@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+>
+
+<meta
+  name="apple-mobile-web-app-capable"
+  content="yes"
+>
+
+<meta
+  name="apple-mobile-web-app-status-bar-style"
+  content="default"
+>
+
+<title>イベント受付管理</title>
+
+
+<style>
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Helvetica Neue",
+    sans-serif;
+
+  background: #f3f3f3;
+  color: #111;
+}
+
+
+.container {
+  width: 100%;
+  max-width: 680px;
+  margin: 0 auto;
+  padding:
+    max(20px, env(safe-area-inset-top))
+    16px
+    50px;
+}
+
+
+/* =========================
+   タイトル
+========================= */
+
+.titleArea {
+  text-align: center;
+  margin-bottom: 18px;
+}
+
+.eventTitle {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+
+  text-align: center;
+  font-size: 34px;
+  font-weight: 900;
+
+  color: #111;
+}
+
+.eventTitle::placeholder {
+  color: #999;
+}
+
+
+.loadStatus {
+  margin-top: 8px;
+
+  font-size: 14px;
+  color: #777;
+}
+
+
+/* =========================
+   集計
+========================= */
+
+.summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+
+  gap: 8px;
+
+  margin-bottom: 12px;
+}
+
+
+.summaryBox {
+  background: white;
+
+  border-radius: 16px;
+
+  padding: 14px 6px;
+
+  text-align: center;
+
+  box-shadow:
+    0 2px 8px
+    rgba(0,0,0,.05);
+}
+
+
+.summaryLabel {
+  font-size: 12px;
+  color: #777;
+}
+
+
+.summaryNumber {
+  margin-top: 4px;
+
+  font-size: 27px;
+  font-weight: 900;
+}
+
+
+/* =========================
+   メニュー
+========================= */
+
+.tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+
+  gap: 8px;
+
+  margin-bottom: 14px;
+}
+
+
+.tabButton {
+  border: none;
+
+  border-radius: 14px;
+
+  padding: 15px 5px;
+
+  background: #dedede;
+
+  color: #222;
+
+  font-size: 16px;
+  font-weight: 800;
+
+  cursor: pointer;
+}
+
+
+.tabButton.active {
+  background: #111;
+  color: white;
+}
+
+
+/* =========================
+   QR読み取り
+========================= */
+
+.scanArea {
+  background: white;
+
+  border-radius: 20px;
+
+  padding: 18px;
+
+  box-shadow:
+    0 4px 16px
+    rgba(0,0,0,.07);
+}
+
+
+.scanTitle {
+  text-align: center;
+
+  font-size: 25px;
+  font-weight: 900;
+
+  margin-bottom: 5px;
+}
+
+
+.scanDescription {
+  text-align: center;
+
+  font-size: 13px;
+  color: #777;
+
+  margin-bottom: 16px;
+}
+
+
+.cameraArea {
+  width: 100%;
+
+  aspect-ratio: 4 / 3;
+
+  border-radius: 16px;
+
+  background: #222;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: white;
+
+  font-size: 14px;
+
+  margin-bottom: 12px;
+}
+
+
+.scanButton {
+  width: 100%;
+
+  border: none;
+
+  border-radius: 15px;
+
+  padding: 18px;
+
+  background: #111;
+  color: white;
+
+  font-size: 20px;
+  font-weight: 900;
+
+  cursor: pointer;
+}
+
+
+/* =========================
+   リセット
+========================= */
+
+.resetButton {
+  width: 100%;
+
+  margin-top: 14px;
+
+  padding: 15px;
+
+  border:
+    1px solid #c40000;
+
+  border-radius: 14px;
+
+  background: white;
+
+  color: #b00000;
+
+  font-size: 15px;
+  font-weight: 800;
+
+  cursor: pointer;
+}
+
+
+/* =========================
+   CSV / QR
+========================= */
+
+.fileButtons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+
+  gap: 8px;
+
+  margin-top: 14px;
+}
+
+
+.utilityButton {
+  min-height: 65px;
+
+  border: none;
+
+  border-radius: 15px;
+
+  background: white;
+
+  padding: 10px 6px;
+
+  font-size: 14px;
+  font-weight: 800;
+
+  color: #111;
+
+  box-shadow:
+    0 2px 8px
+    rgba(0,0,0,.05);
+
+  cursor: pointer;
+}
+
+
+/* =========================
+   ログアウト
+========================= */
+
+.logoutButton {
+  width: 100%;
+
+  margin-top: 18px;
+
+  padding: 14px;
+
+  border:
+    1px solid #aaa;
+
+  border-radius: 14px;
+
+  background: transparent;
+
+  color: #666;
+
+  font-size: 14px;
+
+  cursor: pointer;
+}
+
+
+/* =========================
+   小さい画面
+========================= */
+
+@media (max-width: 380px) {
+
+  .eventTitle {
+    font-size: 29px;
+  }
+
+  .summaryNumber {
+    font-size: 23px;
+  }
+
+  .tabButton {
+    font-size: 14px;
+  }
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<div class="container">
+
+
+  <!-- タイトル -->
+
+  <div class="titleArea">
+
+    <input
+      id="eventTitle"
+      class="eventTitle"
+      type="text"
+      placeholder="イベント名"
+      value=""
+    >
+
+    <div
+      id="loadStatus"
+      class="loadStatus"
+    >
+      参加者 0人 読み込み完了
+    </div>
+
+  </div>
+
+
+
+  <!-- 集計 -->
+
+  <div class="summary">
+
+    <div class="summaryBox">
+
+      <div class="summaryLabel">
+        参加者
+      </div>
+
+      <div
+        id="participantCount"
+        class="summaryNumber"
+      >
+        0
+      </div>
+
+    </div>
+
+
+
+    <div class="summaryBox">
+
+      <div
+        id="status1Label"
+        class="summaryLabel"
+      >
+        入場
+      </div>
+
+      <div
+        id="status1Count"
+        class="summaryNumber"
+      >
+        0
+      </div>
+
+    </div>
+
+
+
+    <div class="summaryBox">
+
+      <div
+        id="status2Label"
+        class="summaryLabel"
+      >
+        受付
+      </div>
+
+      <div
+        id="status2Count"
+        class="summaryNumber"
+      >
+        0
+      </div>
+
+    </div>
+
+  </div>
+
+
+
+  <!-- メニュー -->
+
+  <div class="tabs">
+
+    <button
+      id="status1Tab"
+      class="tabButton active"
+      onclick="changeMode('status1')"
+    >
+      入場
+    </button>
+
+
+    <button
+      id="status2Tab"
+      class="tabButton"
+      onclick="changeMode('status2')"
+    >
+      受付
+    </button>
+
+
+    <button
+      id="listTab"
+      class="tabButton"
+      onclick="changeMode('list')"
+    >
+      一覧
+    </button>
+
+  </div>
+
+
+
+  <!-- QR読み取り -->
+
+  <div
+    id="scanArea"
+    class="scanArea"
+  >
+
+    <div
+      id="scanTitle"
+      class="scanTitle"
+    >
+      入場
+    </div>
+
+
+    <div
+      id="scanDescription"
+      class="scanDescription"
+    >
+      QRコードを読み取ります
+    </div>
+
+
+    <div
+      class="cameraArea"
+    >
+      QRカメラ表示エリア
+    </div>
+
+
+    <button
+      class="scanButton"
+      onclick="startScan()"
+    >
+      QRを読み取る
+    </button>
+
+  </div>
+
+
+
+  <!-- リセット -->
+
+  <button
+    class="resetButton"
+    onclick="resetRecords()"
+  >
+    記録をリセット
+  </button>
+
+
+
+  <!-- CSV / QR -->
+
+  <div class="fileButtons">
+
+    <button
+      class="utilityButton"
+      onclick="uploadCSV()"
+    >
+      CSV<br>
+      アップロード
+    </button>
+
+
+    <button
+      class="utilityButton"
+      onclick="downloadQR()"
+    >
+      QRコード<br>
+      ダウンロード
+    </button>
+
+  </div>
+
+
+
+  <!-- ログアウト -->
+
+  <button
+    class="logoutButton"
+    onclick="logout()"
+  >
+    ログアウト
+  </button>
+
+
+</div>
+
+
+
+<script>
+
+
+/* =========================
+   イベント名
+========================= */
+
+const eventTitle =
+  document.getElementById(
+    "eventTitle"
+  );
+
+
+const savedTitle =
+  localStorage.getItem(
+    "eventTitle"
+  );
+
+
+if (savedTitle) {
+
+  eventTitle.value =
+    savedTitle;
+
+}
+
+
+eventTitle.addEventListener(
+  "input",
+  function() {
+
+    localStorage.setItem(
+      "eventTitle",
+      eventTitle.value
+    );
+
+  }
+);
+
+
+
+/* =========================
+   モード切替
+========================= */
+
+let currentMode =
+  "status1";
+
+
+function changeMode(mode) {
+
+  currentMode =
+    mode;
+
+
+  document
+    .querySelectorAll(
+      ".tabButton"
+    )
+    .forEach(
+      button =>
+        button.classList.remove(
+          "active"
+        )
+    );
+
+
+  if (
+    mode === "status1"
+  ) {
+
+    document
+      .getElementById(
+        "status1Tab"
+      )
+      .classList.add(
+        "active"
+      );
+
+
+    document
+      .getElementById(
+        "scanTitle"
+      )
+      .textContent =
+      document
+        .getElementById(
+          "status1Label"
+        )
+        .textContent;
+
+
+    document
+      .getElementById(
+        "scanArea"
+      )
+      .style.display =
+      "block";
+
+  }
+
+
+  if (
+    mode === "status2"
+  ) {
+
+    document
+      .getElementById(
+        "status2Tab"
+      )
+      .classList.add(
+        "active"
+      );
+
+
+    document
+      .getElementById(
+        "scanTitle"
+      )
+      .textContent =
+      document
+        .getElementById(
+          "status2Label"
+        )
+        .textContent;
+
+
+    document
+      .getElementById(
+        "scanArea"
+      )
+      .style.display =
+      "block";
+
+  }
+
+
+  if (
+    mode === "list"
+  ) {
+
+    document
+      .getElementById(
+        "listTab"
+      )
+      .classList.add(
+        "active"
+      );
+
+
+    document
+      .getElementById(
+        "scanArea"
+      )
+      .style.display =
+      "none";
+
+  }
+
+}
+
+
+
+/* =========================
+   仮ボタン
+========================= */
+
+function startScan() {
+
+  alert(
+    "次の工程でQR読取機能を追加します。"
+  );
+
+}
+
+
+function resetRecords() {
+
+  alert(
+    "次の工程でリセット機能を追加します。"
+  );
+
+}
+
+
+function uploadCSV() {
+
+  alert(
+    "次の工程でCSVアップロード機能を追加します。"
+  );
+
+}
+
+
+function downloadQR() {
+
+  alert(
+    "次の工程でQRコード生成・ダウンロード機能を追加します。"
+  );
+
+}
+
+
+function logout() {
+
+  alert(
+    "次の工程でログイン・ログアウト機能を追加します。"
+  );
+
+}
+
+
+</script>
+
+
+</body>
+
+</html>
