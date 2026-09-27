@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="CHECK-IN">
+<link rel="apple-touch-icon" href="event_app.png">
+<link rel="icon" type="image/png" href="event_app.png">
 
 <title>イベント受付管理</title>
 
@@ -904,34 +907,6 @@ button {
       <div class="syncChip">● 同期接続中</div>
     </div>
 
-    <div id="dashboardRow" class="dashboardRow">
-
-      <div class="dashboardBox">
-        <div class="dashboardLabel">参加者</div>
-        <div id="participantCount" class="dashboardValue">0</div>
-      </div>
-
-      <div class="dashboardBox">
-        <div id="dashboardStatus1Label" class="dashboardLabel">入場</div>
-        <div id="status1Count" class="dashboardValue">0</div>
-      </div>
-
-      <div id="dashboardStatus2Box" class="dashboardBox">
-        <div id="dashboardStatus2Label" class="dashboardLabel">受付</div>
-        <div id="status2Count" class="dashboardValue">0</div>
-      </div>
-
-    </div>
-
-    <div id="dashboardMenu" class="dashboardMenu">
-
-      <button id="dashboardStatus1Button" class="active">入場</button>
-
-      <button id="dashboardStatus2Button">受付</button>
-
-      <button id="dashboardListButton">一覧</button>
-
-    </div>
 
 
     <!-- QR SCAN -->
@@ -968,6 +943,34 @@ button {
 
     </div>
 
+    <div id="dashboardRow" class="dashboardRow">
+
+      <div class="dashboardBox">
+        <div class="dashboardLabel">参加者</div>
+        <div id="participantCount" class="dashboardValue">0</div>
+      </div>
+
+      <div class="dashboardBox">
+        <div id="dashboardStatus1Label" class="dashboardLabel">入場</div>
+        <div id="status1Count" class="dashboardValue">0</div>
+      </div>
+
+      <div id="dashboardStatus2Box" class="dashboardBox">
+        <div id="dashboardStatus2Label" class="dashboardLabel">受付</div>
+        <div id="status2Count" class="dashboardValue">0</div>
+      </div>
+
+    </div>
+
+    <div id="dashboardMenu" class="dashboardMenu">
+
+      <button id="dashboardStatus1Button" class="active">入場</button>
+
+      <button id="dashboardStatus2Button">受付</button>
+
+      <button id="dashboardListButton">一覧</button>
+
+    </div>
 
     <!-- PARTICIPANT LIST -->
     <div id="listPanel" class="listPanel">
