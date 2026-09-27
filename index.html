@@ -595,6 +595,105 @@ button {
   line-height: 1.5;
 }
 
+
+.listPanel {
+  display: none;
+  margin-top: 14px;
+}
+
+.listPanel.active {
+  display: block;
+}
+
+.listFilterRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.listFilterRow.twoFilters {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.listFilterButton {
+  padding: 14px 6px;
+  border: none;
+  border-radius: 13px;
+  background: #dedede;
+  color: #1592ff;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.listFilterButton.active {
+  background: #111;
+  color: white;
+}
+
+.listTableWrap {
+  overflow-x: auto;
+  border-radius: 16px;
+  background: white;
+  box-shadow: 0 2px 10px rgba(0,0,0,.04);
+}
+
+.listTable {
+  width: 100%;
+  min-width: 520px;
+  border-collapse: collapse;
+}
+
+.listTable th {
+  padding: 14px 10px;
+  background: #efefef;
+  font-size: 13px;
+  text-align: center;
+}
+
+.listTable td {
+  padding: 14px 10px;
+  border-top: 1px solid #e8e8e8;
+  font-size: 14px;
+  background: white;
+}
+
+.listTable .nameCol {
+  min-width: 190px;
+  text-align: left;
+  font-weight: 800;
+}
+
+.listTable .numberCol {
+  min-width: 90px;
+  text-align: center;
+}
+
+.listTable .statusCol {
+  min-width: 80px;
+  text-align: center;
+}
+
+.listEmptyInline {
+  display: none;
+  padding: 26px 16px;
+  background: white;
+  color: #777;
+  text-align: center;
+}
+
+.syncChip {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: #e9f8ed;
+  color: #197c3a;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+
 @media (max-width: 380px) {
   .brandTitle {
     font-size: 32px;
@@ -802,6 +901,7 @@ button {
       <div id="eventParticipantStatus" class="eventStatus">
         参加者データはまだ登録されていません
       </div>
+      <div class="syncChip">● 同期接続中</div>
     </div>
 
     <div id="dashboardRow" class="dashboardRow">
@@ -869,6 +969,63 @@ button {
     </div>
 
 
+    <!-- PARTICIPANT LIST -->
+    <div id="listPanel" class="listPanel">
+
+      <input
+        id="inlineListSearch"
+        class="listSearch"
+        type="text"
+        placeholder="名前・number・IDで検索"
+      >
+
+      <div id="inlineFilterRow" class="listFilterRow">
+
+        <button
+          id="filterAllButton"
+          class="listFilterButton active"
+        >
+          全員
+        </button>
+
+        <button
+          id="filterStatus1Button"
+          class="listFilterButton"
+        >
+          未処理
+        </button>
+
+        <button
+          id="filterStatus2Button"
+          class="listFilterButton"
+        >
+          未処理
+        </button>
+
+      </div>
+
+      <div class="listTableWrap">
+
+        <table class="listTable">
+
+          <thead id="inlineVisitorListHead"></thead>
+
+          <tbody id="inlineVisitorListBody"></tbody>
+
+        </table>
+
+        <div
+          id="inlineListEmpty"
+          class="listEmptyInline"
+        >
+          該当する参加者はいません
+        </div>
+
+      </div>
+
+    </div>
+
+
     <!-- RESET -->
     <button id="resetAttendanceButton" class="dangerButton">
       読み取り記録をリセット
@@ -926,40 +1083,6 @@ button {
 
   </section>
 
-
-  <!-- VISITOR LIST -->
-  <section id="visitorListScreen" class="screen">
-
-    <div class="topBar">
-      <button id="listBackButton" class="backButton" aria-label="戻る">‹</button>
-      <h2 class="topBarTitle">参加者一覧</h2>
-      <div class="topBarSpacer"></div>
-    </div>
-
-    <div class="eventHeader">
-      <h2 id="listEventName" class="eventNameLarge">イベント名</h2>
-      <div id="listSummary" class="eventStatus">参加者 0人</div>
-    </div>
-
-    <input
-      id="listSearch"
-      class="listSearch"
-      type="text"
-      placeholder="名前・number・IDで検索"
-    >
-
-    <div class="tableWrap">
-      <table class="visitorTable">
-        <thead id="visitorListHead"></thead>
-        <tbody id="visitorListBody"></tbody>
-      </table>
-    </div>
-
-    <div id="listEmpty" class="emptyState">
-      参加者データがありません
-    </div>
-
-  </section>
 
 </div>
 
@@ -1039,6 +1162,9 @@ let stopEventDataListener =
 
 let currentScanMode =
   "status1";
+
+let currentListFilter =
+  "all";
 
 let html5QrCode =
   null;
@@ -1924,7 +2050,55 @@ function applyEventToDashboard() {
   currentScanMode =
     "status1";
 
+  currentListFilter =
+    "all";
+
+  document
+    .getElementById("filterStatus1Button")
+    .textContent =
+    "未" +
+    (
+      currentEvent.status1 ||
+      "項目1"
+    );
+
+  const filter2 =
+    document.getElementById(
+      "filterStatus2Button"
+    );
+
+  const filterRow =
+    document.getElementById(
+      "inlineFilterRow"
+    );
+
+  if (currentEvent.status2) {
+
+    filter2.style.display =
+      "block";
+
+    filter2.textContent =
+      "未" +
+      currentEvent.status2;
+
+    filterRow.classList.remove(
+      "twoFilters"
+    );
+
+  } else {
+
+    filter2.style.display =
+      "none";
+
+    filterRow.classList.add(
+      "twoFilters"
+    );
+
+  }
+
   updateModeButtons();
+
+  updateListFilterButtons();
 
 }
 
@@ -2140,12 +2314,7 @@ function renderDashboardData() {
     .disabled =
     total === 0;
 
-  document
-    .getElementById("listSummary")
-    .textContent =
-    "参加者 " +
-    total +
-    "人";
+  renderInlineVisitorList();
 
 }
 
@@ -2953,40 +3122,77 @@ document
 
 
 /* =========================
-   VISITOR LIST SCREEN
+   PARTICIPANT LIST
 ========================= */
 
-function renderVisitorList() {
+function updateListFilterButtons() {
+
+  const map = {
+    all:
+      "filterAllButton",
+
+    status1:
+      "filterStatus1Button",
+
+    status2:
+      "filterStatus2Button"
+  };
+
+  document
+    .querySelectorAll(
+      ".listFilterButton"
+    )
+    .forEach(button => {
+      button.classList.remove(
+        "active"
+      );
+    });
+
+  const target =
+    map[
+      currentListFilter
+    ];
+
+  if (target) {
+
+    document
+      .getElementById(target)
+      .classList.add(
+        "active"
+      );
+
+  }
+
+}
+
+
+function renderInlineVisitorList() {
 
   if (!currentEvent) {
     return;
   }
 
-  document
-    .getElementById("listEventName")
-    .textContent =
-    currentEvent.name ||
-    "イベント名";
-
   const head =
     document.getElementById(
-      "visitorListHead"
+      "inlineVisitorListHead"
     );
 
   const body =
     document.getElementById(
-      "visitorListBody"
+      "inlineVisitorListBody"
     );
 
   const empty =
     document.getElementById(
-      "listEmpty"
+      "inlineListEmpty"
     );
 
   const search =
     (
       document
-        .getElementById("listSearch")
+        .getElementById(
+          "inlineListSearch"
+        )
         .value || ""
     )
       .trim()
@@ -2998,16 +3204,47 @@ function renderVisitorList() {
   body.innerHTML =
     "";
 
-  const trh =
+  const headerRow =
     document.createElement(
       "tr"
     );
 
-  [
-    "名前",
-    "number",
-    currentEvent.status1 || "項目1"
-  ].forEach(label => {
+  const headers = [
+    {
+      label:
+        "名前",
+      className:
+        "nameCol"
+    },
+
+    {
+      label:
+        "number",
+      className:
+        "numberCol"
+    },
+
+    {
+      label:
+        currentEvent.status1 ||
+        "項目1",
+      className:
+        "statusCol"
+    }
+  ];
+
+  if (currentEvent.status2) {
+
+    headers.push({
+      label:
+        currentEvent.status2,
+      className:
+        "statusCol"
+    });
+
+  }
+
+  headers.forEach(item => {
 
     const th =
       document.createElement(
@@ -3015,32 +3252,19 @@ function renderVisitorList() {
       );
 
     th.textContent =
-      label;
+      item.label;
 
-    trh.appendChild(
+    th.className =
+      item.className;
+
+    headerRow.appendChild(
       th
     );
 
   });
 
-  if (currentEvent.status2) {
-
-    const th =
-      document.createElement(
-        "th"
-      );
-
-    th.textContent =
-      currentEvent.status2;
-
-    trh.appendChild(
-      th
-    );
-
-  }
-
   head.appendChild(
-    trh
+    headerRow
   );
 
   let shown =
@@ -3048,6 +3272,27 @@ function renderVisitorList() {
 
   currentVisitors.forEach(
     visitor => {
+
+      const record =
+        currentAttendance[
+          visitor.key
+        ] || {};
+
+      if (
+        currentListFilter ===
+          "status1" &&
+        record.status1
+      ) {
+        return;
+      }
+
+      if (
+        currentListFilter ===
+          "status2" &&
+        record.status2
+      ) {
+        return;
+      }
 
       const searchable =
         (
@@ -3069,11 +3314,6 @@ function renderVisitorList() {
 
       shown++;
 
-      const record =
-        currentAttendance[
-          visitor.key
-        ] || {};
-
       const tr =
         document.createElement(
           "tr"
@@ -3085,7 +3325,7 @@ function renderVisitorList() {
         );
 
       nameTd.className =
-        "nameCell";
+        "nameCol";
 
       nameTd.textContent =
         visitor.name;
@@ -3111,7 +3351,7 @@ function renderVisitorList() {
         );
 
       numberTd.className =
-        "center";
+        "numberCol";
 
       numberTd.textContent =
         visitor.number ||
@@ -3123,7 +3363,7 @@ function renderVisitorList() {
         );
 
       status1Td.className =
-        "center " +
+        "statusCol " +
         (
           record.status1
             ? "markYes"
@@ -3157,7 +3397,7 @@ function renderVisitorList() {
           );
 
         status2Td.className =
-          "center " +
+          "statusCol " +
           (
             record.status2
               ? "markYes"
@@ -3190,43 +3430,120 @@ function renderVisitorList() {
 }
 
 
+async function showListMode() {
+
+  await stopScanner();
+
+  clearScanResult();
+
+  document
+    .getElementById("scanPanel")
+    .style.display =
+    "none";
+
+  document
+    .getElementById("listPanel")
+    .classList.add(
+      "active"
+    );
+
+  document
+    .querySelectorAll(
+      ".dashboardMenu button"
+    )
+    .forEach(button => {
+      button.classList.remove(
+        "active"
+      );
+    });
+
+  document
+    .getElementById(
+      "dashboardListButton"
+    )
+    .classList.add(
+      "active"
+    );
+
+  renderInlineVisitorList();
+
+}
+
+
 document
-  .getElementById("dashboardListButton")
+  .getElementById(
+    "dashboardListButton"
+  )
   .addEventListener(
     "click",
-    async () => {
-
-      await stopScanner();
-
-      renderVisitorList();
-
-      showScreen(
-        "visitorListScreen"
-      );
-
-    }
+    showListMode
   );
 
 
 document
-  .getElementById("listBackButton")
+  .getElementById(
+    "inlineListSearch"
+  )
+  .addEventListener(
+    "input",
+    renderInlineVisitorList
+  );
+
+
+document
+  .getElementById(
+    "filterAllButton"
+  )
   .addEventListener(
     "click",
     () => {
 
-      showScreen(
-        "eventDashboardScreen"
-      );
+      currentListFilter =
+        "all";
+
+      updateListFilterButtons();
+
+      renderInlineVisitorList();
 
     }
   );
 
 
 document
-  .getElementById("listSearch")
+  .getElementById(
+    "filterStatus1Button"
+  )
   .addEventListener(
-    "input",
-    renderVisitorList
+    "click",
+    () => {
+
+      currentListFilter =
+        "status1";
+
+      updateListFilterButtons();
+
+      renderInlineVisitorList();
+
+    }
+  );
+
+
+document
+  .getElementById(
+    "filterStatus2Button"
+  )
+  .addEventListener(
+    "click",
+    () => {
+
+      currentListFilter =
+        "status2";
+
+      updateListFilterButtons();
+
+      renderInlineVisitorList();
+
+    }
   );
 
 
@@ -3235,6 +3552,17 @@ document
 ========================= */
 
 function updateModeButtons() {
+
+  document
+    .getElementById("scanPanel")
+    .style.display =
+    "block";
+
+  document
+    .getElementById("listPanel")
+    .classList.remove(
+      "active"
+    );
 
   const button1 =
     document.getElementById(
@@ -3704,7 +4032,7 @@ async function processScannedId(
     );
 
     renderDashboardData();
-    renderVisitorList();
+    renderInlineVisitorList();
 
   } catch (error) {
 
