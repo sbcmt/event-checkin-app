@@ -387,6 +387,21 @@ button {
   line-height: 1.5;
 }
 
+
+.csvArea{margin-top:16px;padding:18px;border-radius:18px;background:#fff;box-shadow:0 3px 12px rgba(0,0,0,.05)}
+.csvTitle{text-align:center;font-size:20px;font-weight:900}
+.csvDescription{margin-top:6px;color:#777;text-align:center;font-size:12px;line-height:1.6}
+.fileActionRow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+.fileActionButton{min-height:62px;padding:10px 7px;border:1px solid #ccc;border-radius:14px;background:#fff;color:#222;font-size:14px;font-weight:800}
+.fileActionButton:disabled{opacity:.4;cursor:default}
+.visitorStatus{margin-top:13px;padding:11px;border-radius:12px;background:#f4f4f4;text-align:center;color:#555;font-size:13px}
+.visitorTableWrap{display:none;margin-top:14px;overflow-x:auto;border-radius:14px;background:#fff}
+.visitorTable{width:100%;min-width:430px;border-collapse:collapse}
+.visitorTable th{padding:10px 8px;background:#eee;font-size:12px}
+.visitorTable td{padding:11px 8px;border-top:1px solid #eee;font-size:13px}
+.hiddenFileInput{display:none}
+.qrProgress{display:none;margin-top:12px;padding:11px;border-radius:12px;background:#eef3ff;color:#294f9b;text-align:center;font-size:13px;font-weight:700}
+
 @media (max-width: 380px) {
   .brandTitle {
     font-size: 32px;
@@ -738,9 +753,49 @@ button {
 
     </div>
 
-    <div class="placeholderArea">
-      次の工程でここに<br>
-      QR読み取り・CSVアップロード・参加者一覧・QRダウンロードを追加します。
+    <div class="csvArea">
+      <div class="csvTitle">参加者データ</div>
+
+      <div class="csvDescription">
+        id・name は必須、number は任意です。<br>
+        QRコードには id だけを記録します。
+      </div>
+
+      <div class="fileActionRow">
+        <button id="downloadCsvTemplateButton" class="fileActionButton">
+          CSVテンプレート<br>ダウンロード
+        </button>
+
+        <button id="uploadCsvButton" class="fileActionButton">
+          visitor_list.csv<br>アップロード
+        </button>
+      </div>
+
+      <input id="csvFileInput" class="hiddenFileInput" type="file" accept=".csv,text/csv">
+
+      <div id="visitorStatus" class="visitorStatus">
+        参加者データはまだ登録されていません
+      </div>
+
+      <button id="downloadQrZipButton" class="primaryButton" disabled>
+        QRコードをまとめてダウンロード
+      </button>
+
+      <div id="qrProgress" class="qrProgress"></div>
+      <div id="visitorError" class="notice"></div>
+
+      <div id="visitorTableWrap" class="visitorTableWrap">
+        <table class="visitorTable">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>名前</th>
+              <th>number</th>
+            </tr>
+          </thead>
+          <tbody id="visitorTableBody"></tbody>
+        </table>
+      </div>
     </div>
 
     <button id="deleteEventButton" class="dangerButton">
@@ -753,6 +808,9 @@ button {
 
 </div>
 
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
 <script type="module">
 
@@ -808,6 +866,12 @@ let currentEventId =
 
 let stopEventListener =
   null;
+
+let currentVisitors =
+  [];
+
+const VISITOR_STORAGE_PREFIX =
+  "eventCheckinVisitors:";
 
 
 /* =========================
@@ -919,6 +983,459 @@ function showFirebaseError(elementId, error) {
   );
 
 }
+
+
+
+/* =========================
+   CSV / 参加者 / QR
+========================= */
+
+function visitorStorageKey() {
+  if (!currentUser || !currentEventId) return null;
+
+  return (
+    VISITOR_STORAGE_PREFIX +
+    currentUser.uid +
+    ":" +
+    currentEventId
+  );
+}
+
+function saveVisitorsLocal() {
+  const key = visitorStorageKey();
+  if (!key) return;
+
+  localStorage.setItem(
+    key,
+    JSON.stringify(currentVisitors)
+  );
+}
+
+function loadVisitorsLocal() {
+  currentVisitors = [];
+
+  const key = visitorStorageKey();
+
+  if (key) {
+    try {
+      const raw = localStorage.getItem(key);
+
+      if (raw) {
+        const parsed = JSON.parse(raw);
+
+        if (Array.isArray(parsed)) {
+          currentVisitors = parsed;
+        }
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  renderVisitors();
+}
+
+function renderVisitors() {
+  const status = document.getElementById("visitorStatus");
+  const tableWrap = document.getElementById("visitorTableWrap");
+  const tbody = document.getElementById("visitorTableBody");
+  const qrButton = document.getElementById("downloadQrZipButton");
+
+  if (!status || !tableWrap || !tbody || !qrButton) return;
+
+  const count = currentVisitors.length;
+
+  status.textContent =
+    count > 0
+      ? "参加者 " + count + "人 読み込み完了"
+      : "参加者データはまだ登録されていません";
+
+  qrButton.disabled = count === 0;
+
+  tbody.innerHTML = "";
+
+  if (count === 0) {
+    tableWrap.style.display = "none";
+    return;
+  }
+
+  currentVisitors.forEach(visitor => {
+    const tr = document.createElement("tr");
+
+    [visitor.id, visitor.name, visitor.number || ""].forEach(value => {
+      const td = document.createElement("td");
+      td.textContent = value;
+      tr.appendChild(td);
+    });
+
+    tbody.appendChild(tr);
+  });
+
+  tableWrap.style.display = "block";
+}
+
+function downloadCsvTemplate() {
+  const content =
+    "\uFEFF" +
+    "id,name,number\r\n" +
+    "SAMPLE-001,山田 太郎,1\r\n" +
+    "SAMPLE-002,佐藤 花子,\r\n";
+
+  const blob = new Blob(
+    [content],
+    { type: "text/csv;charset=utf-8" }
+  );
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+
+  a.href = url;
+  a.download = "visitor_list.csv";
+
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+
+  URL.revokeObjectURL(url);
+}
+
+function parseCsvLine(line) {
+  const result = [];
+  let current = "";
+  let insideQuotes = false;
+
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+
+    if (char === '"') {
+      if (insideQuotes && line[i + 1] === '"') {
+        current += '"';
+        i++;
+      } else {
+        insideQuotes = !insideQuotes;
+      }
+    } else if (char === "," && !insideQuotes) {
+      result.push(current);
+      current = "";
+    } else {
+      current += char;
+    }
+  }
+
+  result.push(current);
+  return result;
+}
+
+function parseVisitorCsv(text) {
+  const cleaned = text.replace(/^\uFEFF/, "");
+
+  const rows = cleaned
+    .split(/\r?\n/)
+    .filter(line => line.trim() !== "");
+
+  if (rows.length < 2) {
+    throw new Error("参加者データがありません。");
+  }
+
+  const headers = parseCsvLine(rows[0])
+    .map(value => value.trim().toLowerCase());
+
+  const idIndex = headers.indexOf("id");
+  const nameIndex = headers.indexOf("name");
+  const numberIndex = headers.indexOf("number");
+
+  if (idIndex === -1 || nameIndex === -1) {
+    throw new Error(
+      "CSVの1行目には id,name が必要です。number は任意です。"
+    );
+  }
+
+  const visitors = [];
+  const ids = new Set();
+
+  for (let i = 1; i < rows.length; i++) {
+    const columns = parseCsvLine(rows[i]);
+
+    const id = String(columns[idIndex] || "").trim();
+    const name = String(columns[nameIndex] || "").trim();
+    const number =
+      numberIndex === -1
+        ? ""
+        : String(columns[numberIndex] || "").trim();
+
+    if (!id) {
+      throw new Error((i + 1) + "行目：id が空欄です。");
+    }
+
+    if (!name) {
+      throw new Error((i + 1) + "行目：name が空欄です。");
+    }
+
+    if (ids.has(id)) {
+      throw new Error(
+        (i + 1) +
+        "行目：id「" +
+        id +
+        "」が重複しています。"
+      );
+    }
+
+    ids.add(id);
+
+    visitors.push({
+      id,
+      name,
+      number
+    });
+  }
+
+  return visitors;
+}
+
+async function handleCsvUpload(file) {
+  clearMessage("visitorError");
+
+  if (!file) return;
+
+  if (!file.name.toLowerCase().endsWith(".csv")) {
+    showBoxMessage(
+      "visitorError",
+      "CSVファイルを選択してください。"
+    );
+    return;
+  }
+
+  try {
+    const text = await file.text();
+    const visitors = parseVisitorCsv(text);
+
+    currentVisitors = visitors;
+
+    saveVisitorsLocal();
+    renderVisitors();
+
+  } catch (error) {
+    console.error(error);
+
+    showBoxMessage(
+      "visitorError",
+      error.message ||
+      "CSVの読み込みに失敗しました。"
+    );
+  }
+}
+
+function safeFileName(name) {
+  return (
+    String(name)
+      .replace(/[\\/:*?"<>|]/g, "_")
+      .trim() ||
+    "QR"
+  );
+}
+
+function makeQrCanvas(textValue) {
+  return new Promise((resolve, reject) => {
+    try {
+      const holder = document.createElement("div");
+
+      holder.style.position = "fixed";
+      holder.style.left = "-99999px";
+      holder.style.top = "-99999px";
+
+      document.body.appendChild(holder);
+
+      new QRCode(holder, {
+        text: textValue,
+        width: 1000,
+        height: 1000,
+        correctLevel: QRCode.CorrectLevel.H
+      });
+
+      setTimeout(() => {
+        try {
+          const sourceCanvas = holder.querySelector("canvas");
+
+          if (!sourceCanvas) {
+            holder.remove();
+            reject(new Error("QR画像の生成に失敗しました。"));
+            return;
+          }
+
+          const outCanvas = document.createElement("canvas");
+
+          outCanvas.width = 1200;
+          outCanvas.height = 1200;
+
+          const ctx = outCanvas.getContext("2d");
+
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(0, 0, 1200, 1200);
+
+          ctx.imageSmoothingEnabled = false;
+
+          ctx.drawImage(
+            sourceCanvas,
+            100,
+            100,
+            1000,
+            1000
+          );
+
+          holder.remove();
+          resolve(outCanvas);
+
+        } catch (error) {
+          holder.remove();
+          reject(error);
+        }
+      }, 50);
+
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
+function canvasToJpegBlob(canvas) {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      blob => {
+        if (!blob) {
+          reject(new Error("JPG変換に失敗しました。"));
+          return;
+        }
+
+        resolve(blob);
+      },
+      "image/jpeg",
+      0.96
+    );
+  });
+}
+
+async function downloadAllQrZip() {
+  clearMessage("visitorError");
+
+  if (currentVisitors.length === 0) {
+    showBoxMessage(
+      "visitorError",
+      "先にCSVをアップロードしてください。"
+    );
+    return;
+  }
+
+  if (
+    typeof QRCode === "undefined" ||
+    typeof JSZip === "undefined"
+  ) {
+    showBoxMessage(
+      "visitorError",
+      "QR生成ライブラリを読み込めませんでした。通信状態を確認してください。"
+    );
+    return;
+  }
+
+  const progress = document.getElementById("qrProgress");
+  const button = document.getElementById("downloadQrZipButton");
+
+  progress.style.display = "block";
+  button.disabled = true;
+
+  try {
+    const zip = new JSZip();
+    const usedNames = new Map();
+
+    for (let i = 0; i < currentVisitors.length; i++) {
+      const visitor = currentVisitors[i];
+
+      progress.textContent =
+        "QRコードを生成中… " +
+        (i + 1) +
+        " / " +
+        currentVisitors.length;
+
+      const canvas = await makeQrCanvas(visitor.id);
+      const blob = await canvasToJpegBlob(canvas);
+
+      const baseName = safeFileName(visitor.name);
+
+      const usedCount =
+        (usedNames.get(baseName) || 0) + 1;
+
+      usedNames.set(baseName, usedCount);
+
+      const fileName =
+        usedCount === 1
+          ? baseName + ".jpg"
+          : baseName + "_" + usedCount + ".jpg";
+
+      zip.file(fileName, blob);
+    }
+
+    progress.textContent =
+      "ZIPファイルを作成しています…";
+
+    const zipBlob = await zip.generateAsync({
+      type: "blob"
+    });
+
+    const url = URL.createObjectURL(zipBlob);
+    const a = document.createElement("a");
+
+    a.href = url;
+    a.download = "visitor_qr_codes.zip";
+
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    URL.revokeObjectURL(url);
+
+    progress.textContent =
+      "QRコードのダウンロードが完了しました。";
+
+  } catch (error) {
+    console.error(error);
+
+    showBoxMessage(
+      "visitorError",
+      error.message ||
+      "QRコードの生成に失敗しました。"
+    );
+
+    progress.style.display = "none";
+
+  } finally {
+    button.disabled = currentVisitors.length === 0;
+  }
+}
+
+document
+  .getElementById("downloadCsvTemplateButton")
+  .addEventListener("click", downloadCsvTemplate);
+
+document
+  .getElementById("uploadCsvButton")
+  .addEventListener("click", () => {
+    document.getElementById("csvFileInput").click();
+  });
+
+document
+  .getElementById("csvFileInput")
+  .addEventListener("change", event => {
+    const file =
+      event.target.files &&
+      event.target.files[0];
+
+    handleCsvUpload(file);
+
+    event.target.value = "";
+  });
+
+document
+  .getElementById("downloadQrZipButton")
+  .addEventListener("click", downloadAllQrZip);
 
 
 /* =========================
@@ -1571,6 +2088,8 @@ async function openEvent(eventId) {
     currentEventId =
       eventId;
 
+    loadVisitorsLocal();
+
 
     document
       .getElementById("dashboardEventName")
@@ -1672,6 +2191,11 @@ document
 
     currentEventId =
       null;
+
+    currentVisitors =
+      [];
+
+    renderVisitors();
 
     showScreen(
       "eventListScreen"
@@ -1797,6 +2321,11 @@ onAuthStateChanged(
 
       currentEventId =
         null;
+
+      currentVisitors =
+        [];
+
+      renderVisitors();
 
 
       document
