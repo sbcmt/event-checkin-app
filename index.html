@@ -743,7 +743,7 @@ button {
       <h2 class="pageTitle">スタッフログイン</h2>
 
       <div class="pageDescription">
-        登録済みのメールアドレスとパスワードを入力してください
+        登録済みのメールアドレスとパスワードでログインしてください
       </div>
 
       <div class="field">
@@ -765,6 +765,41 @@ button {
       <div id="loginError" class="notice"></div>
 
     </div>
+  </section>
+
+
+  <!-- DEVICE LIMIT / SESSION CHECK -->
+  <section id="deviceLimitScreen" class="screen">
+
+    <div class="card">
+
+      <h2 id="deviceLimitTitle" class="pageTitle">
+        接続端末を確認中
+      </h2>
+
+      <div id="deviceLimitMessage" class="pageDescription">
+        このアカウントで使用中の端末を確認しています…
+      </div>
+
+      <button
+        id="retryDeviceButton"
+        class="primaryButton"
+        style="display:none;"
+      >
+        もう一度確認
+      </button>
+
+      <button
+        id="deviceLimitLogoutButton"
+        class="secondaryButton"
+      >
+        ログアウト
+      </button>
+
+      <div id="deviceLimitError" class="notice"></div>
+
+    </div>
+
   </section>
 
 
@@ -1125,7 +1160,9 @@ import {
   get,
   onValue,
   update,
-  remove
+  remove,
+  runTransaction,
+  onDisconnect
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
 
 
@@ -1189,9 +1226,735 @@ let alreadyRead =
 let expiryCleanupRunning =
   false;
 
+let deviceSessionClaimed =
+  false;
+
+let deviceHeartbeatTimer =
+  null;
+
+let deviceDisconnectHandle =
+  null;
+
+let deviceSessionCheckRunning =
+  false;
+
 
 const VISITOR_RETENTION_MS =
   60 * 24 * 60 * 60 * 1000;
+
+const MAX_ACTIVE_DEVICES =
+  2;
+
+const DEVICE_HEARTBEAT_MS =
+  30 * 1000;
+
+const DEVICE_STALE_MS =
+  3 * 60 * 1000;
+
+const DEVICE_ID_STORAGE_KEY =
+  "eventCheckinDeviceId";
+
+const DEVICE_ID =
+  getOrCreateDeviceId();
+
+
+/* =========================
+   DEVICE SESSION LIMIT
+========================= */
+
+function getOrCreateDeviceId() {
+
+  try {
+
+    let saved =
+      localStorage.getItem(
+        DEVICE_ID_STORAGE_KEY
+      );
+
+    if (saved) {
+      return saved;
+    }
+
+    const generated =
+      typeof crypto !== "undefined" &&
+      typeof crypto.randomUUID === "function"
+        ? crypto.randomUUID()
+        : (
+            "device-" +
+            Date.now() +
+            "-" +
+            Math.random()
+              .toString(36)
+              .slice(2)
+          );
+
+    localStorage.setItem(
+      DEVICE_ID_STORAGE_KEY,
+      generated
+    );
+
+    return generated;
+
+  } catch (error) {
+
+    return (
+      "device-" +
+      Date.now() +
+      "-" +
+      Math.random()
+        .toString(36)
+        .slice(2)
+    );
+
+  }
+
+}
+
+
+function getDeviceName() {
+
+  const ua =
+    navigator.userAgent || "";
+
+  const platform =
+    navigator.platform || "";
+
+  const isIPad =
+    /iPad/i.test(ua) ||
+    (
+      /Macintosh/i.test(ua) &&
+      navigator.maxTouchPoints > 1
+    );
+
+  if (isIPad) {
+    return "iPad";
+  }
+
+  if (/iPhone/i.test(ua)) {
+    return "iPhone";
+  }
+
+  if (/Android/i.test(ua)) {
+    return "Android";
+  }
+
+  if (/Win/i.test(platform) || /Windows/i.test(ua)) {
+    return "Windows PC";
+  }
+
+  if (/Mac/i.test(platform) || /Macintosh/i.test(ua)) {
+    return "Mac";
+  }
+
+  return "Web端末";
+
+}
+
+
+function getSessionsPath(uid) {
+
+  return (
+    "users/" +
+    uid +
+    "/sessions"
+  );
+
+}
+
+
+function getMySessionPath(uid) {
+
+  return (
+    getSessionsPath(uid) +
+    "/" +
+    DEVICE_ID
+  );
+
+}
+
+
+function stopDeviceHeartbeat() {
+
+  if (deviceHeartbeatTimer) {
+
+    clearInterval(
+      deviceHeartbeatTimer
+    );
+
+    deviceHeartbeatTimer =
+      null;
+
+  }
+
+}
+
+
+async function configureOnDisconnect(user) {
+
+  try {
+
+    if (deviceDisconnectHandle) {
+
+      try {
+        await deviceDisconnectHandle.cancel();
+      } catch (error) {}
+
+      deviceDisconnectHandle =
+        null;
+
+    }
+
+    const mySessionRef =
+      ref(
+        database,
+        getMySessionPath(
+          user.uid
+        )
+      );
+
+    deviceDisconnectHandle =
+      onDisconnect(
+        mySessionRef
+      );
+
+    await deviceDisconnectHandle.remove();
+
+  } catch (error) {
+
+    console.warn(
+      "onDisconnect setup failed:",
+      error
+    );
+
+  }
+
+}
+
+
+function startDeviceHeartbeat(user) {
+
+  stopDeviceHeartbeat();
+
+  deviceHeartbeatTimer =
+    setInterval(
+      async () => {
+
+        if (
+          !currentUser ||
+          currentUser.uid !== user.uid ||
+          !deviceSessionClaimed
+        ) {
+          return;
+        }
+
+        try {
+
+          await update(
+            ref(
+              database,
+              getMySessionPath(
+                user.uid
+              )
+            ),
+            {
+              lastSeen:
+                Date.now()
+            }
+          );
+
+        } catch (error) {
+
+          console.warn(
+            "heartbeat failed:",
+            error
+          );
+
+        }
+
+      },
+      DEVICE_HEARTBEAT_MS
+    );
+
+}
+
+
+async function acquireDeviceSession(user) {
+
+  const now =
+    Date.now();
+
+  const sessionsRef =
+    ref(
+      database,
+      getSessionsPath(
+        user.uid
+      )
+    );
+
+  try {
+
+    const result =
+      await runTransaction(
+        sessionsRef,
+
+        current => {
+
+          const sessions =
+            current &&
+            typeof current === "object"
+              ? { ...current }
+              : {};
+
+          Object
+            .entries(sessions)
+            .forEach(
+              ([id, session]) => {
+
+                const lastSeen =
+                  Number(
+                    session?.lastSeen || 0
+                  );
+
+                if (
+                  !lastSeen ||
+                  now - lastSeen >
+                    DEVICE_STALE_MS
+                ) {
+
+                  delete sessions[id];
+
+                }
+
+              }
+            );
+
+          if (
+            sessions[DEVICE_ID]
+          ) {
+
+            sessions[DEVICE_ID] = {
+              ...sessions[DEVICE_ID],
+
+              deviceName:
+                getDeviceName(),
+
+              lastSeen:
+                now
+            };
+
+            return sessions;
+
+          }
+
+          if (
+            Object.keys(sessions).length >=
+            MAX_ACTIVE_DEVICES
+          ) {
+
+            return;
+
+          }
+
+          sessions[DEVICE_ID] = {
+            deviceName:
+              getDeviceName(),
+
+            createdAt:
+              now,
+
+            lastSeen:
+              now
+          };
+
+          return sessions;
+
+        },
+        {
+          applyLocally:
+            false
+        }
+      );
+
+    if (
+      !result.committed
+    ) {
+
+      deviceSessionClaimed =
+        false;
+
+      return false;
+
+    }
+
+    const sessions =
+      result.snapshot.val() ||
+      {};
+
+    if (
+      !sessions[DEVICE_ID]
+    ) {
+
+      deviceSessionClaimed =
+        false;
+
+      return false;
+
+    }
+
+    deviceSessionClaimed =
+      true;
+
+    await configureOnDisconnect(
+      user
+    );
+
+    startDeviceHeartbeat(
+      user
+    );
+
+    return true;
+
+  } catch (error) {
+
+    console.error(
+      "device session acquire failed:",
+      error
+    );
+
+    throw error;
+
+  }
+
+}
+
+
+async function releaseDeviceSession() {
+
+  stopDeviceHeartbeat();
+
+  const user =
+    currentUser;
+
+  if (deviceDisconnectHandle) {
+
+    try {
+      await deviceDisconnectHandle.cancel();
+    } catch (error) {}
+
+    deviceDisconnectHandle =
+      null;
+
+  }
+
+  if (
+    user &&
+    deviceSessionClaimed
+  ) {
+
+    try {
+
+      await remove(
+        ref(
+          database,
+          getMySessionPath(
+            user.uid
+          )
+        )
+      );
+
+    } catch (error) {
+
+      console.warn(
+        "session release failed:",
+        error
+      );
+
+    }
+
+  }
+
+  deviceSessionClaimed =
+    false;
+
+}
+
+
+function stopAppDataListeners() {
+
+  if (
+    stopEventListListener
+  ) {
+
+    stopEventListListener();
+
+    stopEventListListener =
+      null;
+
+  }
+
+  if (
+    stopEventDataListener
+  ) {
+
+    stopEventDataListener();
+
+    stopEventDataListener =
+      null;
+
+  }
+
+}
+
+
+async function showDeviceLimitBlocked() {
+
+  await stopScanner();
+
+  stopAppDataListeners();
+
+  deviceSessionClaimed =
+    false;
+
+  stopDeviceHeartbeat();
+
+  document
+    .getElementById(
+      "deviceLimitTitle"
+    )
+    .textContent =
+    "同時使用は2台までです";
+
+  document
+    .getElementById(
+      "deviceLimitMessage"
+    )
+    .textContent =
+    "このアカウントは現在、ほかの2台の端末で使用中です。\nどちらかの端末を終了またはログアウトしてから、もう一度確認してください。";
+
+  document
+    .getElementById(
+      "retryDeviceButton"
+    )
+    .style.display =
+    "block";
+
+  showScreen(
+    "deviceLimitScreen"
+  );
+
+}
+
+
+function showDeviceChecking() {
+
+  clearMessage(
+    "deviceLimitError"
+  );
+
+  document
+    .getElementById(
+      "deviceLimitTitle"
+    )
+    .textContent =
+    "接続端末を確認中";
+
+  document
+    .getElementById(
+      "deviceLimitMessage"
+    )
+    .textContent =
+    "このアカウントで使用中の端末を確認しています…";
+
+  document
+    .getElementById(
+      "retryDeviceButton"
+    )
+    .style.display =
+    "none";
+
+  showScreen(
+    "deviceLimitScreen"
+  );
+
+}
+
+
+async function enterAppAfterSessionCheck(user) {
+
+  if (
+    deviceSessionCheckRunning
+  ) {
+    return;
+  }
+
+  deviceSessionCheckRunning =
+    true;
+
+  showDeviceChecking();
+
+  try {
+
+    const allowed =
+      await acquireDeviceSession(
+        user
+      );
+
+    if (!allowed) {
+
+      await showDeviceLimitBlocked();
+
+      return;
+
+    }
+
+    document
+      .getElementById("userInfo")
+      .textContent =
+      "ログイン中：" +
+      user.email;
+
+    showScreen(
+      "eventListScreen"
+    );
+
+    startEventListListener();
+
+  } catch (error) {
+
+    showFirebaseError(
+      "deviceLimitError",
+      error
+    );
+
+    document
+      .getElementById(
+        "deviceLimitTitle"
+      )
+      .textContent =
+      "接続確認エラー";
+
+    document
+      .getElementById(
+        "deviceLimitMessage"
+      )
+      .textContent =
+      "端末の接続確認に失敗しました。通信状態を確認して、もう一度お試しください。";
+
+    document
+      .getElementById(
+        "retryDeviceButton"
+      )
+      .style.display =
+      "block";
+
+    showScreen(
+      "deviceLimitScreen"
+    );
+
+  } finally {
+
+    deviceSessionCheckRunning =
+      false;
+
+  }
+
+}
+
+
+async function verifyDeviceSessionOnResume() {
+
+  if (
+    document.visibilityState !== "visible" ||
+    !currentUser ||
+    deviceSessionCheckRunning
+  ) {
+    return;
+  }
+
+  try {
+
+    const mySessionRef =
+      ref(
+        database,
+        getMySessionPath(
+          currentUser.uid
+        )
+      );
+
+    const snapshot =
+      await get(
+        mySessionRef
+      );
+
+    const session =
+      snapshot.val();
+
+    const lastSeen =
+      Number(
+        session?.lastSeen || 0
+      );
+
+    const stillValid =
+      snapshot.exists() &&
+      lastSeen &&
+      Date.now() - lastSeen <=
+        DEVICE_STALE_MS;
+
+    if (stillValid) {
+
+      deviceSessionClaimed =
+        true;
+
+      await update(
+        mySessionRef,
+        {
+          lastSeen:
+            Date.now()
+        }
+      );
+
+      await configureOnDisconnect(
+        currentUser
+      );
+
+      startDeviceHeartbeat(
+        currentUser
+      );
+
+      return;
+
+    }
+
+    const allowed =
+      await acquireDeviceSession(
+        currentUser
+      );
+
+    if (!allowed) {
+
+      await showDeviceLimitBlocked();
+
+    }
+
+  } catch (error) {
+
+    console.warn(
+      "resume session check failed:",
+      error
+    );
+
+  }
+
+}
+
+
+document
+  .addEventListener(
+    "visibilitychange",
+    () => {
+      verifyDeviceSessionOnResume();
+    }
+  );
 
 
 /* =========================
@@ -1519,6 +2282,8 @@ document
 
       await stopScanner();
 
+      await releaseDeviceSession();
+
       await signOut(auth);
 
     } catch (error) {
@@ -1531,6 +2296,53 @@ document
     }
 
   });
+
+
+document
+  .getElementById(
+    "retryDeviceButton"
+  )
+  .addEventListener(
+    "click",
+    async () => {
+
+      if (!currentUser) {
+        return;
+      }
+
+      await enterAppAfterSessionCheck(
+        currentUser
+      );
+
+    }
+  );
+
+
+document
+  .getElementById(
+    "deviceLimitLogoutButton"
+  )
+  .addEventListener(
+    "click",
+    async () => {
+
+      try {
+
+        await releaseDeviceSession();
+
+        await signOut(auth);
+
+      } catch (error) {
+
+        showFirebaseError(
+          "deviceLimitError",
+          error
+        );
+
+      }
+
+    }
+  );
 
 
 /* =========================
@@ -4366,50 +5178,38 @@ document
 
 onAuthStateChanged(
   auth,
-  user => {
+  async user => {
 
     currentUser =
       user || null;
 
     if (user) {
 
-      document
-        .getElementById("userInfo")
-        .textContent =
-        "ログイン中：" +
-        user.email;
-
-      showScreen(
-        "eventListScreen"
+      await enterAppAfterSessionCheck(
+        user
       );
-
-      startEventListListener();
 
     } else {
 
-      if (
-        stopEventListListener
-      ) {
+      stopDeviceHeartbeat();
 
-        stopEventListListener();
+      deviceSessionClaimed =
+        false;
 
-        stopEventListListener =
+      if (deviceDisconnectHandle) {
+
+        try {
+          await deviceDisconnectHandle.cancel();
+        } catch (error) {}
+
+        deviceDisconnectHandle =
           null;
 
       }
 
-      if (
-        stopEventDataListener
-      ) {
+      stopAppDataListeners();
 
-        stopEventDataListener();
-
-        stopEventDataListener =
-          null;
-
-      }
-
-      stopScanner();
+      await stopScanner();
 
       currentEventId =
         null;
