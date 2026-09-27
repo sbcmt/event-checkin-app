@@ -6,71 +6,283 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>イベント受付管理</title>
+
 <style>
-*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;background:#f3f3f3;color:#111}button,input{font:inherit}button{cursor:pointer}.app{width:100%;max-width:680px;margin:0 auto;padding:max(22px,env(safe-area-inset-top)) 16px calc(40px + env(safe-area-inset-bottom))}.brand{text-align:center;margin:14px 0 26px}.brandTitle{margin:0;font-size:38px;font-weight:900;letter-spacing:.02em}.brandSub{margin-top:5px;color:#777;font-size:14px}.screen{display:none}.screen.active{display:block}.card{background:#fff;border-radius:22px;padding:22px 18px;box-shadow:0 5px 20px rgba(0,0,0,.07)}.pageTitle{margin:0;text-align:center;font-size:28px;font-weight:900}.pageDescription{margin:8px 0 22px;text-align:center;color:#777;font-size:14px;line-height:1.6}.field{margin-top:15px}.fieldLabel{display:block;margin:0 0 7px 3px;color:#555;font-size:13px;font-weight:700}.input{width:100%;padding:15px;border:1px solid #ccc;border-radius:13px;background:#fff;color:#111;font-size:16px;outline:none}.input:focus{border-color:#111}.primaryButton{width:100%;margin-top:18px;padding:17px;border:none;border-radius:15px;background:#111;color:#fff;font-size:18px;font-weight:900}.secondaryButton{width:100%;margin-top:10px;padding:15px;border:1px solid #aaa;border-radius:14px;background:#fff;color:#444;font-size:15px;font-weight:700}.dangerButton{width:100%;margin-top:10px;padding:14px;border:1px solid #b00000;border-radius:14px;background:#fff;color:#b00000;font-size:14px;font-weight:800}.notice{display:none;margin-top:14px;padding:12px;border-radius:12px;background:#fdeaea;color:#b00000;text-align:center;font-size:13px;font-weight:700;white-space:pre-wrap}.topBar{display:flex;align-items:center;gap:10px;margin-bottom:16px}.backButton{flex:0 0 auto;border:none;background:transparent;padding:8px 3px;font-size:28px;line-height:1}.topBarTitle{flex:1;margin:0;text-align:center;font-size:25px;font-weight:900}.topBarSpacer{width:34px;flex:0 0 34px}.eventList{display:grid;gap:10px;margin-top:16px}.eventCard{width:100%;border:none;border-radius:16px;background:#fff;padding:17px;text-align:left;box-shadow:0 3px 12px rgba(0,0,0,.05)}.eventCardName{font-size:18px;font-weight:900}.eventCardMeta{margin-top:6px;color:#777;font-size:13px}.emptyState{margin-top:16px;padding:34px 18px;border-radius:18px;background:#fff;text-align:center;color:#777;line-height:1.7}.sectionLabel{margin:22px 0 8px 2px;color:#777;font-size:12px;font-weight:800;letter-spacing:.04em}.preview{margin-top:18px;padding:16px;border-radius:16px;background:#f7f7f7}.previewTitle{color:#777;font-size:12px;font-weight:800}.previewRow{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px}.previewBox{padding:12px 5px;border-radius:12px;background:#fff;text-align:center}.previewLabel{color:#777;font-size:11px}.previewValue{margin-top:3px;font-size:20px;font-weight:900}.eventHeader{text-align:center;margin-bottom:18px}.eventNameLarge{margin:0;font-size:31px;font-weight:900}.eventStatus{margin-top:6px;color:#777;font-size:14px}.dashboardRow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}.dashboardBox{padding:14px 6px;border-radius:15px;background:#fff;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,.05)}.dashboardLabel{color:#777;font-size:12px}.dashboardValue{margin-top:3px;font-size:25px;font-weight:900}.dashboardMenu{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}.dashboardMenu button{padding:14px 5px;border:none;border-radius:13px;background:#dedede;color:#222;font-weight:800}.placeholderArea{margin-top:14px;padding:30px 18px;border-radius:18px;background:#fff;text-align:center;color:#777;box-shadow:0 3px 12px rgba(0,0,0,.05)}.smallNote{margin-top:14px;color:#999;text-align:center;font-size:11px;line-height:1.5}@media(max-width:380px){.brandTitle{font-size:32px}.pageTitle{font-size:25px}.eventNameLarge{font-size:27px}}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;background:#f3f3f3;color:#111}
+button,input{font:inherit}button{cursor:pointer}
+.app{width:100%;max-width:680px;margin:0 auto;padding:max(22px,env(safe-area-inset-top)) 16px calc(40px + env(safe-area-inset-bottom))}
+.brand{text-align:center;margin:14px 0 26px}.brandTitle{margin:0;font-size:38px;font-weight:900}.brandSub{margin-top:5px;color:#777;font-size:14px}
+.screen{display:none}.screen.active{display:block}
+.card{background:white;border-radius:22px;padding:22px 18px;box-shadow:0 5px 20px rgba(0,0,0,.07)}
+.pageTitle{margin:0;text-align:center;font-size:28px;font-weight:900}
+.pageDescription{margin:8px 0 22px;text-align:center;color:#777;font-size:14px;line-height:1.6}
+.field{margin-top:15px}.fieldLabel{display:block;margin:0 0 7px 3px;color:#555;font-size:13px;font-weight:700}
+.input{width:100%;padding:15px;border:1px solid #ccc;border-radius:13px;background:white;color:#111;font-size:16px;outline:none}.input:focus{border-color:#111}
+.primaryButton{width:100%;margin-top:18px;padding:17px;border:none;border-radius:15px;background:#111;color:white;font-size:18px;font-weight:900}
+.secondaryButton{width:100%;margin-top:10px;padding:15px;border:1px solid #aaa;border-radius:14px;background:white;color:#444;font-size:15px;font-weight:700}
+.linkButton{width:100%;margin-top:12px;padding:8px;border:none;background:transparent;color:#444;font-size:14px;font-weight:700;text-decoration:underline}
+.notice{display:none;margin-top:14px;padding:12px;border-radius:12px;background:#fdeaea;color:#b00000;text-align:center;font-size:13px;font-weight:700;white-space:pre-wrap}
+.topBar{display:flex;align-items:center;gap:10px;margin-bottom:16px}.topBarTitle{flex:1;margin:0;text-align:center;font-size:25px;font-weight:900}
+.userInfo{margin-bottom:14px;padding:12px 14px;border-radius:14px;background:white;color:#666;font-size:13px;text-align:center}
+.emptyState{margin-top:16px;padding:34px 18px;border-radius:18px;background:white;text-align:center;color:#777;line-height:1.7}
+@media(max-width:380px){.brandTitle{font-size:32px}.pageTitle{font-size:25px}}
 </style>
 </head>
+
 <body>
 <div class="app">
-  <div class="brand"><h1 class="brandTitle">CHECK-IN</h1><div class="brandSub">イベント受付管理</div></div>
+
+  <div class="brand">
+    <h1 class="brandTitle">CHECK-IN</h1>
+    <div class="brandSub">イベント受付管理</div>
+  </div>
 
   <section id="loginScreen" class="screen active">
     <div class="card">
       <h2 class="pageTitle">スタッフログイン</h2>
-      <div class="pageDescription">管理画面を利用するアカウントでログインしてください</div>
-      <div class="field"><label class="fieldLabel" for="email">メールアドレス</label><input id="email" class="input" type="email" autocomplete="username" placeholder="example@email.com"></div>
-      <div class="field"><label class="fieldLabel" for="password">パスワード</label><input id="password" class="input" type="password" autocomplete="current-password" placeholder="パスワード"></div>
-      <button class="primaryButton" onclick="demoLogin()">ログイン</button>
+      <div class="pageDescription">登録済みのメールアドレスとパスワードでログインしてください</div>
+
+      <div class="field">
+        <label class="fieldLabel" for="loginEmail">メールアドレス</label>
+        <input id="loginEmail" class="input" type="email" autocomplete="username" placeholder="example@email.com">
+      </div>
+
+      <div class="field">
+        <label class="fieldLabel" for="loginPassword">パスワード</label>
+        <input id="loginPassword" class="input" type="password" autocomplete="current-password" placeholder="パスワード">
+      </div>
+
+      <button id="loginButton" class="primaryButton">ログイン</button>
+      <button id="openRegisterButton" class="linkButton">初めての方はこちら：新規アカウント登録</button>
       <div id="loginError" class="notice"></div>
-      <div class="smallNote">現在は画面設計用の土台です。<br>Firebase認証は次の工程で接続します。</div>
+    </div>
+  </section>
+
+  <section id="registerScreen" class="screen">
+    <div class="card">
+      <h2 class="pageTitle">新規アカウント登録</h2>
+      <div class="pageDescription">利用するメールアドレスとパスワードを登録してください</div>
+
+      <div class="field">
+        <label class="fieldLabel" for="registerEmail">メールアドレス</label>
+        <input id="registerEmail" class="input" type="email" autocomplete="email" placeholder="example@email.com">
+      </div>
+
+      <div class="field">
+        <label class="fieldLabel" for="registerPassword">パスワード</label>
+        <input id="registerPassword" class="input" type="password" autocomplete="new-password" placeholder="6文字以上">
+      </div>
+
+      <div class="field">
+        <label class="fieldLabel" for="registerPasswordConfirm">パスワード確認</label>
+        <input id="registerPasswordConfirm" class="input" type="password" autocomplete="new-password" placeholder="同じパスワードをもう一度">
+      </div>
+
+      <button id="registerButton" class="primaryButton">アカウントを作成</button>
+      <button id="backToLoginButton" class="secondaryButton">ログイン画面に戻る</button>
+      <div id="registerError" class="notice"></div>
     </div>
   </section>
 
   <section id="eventListScreen" class="screen">
-    <div class="topBar"><div class="topBarSpacer"></div><h2 class="topBarTitle">イベント一覧</h2><div class="topBarSpacer"></div></div>
-    <button class="primaryButton" onclick="openNewEvent()">＋ 新しいイベントを登録</button>
-    <div class="sectionLabel">登録済みイベント</div>
-    <div id="eventList" class="eventList"></div>
-    <div id="emptyEventState" class="emptyState">まだイベントがありません。<br>「新しいイベントを登録」から作成してください。</div>
-    <button class="secondaryButton" onclick="logoutDemo()">ログアウト</button>
-  </section>
+    <div class="topBar"><h2 class="topBarTitle">イベント一覧</h2></div>
+    <div id="userInfo" class="userInfo"></div>
 
-  <section id="newEventScreen" class="screen">
-    <div class="topBar"><button class="backButton" onclick="showScreen('eventListScreen')" aria-label="戻る">‹</button><h2 class="topBarTitle">新規イベント登録</h2><div class="topBarSpacer"></div></div>
-    <div class="card">
-      <div class="field"><label class="fieldLabel" for="newEventName">イベント名</label><input id="newEventName" class="input" type="text" placeholder="例：○○フェス2026" oninput="updatePreview()"></div>
-      <div class="field"><label class="fieldLabel" for="newStatus1">項目1</label><input id="newStatus1" class="input" type="text" placeholder="例：入場" value="入場" oninput="updatePreview()"></div>
-      <div class="field"><label class="fieldLabel" for="newStatus2">項目2</label><input id="newStatus2" class="input" type="text" placeholder="例：受付" value="受付" oninput="updatePreview()"></div>
-      <div class="preview"><div class="previewTitle">管理画面プレビュー</div><div class="previewRow"><div class="previewBox"><div class="previewLabel">参加者</div><div class="previewValue">0</div></div><div class="previewBox"><div id="previewStatus1" class="previewLabel">入場</div><div class="previewValue">0</div></div><div class="previewBox"><div id="previewStatus2" class="previewLabel">受付</div><div class="previewValue">0</div></div></div></div>
-      <button class="primaryButton" onclick="createEvent()">イベントを作成</button>
-      <div id="eventError" class="notice"></div>
+    <button id="newEventButton" class="primaryButton">＋ 新しいイベントを登録</button>
+
+    <div class="emptyState">
+      ここに、このアカウントで作成したイベントを表示します。<br>
+      イベント保存機能は次の工程でFirebaseに接続します。
     </div>
+
+    <button id="logoutButton" class="secondaryButton">ログアウト</button>
   </section>
 
-  <section id="eventDashboardScreen" class="screen">
-    <div class="topBar"><button class="backButton" onclick="showScreen('eventListScreen')" aria-label="戻る">‹</button><h2 class="topBarTitle">イベント管理</h2><div class="topBarSpacer"></div></div>
-    <div class="eventHeader"><h2 id="dashboardEventName" class="eventNameLarge">イベント名</h2><div class="eventStatus">参加者 0人 読み込み完了</div></div>
-    <div class="dashboardRow"><div class="dashboardBox"><div class="dashboardLabel">参加者</div><div class="dashboardValue">0</div></div><div class="dashboardBox"><div id="dashboardStatus1Label" class="dashboardLabel">入場</div><div class="dashboardValue">0</div></div><div class="dashboardBox"><div id="dashboardStatus2Label" class="dashboardLabel">受付</div><div class="dashboardValue">0</div></div></div>
-    <div class="dashboardMenu"><button id="dashboardStatus1Button">入場</button><button id="dashboardStatus2Button">受付</button><button>一覧</button></div>
-    <div class="placeholderArea">QR読み取り・CSV・一覧などは<br>この画面に次の工程で追加します。</div>
-    <button class="dangerButton" onclick="deleteCurrentEvent()">このイベントを削除</button>
-  </section>
 </div>
 
-<script>
-const STORAGE_KEY="eventCheckinAppEvents";let currentEventId=null;
-function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo({top:0,behavior:'instant'});}
-function demoLogin(){const email=document.getElementById('email').value.trim();const password=document.getElementById('password').value;const error=document.getElementById('loginError');error.style.display='none';if(!email||!password){error.textContent='メールアドレスとパスワードを入力してください。';error.style.display='block';return;}showScreen('eventListScreen');renderEventList();}
-function logoutDemo(){document.getElementById('password').value='';showScreen('loginScreen');}
-function getEvents(){try{const raw=localStorage.getItem(STORAGE_KEY);if(!raw)return[];const events=JSON.parse(raw);return Array.isArray(events)?events:[];}catch(e){return[];}}
-function saveEvents(events){localStorage.setItem(STORAGE_KEY,JSON.stringify(events));}
-function renderEventList(){const list=document.getElementById('eventList');const empty=document.getElementById('emptyEventState');const events=getEvents();list.innerHTML='';if(events.length===0){empty.style.display='block';return;}empty.style.display='none';events.slice().reverse().forEach(event=>{const button=document.createElement('button');button.className='eventCard';const name=document.createElement('div');name.className='eventCardName';name.textContent=event.name;const meta=document.createElement('div');meta.className='eventCardMeta';meta.textContent='項目：'+event.status1+' / '+event.status2;button.appendChild(name);button.appendChild(meta);button.addEventListener('click',()=>openEvent(event.id));list.appendChild(button);});}
-function openNewEvent(){document.getElementById('newEventName').value='';document.getElementById('newStatus1').value='入場';document.getElementById('newStatus2').value='受付';document.getElementById('eventError').style.display='none';updatePreview();showScreen('newEventScreen');}
-function updatePreview(){const s1=document.getElementById('newStatus1').value.trim()||'項目1';const s2=document.getElementById('newStatus2').value.trim()||'項目2';document.getElementById('previewStatus1').textContent=s1;document.getElementById('previewStatus2').textContent=s2;}
-function createEvent(){const name=document.getElementById('newEventName').value.trim();const status1=document.getElementById('newStatus1').value.trim();const status2=document.getElementById('newStatus2').value.trim();const error=document.getElementById('eventError');error.style.display='none';if(!name||!status1||!status2){error.textContent='イベント名・項目1・項目2をすべて入力してください。';error.style.display='block';return;}const events=getEvents();const event={id:'event-'+Date.now(),name,status1,status2,createdAt:Date.now()};events.push(event);saveEvents(events);currentEventId=event.id;renderEventList();openEvent(event.id);}
-function openEvent(eventId){const event=getEvents().find(item=>item.id===eventId);if(!event)return;currentEventId=event.id;document.getElementById('dashboardEventName').textContent=event.name;document.getElementById('dashboardStatus1Label').textContent=event.status1;document.getElementById('dashboardStatus2Label').textContent=event.status2;document.getElementById('dashboardStatus1Button').textContent=event.status1;document.getElementById('dashboardStatus2Button').textContent=event.status2;showScreen('eventDashboardScreen');}
-function deleteCurrentEvent(){if(!currentEventId)return;const event=getEvents().find(item=>item.id===currentEventId);if(!event)return;const answer=confirm('「'+event.name+'」を削除しますか？');if(!answer)return;const events=getEvents().filter(item=>item.id!==currentEventId);saveEvents(events);currentEventId=null;renderEventList();showScreen('eventListScreen');}
-renderEventList();
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAAeHpco02MEDN58bXkhHcDof1kVFWQU0U",
+  authDomain: "event-checkin-app-987b3.firebaseapp.com",
+  projectId: "event-checkin-app-987b3",
+  storageBucket: "event-checkin-app-987b3.firebasestorage.app",
+  messagingSenderId: "403667082231",
+  appId: "1:403667082231:web:7325e9a85e9a887196acf2"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+function showScreen(id) {
+  document.querySelectorAll(".screen").forEach(screen => {
+    screen.classList.remove("active");
+  });
+
+  document.getElementById(id).classList.add("active");
+  window.scrollTo(0, 0);
+}
+
+function clearMessage(id) {
+  const box = document.getElementById(id);
+  box.style.display = "none";
+  box.textContent = "";
+}
+
+function showError(elementId, error) {
+  const box = document.getElementById(elementId);
+
+  const code =
+    error && error.code
+      ? error.code
+      : "unknown-error";
+
+  const messages = {
+    "auth/email-already-in-use":
+      "このメールアドレスはすでに登録されています。",
+
+    "auth/invalid-email":
+      "メールアドレスの形式を確認してください。",
+
+    "auth/weak-password":
+      "パスワードは6文字以上にしてください。",
+
+    "auth/invalid-credential":
+      "メールアドレスまたはパスワードが一致しません。",
+
+    "auth/user-disabled":
+      "このアカウントは無効になっています。",
+
+    "auth/too-many-requests":
+      "ログイン試行が多いため一時的に制限されています。",
+
+    "auth/network-request-failed":
+      "通信エラーです。インターネット接続を確認してください。",
+
+    "auth/operation-not-allowed":
+      "Firebaseのメール・パスワード認証が有効になっていません。",
+
+    "auth/unauthorized-domain":
+      "このWebサイトのドメインがFirebaseで許可されていません。",
+
+    "auth/api-key-not-valid.-please-pass-a-valid-api-key.":
+      "FirebaseのAPIキーが正しくありません。"
+  };
+
+  box.textContent =
+    (messages[code] || "Firebaseエラーが発生しました。") +
+    "\n\nエラーコード：" +
+    code;
+
+  box.style.display = "block";
+}
+
+document.getElementById("openRegisterButton").addEventListener("click", () => {
+  clearMessage("loginError");
+  showScreen("registerScreen");
+});
+
+document.getElementById("backToLoginButton").addEventListener("click", () => {
+  clearMessage("registerError");
+  showScreen("loginScreen");
+});
+
+document.getElementById("registerButton").addEventListener("click", async () => {
+  clearMessage("registerError");
+
+  const email =
+    document.getElementById("registerEmail").value.trim();
+
+  const password =
+    document.getElementById("registerPassword").value;
+
+  const confirmPassword =
+    document.getElementById("registerPasswordConfirm").value;
+
+  if (!email || !password || !confirmPassword) {
+    const box = document.getElementById("registerError");
+    box.textContent = "すべて入力してください。";
+    box.style.display = "block";
+    return;
+  }
+
+  if (password !== confirmPassword) {
+    const box = document.getElementById("registerError");
+    box.textContent = "確認用パスワードが一致していません。";
+    box.style.display = "block";
+    return;
+  }
+
+  try {
+    await createUserWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
+  } catch (error) {
+    console.error(error);
+    showError("registerError", error);
+  }
+});
+
+document.getElementById("loginButton").addEventListener("click", async () => {
+  clearMessage("loginError");
+
+  const email =
+    document.getElementById("loginEmail").value.trim();
+
+  const password =
+    document.getElementById("loginPassword").value;
+
+  if (!email || !password) {
+    const box = document.getElementById("loginError");
+    box.textContent = "メールアドレスとパスワードを入力してください。";
+    box.style.display = "block";
+    return;
+  }
+
+  try {
+    await signInWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
+
+    document.getElementById("loginPassword").value = "";
+  } catch (error) {
+    console.error(error);
+    showError("loginError", error);
+  }
+});
+
+document.getElementById("logoutButton").addEventListener("click", async () => {
+  await signOut(auth);
+});
+
+document.getElementById("newEventButton").addEventListener("click", () => {
+  alert("次の工程でイベント登録画面とFirebase保存を接続します。");
+});
+
+onAuthStateChanged(auth, user => {
+  if (user) {
+    document.getElementById("userInfo").textContent =
+      "ログイン中：" + user.email;
+
+    showScreen("eventListScreen");
+  } else {
+    showScreen("loginScreen");
+  }
+});
 </script>
+
 </body>
 </html>
