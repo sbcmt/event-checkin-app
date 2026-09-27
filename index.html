@@ -364,6 +364,10 @@ button {
   font-weight: 800;
 }
 
+.twoColumns {
+  grid-template-columns: repeat(2, 1fr) !important;
+}
+
 .placeholderArea {
   margin-top: 14px;
   padding: 30px 18px;
@@ -612,15 +616,15 @@ button {
 
       <div class="field">
         <label class="fieldLabel" for="newStatus2">
-          項目2
+          項目2（任意）
         </label>
 
         <input
           id="newStatus2"
           class="input"
           type="text"
-          value="受付"
-          placeholder="例：受付"
+          value=""
+          placeholder="例：受付（使わない場合は空欄）"
         >
       </div>
 
@@ -630,7 +634,7 @@ button {
           管理画面プレビュー
         </div>
 
-        <div class="previewRow">
+        <div id="previewRow" class="previewRow">
 
           <div class="previewBox">
             <div class="previewLabel">参加者</div>
@@ -642,7 +646,7 @@ button {
             <div class="previewValue">0</div>
           </div>
 
-          <div class="previewBox">
+          <div id="previewStatus2Box" class="previewBox">
             <div id="previewStatus2" class="previewLabel">受付</div>
             <div class="previewValue">0</div>
           </div>
@@ -711,7 +715,7 @@ button {
         <div class="dashboardValue">0</div>
       </div>
 
-      <div class="dashboardBox">
+      <div id="dashboardStatus2Box" class="dashboardBox">
         <div id="dashboardStatus2Label" class="dashboardLabel">受付</div>
         <div class="dashboardValue">0</div>
       </div>
@@ -1252,10 +1256,13 @@ function renderEventList(eventsObject) {
       "eventCardMeta";
 
     meta.textContent =
-      "項目：" +
-      (event.status1 || "項目1") +
-      " / " +
-      (event.status2 || "項目2");
+      event.status2
+        ? "項目：" +
+          (event.status1 || "項目1") +
+          " / " +
+          event.status2
+        : "項目：" +
+          (event.status1 || "項目1");
 
 
     button.appendChild(
@@ -1311,7 +1318,7 @@ document
     document
       .getElementById("newStatus2")
       .value =
-      "受付";
+      "";
 
     updatePreview();
 
@@ -1362,8 +1369,7 @@ function updatePreview() {
     document
       .getElementById("newStatus2")
       .value
-      .trim() ||
-    "項目2";
+      .trim();
 
 
   document
@@ -1371,10 +1377,38 @@ function updatePreview() {
     .textContent =
     status1;
 
-  document
-    .getElementById("previewStatus2")
-    .textContent =
-    status2;
+
+  const previewRow =
+    document.getElementById("previewRow");
+
+  const previewStatus2Box =
+    document.getElementById("previewStatus2Box");
+
+
+  if (status2) {
+
+    document
+      .getElementById("previewStatus2")
+      .textContent =
+      status2;
+
+    previewStatus2Box.style.display =
+      "block";
+
+    previewRow.classList.remove(
+      "twoColumns"
+    );
+
+  } else {
+
+    previewStatus2Box.style.display =
+      "none";
+
+    previewRow.classList.add(
+      "twoColumns"
+    );
+
+  }
 
 }
 
@@ -1421,13 +1455,12 @@ document
 
     if (
       !name ||
-      !status1 ||
-      !status2
+      !status1
     ) {
 
       showBoxMessage(
         "eventCreateError",
-        "イベント名・項目1・項目2をすべて入力してください。"
+        "イベント名と項目1を入力してください。"
       );
 
       return;
@@ -1554,24 +1587,66 @@ async function openEvent(eventId) {
 
 
     document
-      .getElementById("dashboardStatus2Label")
-      .textContent =
-      event.status2 ||
-      "項目2";
-
-
-    document
       .getElementById("dashboardStatus1Button")
       .textContent =
       event.status1 ||
       "項目1";
 
 
-    document
-      .getElementById("dashboardStatus2Button")
-      .textContent =
-      event.status2 ||
-      "項目2";
+    const dashboardRow =
+      document.querySelector(".dashboardRow");
+
+    const dashboardMenu =
+      document.querySelector(".dashboardMenu");
+
+    const status2Box =
+      document.getElementById("dashboardStatus2Box");
+
+    const status2Button =
+      document.getElementById("dashboardStatus2Button");
+
+
+    if (event.status2) {
+
+      document
+        .getElementById("dashboardStatus2Label")
+        .textContent =
+        event.status2;
+
+      status2Box.style.display =
+        "block";
+
+      status2Button.style.display =
+        "block";
+
+      status2Button.textContent =
+        event.status2;
+
+      dashboardRow.classList.remove(
+        "twoColumns"
+      );
+
+      dashboardMenu.classList.remove(
+        "twoColumns"
+      );
+
+    } else {
+
+      status2Box.style.display =
+        "none";
+
+      status2Button.style.display =
+        "none";
+
+      dashboardRow.classList.add(
+        "twoColumns"
+      );
+
+      dashboardMenu.classList.add(
+        "twoColumns"
+      );
+
+    }
 
 
     showScreen(
