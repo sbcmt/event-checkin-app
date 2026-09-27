@@ -635,7 +635,7 @@ button {
 }
 
 .listTableWrap {
-  overflow-x: auto;
+  overflow-x: hidden;
   border-radius: 16px;
   background: white;
   box-shadow: 0 2px 10px rgba(0,0,0,.04);
@@ -643,37 +643,45 @@ button {
 
 .listTable {
   width: 100%;
-  min-width: 520px;
+  min-width: 0;
+  table-layout: fixed;
   border-collapse: collapse;
 }
 
 .listTable th {
-  padding: 14px 10px;
+  padding: 12px 5px;
   background: #efefef;
-  font-size: 13px;
+  font-size: 12px;
   text-align: center;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .listTable td {
-  padding: 14px 10px;
+  padding: 12px 5px;
   border-top: 1px solid #e8e8e8;
-  font-size: 14px;
+  font-size: 13px;
   background: white;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .listTable .nameCol {
-  min-width: 190px;
+  width: 38%;
+  min-width: 0;
   text-align: left;
   font-weight: 800;
 }
 
 .listTable .numberCol {
-  min-width: 90px;
+  width: 18%;
+  min-width: 0;
   text-align: center;
 }
 
 .listTable .statusCol {
-  min-width: 80px;
+  width: 22%;
+  min-width: 0;
   text-align: center;
 }
 
