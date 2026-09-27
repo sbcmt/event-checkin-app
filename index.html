@@ -64,10 +64,11 @@ button {
   display: block;
 }
 
-.card {
+.card,
+.panel {
   background: white;
   border-radius: 22px;
-  padding: 22px 18px;
+  padding: 20px 18px;
   box-shadow: 0 5px 20px rgba(0,0,0,.07);
 }
 
@@ -115,7 +116,7 @@ button {
 
 .primaryButton {
   width: 100%;
-  margin-top: 18px;
+  margin-top: 16px;
   padding: 17px;
   border: none;
   border-radius: 15px;
@@ -123,6 +124,11 @@ button {
   color: white;
   font-size: 18px;
   font-weight: 900;
+}
+
+.primaryButton:disabled {
+  opacity: .35;
+  cursor: default;
 }
 
 .secondaryButton {
@@ -174,13 +180,13 @@ button {
   white-space: pre-wrap;
 }
 
-.successNotice {
+.infoNotice {
   display: none;
-  margin-top: 14px;
-  padding: 12px;
+  margin-top: 12px;
+  padding: 11px;
   border-radius: 12px;
-  background: #e7f6ea;
-  color: #176b2c;
+  background: #eef3ff;
+  color: #294f9b;
   text-align: center;
   font-size: 13px;
   font-weight: 700;
@@ -325,6 +331,10 @@ button {
   font-weight: 900;
 }
 
+.twoColumns {
+  grid-template-columns: repeat(2, 1fr) !important;
+}
+
 .eventHeader {
   text-align: center;
   margin-bottom: 18px;
@@ -364,43 +374,226 @@ button {
   font-weight: 800;
 }
 
-.twoColumns {
-  grid-template-columns: repeat(2, 1fr) !important;
+.dashboardMenu button.active {
+  background: #111;
+  color: white;
 }
 
-.placeholderArea {
+/* QR scanner */
+
+.scanPanel {
   margin-top: 14px;
-  padding: 30px 18px;
-  border-radius: 18px;
-  background: white;
+}
+
+.scanHeading {
   text-align: center;
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.scanSub {
+  margin-top: 5px;
   color: #777;
-  box-shadow: 0 3px 12px rgba(0,0,0,.05);
-  line-height: 1.7;
+  text-align: center;
+  font-size: 13px;
+}
+
+.readerWrap {
+  position: relative;
+  width: 100%;
+  margin-top: 14px;
+  overflow: hidden;
+  border-radius: 16px;
+  background: #222;
+  min-height: 80px;
+}
+
+#reader {
+  width: 100%;
+}
+
+#reader video {
+  display: block;
+  width: 100% !important;
+  height: auto !important;
+  object-fit: contain !important;
+}
+
+.scanButton {
+  width: 100%;
+  margin-top: 12px;
+  padding: 17px;
+  border: none;
+  border-radius: 15px;
+  background: #111;
+  color: white;
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.scanButton:disabled {
+  opacity: .35;
+}
+
+.scanStatus {
+  margin-top: 10px;
+  color: #777;
+  text-align: center;
+  font-size: 13px;
+}
+
+.scanResult {
+  display: none;
+  margin-top: 14px;
+  padding: 18px;
+  border-radius: 16px;
+  background: #f7f7f7;
+  text-align: center;
+}
+
+.scanResultMessage {
+  font-size: 25px;
+  font-weight: 900;
+}
+
+.scanResultName {
+  margin-top: 10px;
+  font-size: 27px;
+  font-weight: 900;
+}
+
+.scanResultNumber {
+  margin-top: 5px;
+  color: #666;
+  font-size: 16px;
+}
+
+.scanResultTime {
+  margin-top: 10px;
+  color: #777;
+  font-size: 13px;
+}
+
+/* CSV */
+
+.csvArea {
+  margin-top: 14px;
+}
+
+.csvTitle {
+  text-align: center;
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.csvDescription {
+  margin-top: 6px;
+  color: #777;
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.fileActionRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.fileActionButton {
+  min-height: 62px;
+  padding: 10px 7px;
+  border: 1px solid #ccc;
+  border-radius: 14px;
+  background: white;
+  color: #222;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.visitorStatus {
+  margin-top: 13px;
+  padding: 11px;
+  border-radius: 12px;
+  background: #f4f4f4;
+  text-align: center;
+  color: #555;
+  font-size: 13px;
+}
+
+.hiddenFileInput {
+  display: none;
+}
+
+/* List */
+
+.listSearch {
+  width: 100%;
+  margin-bottom: 12px;
+  padding: 13px;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  background: white;
+  font-size: 16px;
+}
+
+.tableWrap {
+  overflow-x: auto;
+  border-radius: 14px;
+  background: white;
+}
+
+.visitorTable {
+  width: 100%;
+  min-width: 480px;
+  border-collapse: collapse;
+}
+
+.visitorTable th {
+  padding: 11px 8px;
+  background: #eee;
+  font-size: 12px;
+}
+
+.visitorTable td {
+  padding: 12px 8px;
+  border-top: 1px solid #eee;
+  font-size: 13px;
+}
+
+.nameCell {
+  font-weight: 800;
+}
+
+.idSub {
+  display: block;
+  margin-top: 3px;
+  color: #999;
+  font-size: 10px;
+  font-weight: 400;
+}
+
+.center {
+  text-align: center;
+}
+
+.markYes {
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.markNo {
+  color: #bbb;
 }
 
 .smallNote {
-  margin-top: 14px;
+  margin-top: 12px;
   color: #999;
   text-align: center;
   font-size: 11px;
   line-height: 1.5;
 }
-
-
-.csvArea{margin-top:16px;padding:18px;border-radius:18px;background:#fff;box-shadow:0 3px 12px rgba(0,0,0,.05)}
-.csvTitle{text-align:center;font-size:20px;font-weight:900}
-.csvDescription{margin-top:6px;color:#777;text-align:center;font-size:12px;line-height:1.6}
-.fileActionRow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
-.fileActionButton{min-height:62px;padding:10px 7px;border:1px solid #ccc;border-radius:14px;background:#fff;color:#222;font-size:14px;font-weight:800}
-.fileActionButton:disabled{opacity:.4;cursor:default}
-.visitorStatus{margin-top:13px;padding:11px;border-radius:12px;background:#f4f4f4;text-align:center;color:#555;font-size:13px}
-.visitorTableWrap{display:none;margin-top:14px;overflow-x:auto;border-radius:14px;background:#fff}
-.visitorTable{width:100%;min-width:430px;border-collapse:collapse}
-.visitorTable th{padding:10px 8px;background:#eee;font-size:12px}
-.visitorTable td{padding:11px 8px;border-top:1px solid #eee;font-size:13px}
-.hiddenFileInput{display:none}
-.qrProgress{display:none;margin-top:12px;padding:11px;border-radius:12px;background:#eef3ff;color:#294f9b;text-align:center;font-size:13px;font-weight:700}
 
 @media (max-width: 380px) {
   .brandTitle {
@@ -433,9 +626,8 @@ button {
   </div>
 
 
-  <!-- ログイン -->
+  <!-- LOGIN -->
   <section id="loginScreen" class="screen active">
-
     <div class="card">
 
       <h2 class="pageTitle">スタッフログイン</h2>
@@ -446,29 +638,15 @@ button {
 
       <div class="field">
         <label class="fieldLabel" for="loginEmail">メールアドレス</label>
-        <input
-          id="loginEmail"
-          class="input"
-          type="email"
-          autocomplete="username"
-          placeholder="example@email.com"
-        >
+        <input id="loginEmail" class="input" type="email" autocomplete="username" placeholder="example@email.com">
       </div>
 
       <div class="field">
         <label class="fieldLabel" for="loginPassword">パスワード</label>
-        <input
-          id="loginPassword"
-          class="input"
-          type="password"
-          autocomplete="current-password"
-          placeholder="パスワード"
-        >
+        <input id="loginPassword" class="input" type="password" autocomplete="current-password" placeholder="パスワード">
       </div>
 
-      <button id="loginButton" class="primaryButton">
-        ログイン
-      </button>
+      <button id="loginButton" class="primaryButton">ログイン</button>
 
       <button id="openRegisterButton" class="linkButton">
         初めての方はこちら：新規アカウント登録
@@ -477,11 +655,10 @@ button {
       <div id="loginError" class="notice"></div>
 
     </div>
-
   </section>
 
 
-  <!-- 新規アカウント登録 -->
+  <!-- REGISTER -->
   <section id="registerScreen" class="screen">
 
     <div class="card">
@@ -494,44 +671,22 @@ button {
 
       <div class="field">
         <label class="fieldLabel" for="registerEmail">メールアドレス</label>
-        <input
-          id="registerEmail"
-          class="input"
-          type="email"
-          autocomplete="email"
-          placeholder="example@email.com"
-        >
+        <input id="registerEmail" class="input" type="email" autocomplete="email" placeholder="example@email.com">
       </div>
 
       <div class="field">
         <label class="fieldLabel" for="registerPassword">パスワード</label>
-        <input
-          id="registerPassword"
-          class="input"
-          type="password"
-          autocomplete="new-password"
-          placeholder="6文字以上"
-        >
+        <input id="registerPassword" class="input" type="password" autocomplete="new-password" placeholder="6文字以上">
       </div>
 
       <div class="field">
         <label class="fieldLabel" for="registerPasswordConfirm">パスワード確認</label>
-        <input
-          id="registerPasswordConfirm"
-          class="input"
-          type="password"
-          autocomplete="new-password"
-          placeholder="同じパスワードをもう一度"
-        >
+        <input id="registerPasswordConfirm" class="input" type="password" autocomplete="new-password" placeholder="同じパスワードをもう一度">
       </div>
 
-      <button id="registerButton" class="primaryButton">
-        アカウントを作成
-      </button>
+      <button id="registerButton" class="primaryButton">アカウントを作成</button>
 
-      <button id="backToLoginButton" class="secondaryButton">
-        ログイン画面に戻る
-      </button>
+      <button id="backToLoginButton" class="secondaryButton">ログイン画面に戻る</button>
 
       <div id="registerError" class="notice"></div>
 
@@ -540,7 +695,7 @@ button {
   </section>
 
 
-  <!-- イベント一覧 -->
+  <!-- EVENT LIST -->
   <section id="eventListScreen" class="screen">
 
     <div class="topBar">
@@ -555,9 +710,7 @@ button {
       ＋ 新しいイベントを登録
     </button>
 
-    <div class="sectionLabel">
-      登録済みイベント
-    </div>
+    <div class="sectionLabel">登録済みイベント</div>
 
     <div id="eventLoading" class="loadingState">
       イベントを読み込んでいます…
@@ -572,82 +725,39 @@ button {
 
     <div id="eventListError" class="notice"></div>
 
-    <button id="logoutButton" class="secondaryButton">
-      ログアウト
-    </button>
+    <button id="logoutButton" class="secondaryButton">ログアウト</button>
 
   </section>
 
 
-  <!-- 新規イベント登録 -->
+  <!-- NEW EVENT -->
   <section id="newEventScreen" class="screen">
 
     <div class="topBar">
-
-      <button
-        id="backToEventListButton"
-        class="backButton"
-        aria-label="戻る"
-      >
-        ‹
-      </button>
-
-      <h2 class="topBarTitle">
-        新規イベント登録
-      </h2>
-
+      <button id="backToEventListButton" class="backButton" aria-label="戻る">‹</button>
+      <h2 class="topBarTitle">新規イベント登録</h2>
       <div class="topBarSpacer"></div>
-
     </div>
 
     <div class="card">
 
       <div class="field">
-        <label class="fieldLabel" for="newEventName">
-          イベント名
-        </label>
-
-        <input
-          id="newEventName"
-          class="input"
-          type="text"
-          placeholder="例：○○フェス2026"
-        >
+        <label class="fieldLabel" for="newEventName">イベント名</label>
+        <input id="newEventName" class="input" type="text" placeholder="例：○○フェス2026">
       </div>
 
       <div class="field">
-        <label class="fieldLabel" for="newStatus1">
-          項目1
-        </label>
-
-        <input
-          id="newStatus1"
-          class="input"
-          type="text"
-          value="入場"
-          placeholder="例：入場"
-        >
+        <label class="fieldLabel" for="newStatus1">項目1</label>
+        <input id="newStatus1" class="input" type="text" value="入場" placeholder="例：入場">
       </div>
 
       <div class="field">
-        <label class="fieldLabel" for="newStatus2">
-          項目2（任意）
-        </label>
-
-        <input
-          id="newStatus2"
-          class="input"
-          type="text"
-          value=""
-          placeholder="例：受付（使わない場合は空欄）"
-        >
+        <label class="fieldLabel" for="newStatus2">項目2（任意）</label>
+        <input id="newStatus2" class="input" type="text" value="" placeholder="例：受付（使わない場合は空欄）">
       </div>
 
       <div class="preview">
-
-        <div class="previewTitle">
-          管理画面プレビュー
-        </div>
+        <div class="previewTitle">管理画面プレビュー</div>
 
         <div id="previewRow" class="previewRow">
 
@@ -667,93 +777,107 @@ button {
           </div>
 
         </div>
-
       </div>
 
-      <button id="createEventButton" class="primaryButton">
-        イベントを作成
-      </button>
+      <button id="createEventButton" class="primaryButton">イベントを作成</button>
 
       <div id="eventCreateError" class="notice"></div>
-
-      <div class="smallNote">
-        作成したイベントは、このログインアカウント専用でFirebaseに保存されます。
-      </div>
 
     </div>
 
   </section>
 
 
-  <!-- イベント管理 -->
+  <!-- DASHBOARD -->
   <section id="eventDashboardScreen" class="screen">
 
     <div class="topBar">
-
-      <button
-        id="dashboardBackButton"
-        class="backButton"
-        aria-label="戻る"
-      >
-        ‹
-      </button>
-
-      <h2 class="topBarTitle">
-        イベント管理
-      </h2>
-
+      <button id="dashboardBackButton" class="backButton" aria-label="戻る">‹</button>
+      <h2 class="topBarTitle">イベント管理</h2>
       <div class="topBarSpacer"></div>
-
     </div>
 
     <div class="eventHeader">
-
-      <h2 id="dashboardEventName" class="eventNameLarge">
-        イベント名
-      </h2>
-
-      <div class="eventStatus">
-        参加者 0人 読み込み完了
+      <h2 id="dashboardEventName" class="eventNameLarge">イベント名</h2>
+      <div id="eventParticipantStatus" class="eventStatus">
+        参加者データはまだ登録されていません
       </div>
-
     </div>
 
-    <div class="dashboardRow">
+    <div id="dashboardRow" class="dashboardRow">
 
       <div class="dashboardBox">
         <div class="dashboardLabel">参加者</div>
-        <div class="dashboardValue">0</div>
+        <div id="participantCount" class="dashboardValue">0</div>
       </div>
 
       <div class="dashboardBox">
         <div id="dashboardStatus1Label" class="dashboardLabel">入場</div>
-        <div class="dashboardValue">0</div>
+        <div id="status1Count" class="dashboardValue">0</div>
       </div>
 
       <div id="dashboardStatus2Box" class="dashboardBox">
         <div id="dashboardStatus2Label" class="dashboardLabel">受付</div>
-        <div class="dashboardValue">0</div>
+        <div id="status2Count" class="dashboardValue">0</div>
       </div>
 
     </div>
 
-    <div class="dashboardMenu">
+    <div id="dashboardMenu" class="dashboardMenu">
 
-      <button id="dashboardStatus1Button">
-        入場
+      <button id="dashboardStatus1Button" class="active">入場</button>
+
+      <button id="dashboardStatus2Button">受付</button>
+
+      <button id="dashboardListButton">一覧</button>
+
+    </div>
+
+
+    <!-- QR SCAN -->
+    <div id="scanPanel" class="panel scanPanel">
+
+      <div id="scanHeading" class="scanHeading">入場</div>
+
+      <div class="scanSub">
+        QRコードをカメラにかざしてください
+      </div>
+
+      <div class="readerWrap">
+        <div id="reader"></div>
+      </div>
+
+      <button id="scanButton" class="scanButton" disabled>
+        QRを読み取る
       </button>
 
-      <button id="dashboardStatus2Button">
-        受付
-      </button>
+      <div id="scanStatus" class="scanStatus"></div>
 
-      <button>
-        一覧
+      <div id="scanError" class="notice"></div>
+
+      <div id="scanResult" class="scanResult">
+        <div id="scanResultMessage" class="scanResultMessage"></div>
+        <div id="scanResultName" class="scanResultName"></div>
+        <div id="scanResultNumber" class="scanResultNumber"></div>
+        <div id="scanResultTime" class="scanResultTime"></div>
+      </div>
+
+      <button id="nextScanButton" class="secondaryButton" style="display:none;">
+        次のQRを読み取る
       </button>
 
     </div>
 
-    <div class="csvArea">
+
+    <!-- RESET -->
+    <button id="resetAttendanceButton" class="dangerButton">
+      読み取り記録をリセット
+    </button>
+
+
+    <!-- CSV -->
+    <div class="panel csvArea">
+
       <div class="csvTitle">参加者データ</div>
 
       <div class="csvDescription">
@@ -762,6 +886,7 @@ button {
       </div>
 
       <div class="fileActionRow">
+
         <button id="downloadCsvTemplateButton" class="fileActionButton">
           CSVテンプレート<br>ダウンロード
         </button>
@@ -769,6 +894,7 @@ button {
         <button id="uploadCsvButton" class="fileActionButton">
           visitor_list.csv<br>アップロード
         </button>
+
       </div>
 
       <input id="csvFileInput" class="hiddenFileInput" type="file" accept=".csv,text/csv">
@@ -781,22 +907,16 @@ button {
         QRコードをまとめてダウンロード
       </button>
 
-      <div id="qrProgress" class="qrProgress"></div>
+      <div id="qrProgress" class="infoNotice"></div>
+
       <div id="visitorError" class="notice"></div>
 
-      <div id="visitorTableWrap" class="visitorTableWrap">
-        <table class="visitorTable">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>名前</th>
-              <th>number</th>
-            </tr>
-          </thead>
-          <tbody id="visitorTableBody"></tbody>
-        </table>
+      <div class="smallNote">
+        参加者リストはFirebaseに保存され、同じアカウントならPC・iPhone・iPadなどすべての端末で同期されます。
       </div>
+
     </div>
+
 
     <button id="deleteEventButton" class="dangerButton">
       このイベントを削除
@@ -806,11 +926,48 @@ button {
 
   </section>
 
+
+  <!-- VISITOR LIST -->
+  <section id="visitorListScreen" class="screen">
+
+    <div class="topBar">
+      <button id="listBackButton" class="backButton" aria-label="戻る">‹</button>
+      <h2 class="topBarTitle">参加者一覧</h2>
+      <div class="topBarSpacer"></div>
+    </div>
+
+    <div class="eventHeader">
+      <h2 id="listEventName" class="eventNameLarge">イベント名</h2>
+      <div id="listSummary" class="eventStatus">参加者 0人</div>
+    </div>
+
+    <input
+      id="listSearch"
+      class="listSearch"
+      type="text"
+      placeholder="名前・number・IDで検索"
+    >
+
+    <div class="tableWrap">
+      <table class="visitorTable">
+        <thead id="visitorListHead"></thead>
+        <tbody id="visitorListBody"></tbody>
+      </table>
+    </div>
+
+    <div id="listEmpty" class="emptyState">
+      参加者データがありません
+    </div>
+
+  </section>
+
 </div>
 
 
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
 
 <script type="module">
 
@@ -833,6 +990,7 @@ import {
   set,
   get,
   onValue,
+  update,
   remove
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
 
@@ -864,18 +1022,43 @@ let currentUser =
 let currentEventId =
   null;
 
-let stopEventListener =
+let currentEvent =
   null;
 
 let currentVisitors =
   [];
 
-const VISITOR_STORAGE_PREFIX =
-  "eventCheckinVisitors:";
+let currentAttendance =
+  {};
+
+let stopEventListListener =
+  null;
+
+let stopEventDataListener =
+  null;
+
+let currentScanMode =
+  "status1";
+
+let html5QrCode =
+  null;
+
+let scannerRunning =
+  false;
+
+let alreadyRead =
+  false;
+
+let expiryCleanupRunning =
+  false;
+
+
+const VISITOR_RETENTION_MS =
+  60 * 24 * 60 * 60 * 1000;
 
 
 /* =========================
-   共通
+   COMMON
 ========================= */
 
 function showScreen(id) {
@@ -900,6 +1083,8 @@ function clearMessage(id) {
   const box =
     document.getElementById(id);
 
+  if (!box) return;
+
   box.style.display =
     "none";
 
@@ -913,6 +1098,8 @@ function showBoxMessage(id, message) {
 
   const box =
     document.getElementById(id);
+
+  if (!box) return;
 
   box.textContent =
     message;
@@ -964,10 +1151,10 @@ function showFirebaseError(elementId, error) {
       "FirebaseのAPIキーが正しくありません。",
 
     "PERMISSION_DENIED":
-      "Firebaseへのアクセスが拒否されました。セキュリティルールを確認してください。",
+      "Firebaseへのアクセスが拒否されました。",
 
     "permission_denied":
-      "Firebaseへのアクセスが拒否されました。セキュリティルールを確認してください。"
+      "Firebaseへのアクセスが拒否されました。"
   };
 
   const message =
@@ -985,461 +1172,63 @@ function showFirebaseError(elementId, error) {
 }
 
 
+function idToKey(id) {
 
-/* =========================
-   CSV / 参加者 / QR
-========================= */
+  const bytes =
+    new TextEncoder().encode(
+      String(id)
+    );
 
-function visitorStorageKey() {
-  if (!currentUser || !currentEventId) return null;
+  let binary =
+    "";
+
+  bytes.forEach(byte => {
+    binary +=
+      String.fromCharCode(byte);
+  });
+
+  return btoa(binary)
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/g, "");
+
+}
+
+
+function formatDateTime(value) {
+
+  const date =
+    new Date(value);
+
+  const month =
+    date.getMonth() + 1;
+
+  const day =
+    date.getDate();
+
+  const hour =
+    String(date.getHours())
+      .padStart(2, "0");
+
+  const minute =
+    String(date.getMinutes())
+      .padStart(2, "0");
 
   return (
-    VISITOR_STORAGE_PREFIX +
-    currentUser.uid +
+    month +
+    "/" +
+    day +
+    " " +
+    hour +
     ":" +
-    currentEventId
-  );
-}
-
-function saveVisitorsLocal() {
-  const key = visitorStorageKey();
-  if (!key) return;
-
-  localStorage.setItem(
-    key,
-    JSON.stringify(currentVisitors)
-  );
-}
-
-function loadVisitorsLocal() {
-  currentVisitors = [];
-
-  const key = visitorStorageKey();
-
-  if (key) {
-    try {
-      const raw = localStorage.getItem(key);
-
-      if (raw) {
-        const parsed = JSON.parse(raw);
-
-        if (Array.isArray(parsed)) {
-          currentVisitors = parsed;
-        }
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  }
-
-  renderVisitors();
-}
-
-function renderVisitors() {
-  const status = document.getElementById("visitorStatus");
-  const tableWrap = document.getElementById("visitorTableWrap");
-  const tbody = document.getElementById("visitorTableBody");
-  const qrButton = document.getElementById("downloadQrZipButton");
-
-  if (!status || !tableWrap || !tbody || !qrButton) return;
-
-  const count = currentVisitors.length;
-
-  status.textContent =
-    count > 0
-      ? "参加者 " + count + "人 読み込み完了"
-      : "参加者データはまだ登録されていません";
-
-  qrButton.disabled = count === 0;
-
-  tbody.innerHTML = "";
-
-  if (count === 0) {
-    tableWrap.style.display = "none";
-    return;
-  }
-
-  currentVisitors.forEach(visitor => {
-    const tr = document.createElement("tr");
-
-    [visitor.id, visitor.name, visitor.number || ""].forEach(value => {
-      const td = document.createElement("td");
-      td.textContent = value;
-      tr.appendChild(td);
-    });
-
-    tbody.appendChild(tr);
-  });
-
-  tableWrap.style.display = "block";
-}
-
-function downloadCsvTemplate() {
-  const content =
-    "\uFEFF" +
-    "id,name,number\r\n" +
-    "SAMPLE-001,山田 太郎,1\r\n" +
-    "SAMPLE-002,佐藤 花子,\r\n";
-
-  const blob = new Blob(
-    [content],
-    { type: "text/csv;charset=utf-8" }
+    minute
   );
 
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-
-  a.href = url;
-  a.download = "visitor_list.csv";
-
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-
-  URL.revokeObjectURL(url);
 }
-
-function parseCsvLine(line) {
-  const result = [];
-  let current = "";
-  let insideQuotes = false;
-
-  for (let i = 0; i < line.length; i++) {
-    const char = line[i];
-
-    if (char === '"') {
-      if (insideQuotes && line[i + 1] === '"') {
-        current += '"';
-        i++;
-      } else {
-        insideQuotes = !insideQuotes;
-      }
-    } else if (char === "," && !insideQuotes) {
-      result.push(current);
-      current = "";
-    } else {
-      current += char;
-    }
-  }
-
-  result.push(current);
-  return result;
-}
-
-function parseVisitorCsv(text) {
-  const cleaned = text.replace(/^\uFEFF/, "");
-
-  const rows = cleaned
-    .split(/\r?\n/)
-    .filter(line => line.trim() !== "");
-
-  if (rows.length < 2) {
-    throw new Error("参加者データがありません。");
-  }
-
-  const headers = parseCsvLine(rows[0])
-    .map(value => value.trim().toLowerCase());
-
-  const idIndex = headers.indexOf("id");
-  const nameIndex = headers.indexOf("name");
-  const numberIndex = headers.indexOf("number");
-
-  if (idIndex === -1 || nameIndex === -1) {
-    throw new Error(
-      "CSVの1行目には id,name が必要です。number は任意です。"
-    );
-  }
-
-  const visitors = [];
-  const ids = new Set();
-
-  for (let i = 1; i < rows.length; i++) {
-    const columns = parseCsvLine(rows[i]);
-
-    const id = String(columns[idIndex] || "").trim();
-    const name = String(columns[nameIndex] || "").trim();
-    const number =
-      numberIndex === -1
-        ? ""
-        : String(columns[numberIndex] || "").trim();
-
-    if (!id) {
-      throw new Error((i + 1) + "行目：id が空欄です。");
-    }
-
-    if (!name) {
-      throw new Error((i + 1) + "行目：name が空欄です。");
-    }
-
-    if (ids.has(id)) {
-      throw new Error(
-        (i + 1) +
-        "行目：id「" +
-        id +
-        "」が重複しています。"
-      );
-    }
-
-    ids.add(id);
-
-    visitors.push({
-      id,
-      name,
-      number
-    });
-  }
-
-  return visitors;
-}
-
-async function handleCsvUpload(file) {
-  clearMessage("visitorError");
-
-  if (!file) return;
-
-  if (!file.name.toLowerCase().endsWith(".csv")) {
-    showBoxMessage(
-      "visitorError",
-      "CSVファイルを選択してください。"
-    );
-    return;
-  }
-
-  try {
-    const text = await file.text();
-    const visitors = parseVisitorCsv(text);
-
-    currentVisitors = visitors;
-
-    saveVisitorsLocal();
-    renderVisitors();
-
-  } catch (error) {
-    console.error(error);
-
-    showBoxMessage(
-      "visitorError",
-      error.message ||
-      "CSVの読み込みに失敗しました。"
-    );
-  }
-}
-
-function safeFileName(name) {
-  return (
-    String(name)
-      .replace(/[\\/:*?"<>|]/g, "_")
-      .trim() ||
-    "QR"
-  );
-}
-
-function makeQrCanvas(textValue) {
-  return new Promise((resolve, reject) => {
-    try {
-      const holder = document.createElement("div");
-
-      holder.style.position = "fixed";
-      holder.style.left = "-99999px";
-      holder.style.top = "-99999px";
-
-      document.body.appendChild(holder);
-
-      new QRCode(holder, {
-        text: textValue,
-        width: 1000,
-        height: 1000,
-        correctLevel: QRCode.CorrectLevel.H
-      });
-
-      setTimeout(() => {
-        try {
-          const sourceCanvas = holder.querySelector("canvas");
-
-          if (!sourceCanvas) {
-            holder.remove();
-            reject(new Error("QR画像の生成に失敗しました。"));
-            return;
-          }
-
-          const outCanvas = document.createElement("canvas");
-
-          outCanvas.width = 1200;
-          outCanvas.height = 1200;
-
-          const ctx = outCanvas.getContext("2d");
-
-          ctx.fillStyle = "#ffffff";
-          ctx.fillRect(0, 0, 1200, 1200);
-
-          ctx.imageSmoothingEnabled = false;
-
-          ctx.drawImage(
-            sourceCanvas,
-            100,
-            100,
-            1000,
-            1000
-          );
-
-          holder.remove();
-          resolve(outCanvas);
-
-        } catch (error) {
-          holder.remove();
-          reject(error);
-        }
-      }, 50);
-
-    } catch (error) {
-      reject(error);
-    }
-  });
-}
-
-function canvasToJpegBlob(canvas) {
-  return new Promise((resolve, reject) => {
-    canvas.toBlob(
-      blob => {
-        if (!blob) {
-          reject(new Error("JPG変換に失敗しました。"));
-          return;
-        }
-
-        resolve(blob);
-      },
-      "image/jpeg",
-      0.96
-    );
-  });
-}
-
-async function downloadAllQrZip() {
-  clearMessage("visitorError");
-
-  if (currentVisitors.length === 0) {
-    showBoxMessage(
-      "visitorError",
-      "先にCSVをアップロードしてください。"
-    );
-    return;
-  }
-
-  if (
-    typeof QRCode === "undefined" ||
-    typeof JSZip === "undefined"
-  ) {
-    showBoxMessage(
-      "visitorError",
-      "QR生成ライブラリを読み込めませんでした。通信状態を確認してください。"
-    );
-    return;
-  }
-
-  const progress = document.getElementById("qrProgress");
-  const button = document.getElementById("downloadQrZipButton");
-
-  progress.style.display = "block";
-  button.disabled = true;
-
-  try {
-    const zip = new JSZip();
-    const usedNames = new Map();
-
-    for (let i = 0; i < currentVisitors.length; i++) {
-      const visitor = currentVisitors[i];
-
-      progress.textContent =
-        "QRコードを生成中… " +
-        (i + 1) +
-        " / " +
-        currentVisitors.length;
-
-      const canvas = await makeQrCanvas(visitor.id);
-      const blob = await canvasToJpegBlob(canvas);
-
-      const baseName = safeFileName(visitor.name);
-
-      const usedCount =
-        (usedNames.get(baseName) || 0) + 1;
-
-      usedNames.set(baseName, usedCount);
-
-      const fileName =
-        usedCount === 1
-          ? baseName + ".jpg"
-          : baseName + "_" + usedCount + ".jpg";
-
-      zip.file(fileName, blob);
-    }
-
-    progress.textContent =
-      "ZIPファイルを作成しています…";
-
-    const zipBlob = await zip.generateAsync({
-      type: "blob"
-    });
-
-    const url = URL.createObjectURL(zipBlob);
-    const a = document.createElement("a");
-
-    a.href = url;
-    a.download = "visitor_qr_codes.zip";
-
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-
-    URL.revokeObjectURL(url);
-
-    progress.textContent =
-      "QRコードのダウンロードが完了しました。";
-
-  } catch (error) {
-    console.error(error);
-
-    showBoxMessage(
-      "visitorError",
-      error.message ||
-      "QRコードの生成に失敗しました。"
-    );
-
-    progress.style.display = "none";
-
-  } finally {
-    button.disabled = currentVisitors.length === 0;
-  }
-}
-
-document
-  .getElementById("downloadCsvTemplateButton")
-  .addEventListener("click", downloadCsvTemplate);
-
-document
-  .getElementById("uploadCsvButton")
-  .addEventListener("click", () => {
-    document.getElementById("csvFileInput").click();
-  });
-
-document
-  .getElementById("csvFileInput")
-  .addEventListener("change", event => {
-    const file =
-      event.target.files &&
-      event.target.files[0];
-
-    handleCsvUpload(file);
-
-    event.target.value = "";
-  });
-
-document
-  .getElementById("downloadQrZipButton")
-  .addEventListener("click", downloadAllQrZip);
 
 
 /* =========================
-   新規登録
+   AUTH
 ========================= */
 
 document
@@ -1490,11 +1279,7 @@ document
         .getElementById("registerPasswordConfirm")
         .value;
 
-    if (
-      !email ||
-      !password ||
-      !confirmPassword
-    ) {
+    if (!email || !password || !confirmPassword) {
 
       showBoxMessage(
         "registerError",
@@ -1505,10 +1290,7 @@ document
 
     }
 
-    if (
-      password !==
-      confirmPassword
-    ) {
+    if (password !== confirmPassword) {
 
       showBoxMessage(
         "registerError",
@@ -1539,10 +1321,6 @@ document
   });
 
 
-/* =========================
-   ログイン / ログアウト
-========================= */
-
 document
   .getElementById("loginButton")
   .addEventListener("click", async () => {
@@ -1560,10 +1338,7 @@ document
         .getElementById("loginPassword")
         .value;
 
-    if (
-      !email ||
-      !password
-    ) {
+    if (!email || !password) {
 
       showBoxMessage(
         "loginError",
@@ -1605,6 +1380,8 @@ document
 
     try {
 
+      await stopScanner();
+
       await signOut(auth);
 
     } catch (error) {
@@ -1620,24 +1397,21 @@ document
 
 
 /* =========================
-   イベント一覧
+   EVENT LIST
 ========================= */
 
-function startEventListener() {
+function startEventListListener() {
 
-  if (!currentUser) {
-    return;
-  }
+  if (!currentUser) return;
 
-  if (stopEventListener) {
+  if (stopEventListListener) {
 
-    stopEventListener();
+    stopEventListListener();
 
-    stopEventListener =
+    stopEventListListener =
       null;
 
   }
-
 
   const eventsRef =
     ref(
@@ -1647,15 +1421,13 @@ function startEventListener() {
         "/events"
     );
 
-
   document
     .getElementById("eventLoading")
     .style
     .display =
     "block";
 
-
-  stopEventListener =
+  stopEventListListener =
     onValue(
       eventsRef,
 
@@ -1706,10 +1478,8 @@ function renderEventList(eventsObject) {
     document
       .getElementById("emptyEventState");
 
-
   list.innerHTML =
     "";
-
 
   const events =
     Object.entries(eventsObject)
@@ -1723,10 +1493,7 @@ function renderEventList(eventsObject) {
           (a.createdAt || 0)
       );
 
-
-  if (
-    events.length === 0
-  ) {
+  if (events.length === 0) {
 
     empty.style.display =
       "block";
@@ -1735,10 +1502,8 @@ function renderEventList(eventsObject) {
 
   }
 
-
   empty.style.display =
     "none";
-
 
   events.forEach(event => {
 
@@ -1749,7 +1514,6 @@ function renderEventList(eventsObject) {
 
     button.className =
       "eventCard";
-
 
     const name =
       document.createElement(
@@ -1762,7 +1526,6 @@ function renderEventList(eventsObject) {
     name.textContent =
       event.name ||
       "名称未設定";
-
 
     const meta =
       document.createElement(
@@ -1781,15 +1544,8 @@ function renderEventList(eventsObject) {
         : "項目：" +
           (event.status1 || "項目1");
 
-
-    button.appendChild(
-      name
-    );
-
-    button.appendChild(
-      meta
-    );
-
+    button.appendChild(name);
+    button.appendChild(meta);
 
     button.addEventListener(
       "click",
@@ -1800,10 +1556,7 @@ function renderEventList(eventsObject) {
       }
     );
 
-
-    list.appendChild(
-      button
-    );
+    list.appendChild(button);
 
   });
 
@@ -1811,7 +1564,7 @@ function renderEventList(eventsObject) {
 
 
 /* =========================
-   新規イベント登録
+   NEW EVENT
 ========================= */
 
 document
@@ -1888,19 +1641,20 @@ function updatePreview() {
       .value
       .trim();
 
-
   document
     .getElementById("previewStatus1")
     .textContent =
     status1;
 
-
   const previewRow =
-    document.getElementById("previewRow");
+    document.getElementById(
+      "previewRow"
+    );
 
   const previewStatus2Box =
-    document.getElementById("previewStatus2Box");
-
+    document.getElementById(
+      "previewStatus2Box"
+    );
 
   if (status2) {
 
@@ -1938,7 +1692,6 @@ document
       "eventCreateError"
     );
 
-
     if (!currentUser) {
 
       showBoxMessage(
@@ -1949,7 +1702,6 @@ document
       return;
 
     }
-
 
     const name =
       document
@@ -1969,11 +1721,7 @@ document
         .value
         .trim();
 
-
-    if (
-      !name ||
-      !status1
-    ) {
+    if (!name || !status1) {
 
       showBoxMessage(
         "eventCreateError",
@@ -1983,7 +1731,6 @@ document
       return;
 
     }
-
 
     try {
 
@@ -1995,12 +1742,8 @@ document
             "/events"
         );
 
-
       const newEventRef =
-        push(
-          eventsRef
-        );
-
+        push(eventsRef);
 
       await set(
         newEventRef,
@@ -2013,15 +1756,9 @@ document
         }
       );
 
-
-      currentEventId =
-        newEventRef.key;
-
-
       await openEvent(
-        currentEventId
+        newEventRef.key
       );
-
 
     } catch (error) {
 
@@ -2036,7 +1773,7 @@ document
 
 
 /* =========================
-   イベント管理
+   OPEN EVENT / REALTIME DATA
 ========================= */
 
 async function openEvent(eventId) {
@@ -2045,11 +1782,9 @@ async function openEvent(eventId) {
     "dashboardError"
   );
 
+  await stopScanner();
 
-  if (!currentUser) {
-    return;
-  }
-
+  if (!currentUser) return;
 
   try {
 
@@ -2062,12 +1797,8 @@ async function openEvent(eventId) {
           eventId
       );
 
-
     const snapshot =
-      await get(
-        eventRef
-      );
-
+      await get(eventRef);
 
     if (!snapshot.exists()) {
 
@@ -2080,98 +1811,19 @@ async function openEvent(eventId) {
 
     }
 
-
-    const event =
-      snapshot.val();
-
-
     currentEventId =
       eventId;
 
-    loadVisitorsLocal();
+    currentEvent =
+      snapshot.val();
 
+    applyEventToDashboard();
 
-    document
-      .getElementById("dashboardEventName")
-      .textContent =
-      event.name ||
-      "イベント名";
-
-
-    document
-      .getElementById("dashboardStatus1Label")
-      .textContent =
-      event.status1 ||
-      "項目1";
-
-
-    document
-      .getElementById("dashboardStatus1Button")
-      .textContent =
-      event.status1 ||
-      "項目1";
-
-
-    const dashboardRow =
-      document.querySelector(".dashboardRow");
-
-    const dashboardMenu =
-      document.querySelector(".dashboardMenu");
-
-    const status2Box =
-      document.getElementById("dashboardStatus2Box");
-
-    const status2Button =
-      document.getElementById("dashboardStatus2Button");
-
-
-    if (event.status2) {
-
-      document
-        .getElementById("dashboardStatus2Label")
-        .textContent =
-        event.status2;
-
-      status2Box.style.display =
-        "block";
-
-      status2Button.style.display =
-        "block";
-
-      status2Button.textContent =
-        event.status2;
-
-      dashboardRow.classList.remove(
-        "twoColumns"
-      );
-
-      dashboardMenu.classList.remove(
-        "twoColumns"
-      );
-
-    } else {
-
-      status2Box.style.display =
-        "none";
-
-      status2Button.style.display =
-        "none";
-
-      dashboardRow.classList.add(
-        "twoColumns"
-      );
-
-      dashboardMenu.classList.add(
-        "twoColumns"
-      );
-
-    }
-
+    startEventDataListener();
 
     showScreen(
       "eventDashboardScreen"
     );
-
 
   } catch (error) {
 
@@ -2185,101 +1837,2192 @@ async function openEvent(eventId) {
 }
 
 
-document
-  .getElementById("dashboardBackButton")
-  .addEventListener("click", () => {
+function applyEventToDashboard() {
 
-    currentEventId =
+  if (!currentEvent) return;
+
+  document
+    .getElementById("dashboardEventName")
+    .textContent =
+    currentEvent.name ||
+    "イベント名";
+
+  document
+    .getElementById("dashboardStatus1Label")
+    .textContent =
+    currentEvent.status1 ||
+    "項目1";
+
+  document
+    .getElementById("dashboardStatus1Button")
+    .textContent =
+    currentEvent.status1 ||
+    "項目1";
+
+  const status2Box =
+    document.getElementById(
+      "dashboardStatus2Box"
+    );
+
+  const status2Button =
+    document.getElementById(
+      "dashboardStatus2Button"
+    );
+
+  const row =
+    document.getElementById(
+      "dashboardRow"
+    );
+
+  const menu =
+    document.getElementById(
+      "dashboardMenu"
+    );
+
+  if (currentEvent.status2) {
+
+    document
+      .getElementById("dashboardStatus2Label")
+      .textContent =
+      currentEvent.status2;
+
+    status2Button.textContent =
+      currentEvent.status2;
+
+    status2Box.style.display =
+      "block";
+
+    status2Button.style.display =
+      "block";
+
+    row.classList.remove(
+      "twoColumns"
+    );
+
+    menu.classList.remove(
+      "twoColumns"
+    );
+
+  } else {
+
+    status2Box.style.display =
+      "none";
+
+    status2Button.style.display =
+      "none";
+
+    row.classList.add(
+      "twoColumns"
+    );
+
+    menu.classList.add(
+      "twoColumns"
+    );
+
+  }
+
+  currentScanMode =
+    "status1";
+
+  updateModeButtons();
+
+}
+
+
+function startEventDataListener() {
+
+  if (!currentUser || !currentEventId) return;
+
+  if (stopEventDataListener) {
+
+    stopEventDataListener();
+
+    stopEventDataListener =
       null;
 
-    currentVisitors =
-      [];
+  }
 
-    renderVisitors();
+  const dataRef =
+    ref(
+      database,
+      "users/" +
+        currentUser.uid +
+        "/eventData/" +
+        currentEventId
+    );
 
-    showScreen(
-      "eventListScreen"
+  stopEventDataListener =
+    onValue(
+      dataRef,
+
+      snapshot => {
+
+        const data =
+          snapshot.val() || {};
+
+        maybeCleanupExpiredData(
+          data
+        );
+
+        const visitorObject =
+          data.visitors || {};
+
+        currentVisitors =
+          Object.entries(visitorObject)
+            .map(([key, visitor]) => ({
+              key,
+              ...visitor
+            }))
+            .sort(
+              (a, b) =>
+                (a.order || 0) -
+                (b.order || 0)
+            );
+
+        currentAttendance =
+          data.attendance || {};
+
+        renderDashboardData();
+        renderVisitorList();
+
+      },
+
+      error => {
+
+        showFirebaseError(
+          "dashboardError",
+          error
+        );
+
+      }
+    );
+
+}
+
+
+async function maybeCleanupExpiredData(data) {
+
+  if (
+    expiryCleanupRunning ||
+    !currentUser ||
+    !currentEventId ||
+    !data.uploadedAt
+  ) {
+    return;
+  }
+
+  if (
+    Date.now() -
+      data.uploadedAt <=
+    VISITOR_RETENTION_MS
+  ) {
+    return;
+  }
+
+  expiryCleanupRunning =
+    true;
+
+  try {
+
+    const basePath =
+      "users/" +
+      currentUser.uid +
+      "/eventData/" +
+      currentEventId;
+
+    const changes = {};
+
+    changes[
+      basePath +
+      "/visitors"
+    ] = null;
+
+    changes[
+      basePath +
+      "/attendance"
+    ] = null;
+
+    changes[
+      basePath +
+      "/uploadedAt"
+    ] = null;
+
+    await update(
+      ref(database),
+      changes
+    );
+
+  } catch (error) {
+
+    console.error(error);
+
+  } finally {
+
+    expiryCleanupRunning =
+      false;
+
+  }
+
+}
+
+
+/* =========================
+   DASHBOARD COUNTS
+========================= */
+
+function renderDashboardData() {
+
+  const total =
+    currentVisitors.length;
+
+  let status1 =
+    0;
+
+  let status2 =
+    0;
+
+  currentVisitors.forEach(visitor => {
+
+    const record =
+      currentAttendance[
+        visitor.key
+      ] || {};
+
+    if (record.status1) {
+      status1++;
+    }
+
+    if (record.status2) {
+      status2++;
+    }
+
+  });
+
+  document
+    .getElementById("participantCount")
+    .textContent =
+    total;
+
+  document
+    .getElementById("status1Count")
+    .textContent =
+    status1;
+
+  document
+    .getElementById("status2Count")
+    .textContent =
+    status2;
+
+  const statusText =
+    total > 0
+      ? "参加者 " +
+        total +
+        "人 読み込み完了"
+      : "参加者データはまだ登録されていません";
+
+  document
+    .getElementById("eventParticipantStatus")
+    .textContent =
+    statusText;
+
+  document
+    .getElementById("visitorStatus")
+    .textContent =
+    statusText;
+
+  document
+    .getElementById("downloadQrZipButton")
+    .disabled =
+    total === 0;
+
+  document
+    .getElementById("scanButton")
+    .disabled =
+    total === 0;
+
+  document
+    .getElementById("listSummary")
+    .textContent =
+    "参加者 " +
+    total +
+    "人";
+
+}
+
+
+/* =========================
+   CSV
+========================= */
+
+function downloadCsvTemplate() {
+
+  const content =
+    "\uFEFF" +
+    "id,name,number\r\n" +
+    "SAMPLE-001,山田 太郎,1\r\n" +
+    "SAMPLE-002,佐藤 花子,\r\n";
+
+  const blob =
+    new Blob(
+      [content],
+      {
+        type:
+          "text/csv;charset=utf-8"
+      }
+    );
+
+  const url =
+    URL.createObjectURL(
+      blob
+    );
+
+  const a =
+    document.createElement(
+      "a"
+    );
+
+  a.href =
+    url;
+
+  a.download =
+    "visitor_list.csv";
+
+  document.body.appendChild(a);
+
+  a.click();
+
+  a.remove();
+
+  URL.revokeObjectURL(url);
+
+}
+
+
+function parseCsvLine(line) {
+
+  const result = [];
+
+  let current =
+    "";
+
+  let insideQuotes =
+    false;
+
+  for (
+    let i = 0;
+    i < line.length;
+    i++
+  ) {
+
+    const char =
+      line[i];
+
+    if (char === '"') {
+
+      if (
+        insideQuotes &&
+        line[i + 1] === '"'
+      ) {
+
+        current += '"';
+
+        i++;
+
+      } else {
+
+        insideQuotes =
+          !insideQuotes;
+
+      }
+
+    } else if (
+      char === "," &&
+      !insideQuotes
+    ) {
+
+      result.push(
+        current
+      );
+
+      current =
+        "";
+
+    } else {
+
+      current +=
+        char;
+
+    }
+
+  }
+
+  result.push(
+    current
+  );
+
+  return result;
+
+}
+
+
+function parseVisitorCsv(text) {
+
+  const cleaned =
+    text.replace(
+      /^\uFEFF/,
+      ""
+    );
+
+  const rows =
+    cleaned
+      .split(/\r?\n/)
+      .filter(
+        line =>
+          line.trim() !== ""
+      );
+
+  if (
+    rows.length < 2
+  ) {
+
+    throw new Error(
+      "参加者データがありません。"
+    );
+
+  }
+
+  const headers =
+    parseCsvLine(
+      rows[0]
+    ).map(
+      value =>
+        value
+          .trim()
+          .toLowerCase()
+    );
+
+  const idIndex =
+    headers.indexOf(
+      "id"
+    );
+
+  const nameIndex =
+    headers.indexOf(
+      "name"
+    );
+
+  const numberIndex =
+    headers.indexOf(
+      "number"
+    );
+
+  if (
+    idIndex === -1 ||
+    nameIndex === -1
+  ) {
+
+    throw new Error(
+      "CSVの1行目には id,name が必要です。number は任意です。"
+    );
+
+  }
+
+  const visitors =
+    [];
+
+  const ids =
+    new Set();
+
+  for (
+    let i = 1;
+    i < rows.length;
+    i++
+  ) {
+
+    const columns =
+      parseCsvLine(
+        rows[i]
+      );
+
+    const id =
+      String(
+        columns[idIndex] || ""
+      ).trim();
+
+    const name =
+      String(
+        columns[nameIndex] || ""
+      ).trim();
+
+    const number =
+      numberIndex === -1
+        ? ""
+        : String(
+            columns[
+              numberIndex
+            ] || ""
+          ).trim();
+
+    if (!id) {
+
+      throw new Error(
+        (i + 1) +
+        "行目：id が空欄です。"
+      );
+
+    }
+
+    if (!name) {
+
+      throw new Error(
+        (i + 1) +
+        "行目：name が空欄です。"
+      );
+
+    }
+
+    if (
+      ids.has(id)
+    ) {
+
+      throw new Error(
+        (i + 1) +
+        "行目：id「" +
+        id +
+        "」が重複しています。"
+      );
+
+    }
+
+    ids.add(id);
+
+    visitors.push({
+      id,
+      name,
+      number,
+      order:
+        visitors.length
+    });
+
+  }
+
+  return visitors;
+
+}
+
+
+async function handleCsvUpload(file) {
+
+  clearMessage(
+    "visitorError"
+  );
+
+  if (!file) return;
+
+  if (
+    !currentUser ||
+    !currentEventId
+  ) {
+
+    showBoxMessage(
+      "visitorError",
+      "イベントを確認できませんでした。"
+    );
+
+    return;
+
+  }
+
+  if (
+    !file.name
+      .toLowerCase()
+      .endsWith(".csv")
+  ) {
+
+    showBoxMessage(
+      "visitorError",
+      "CSVファイルを選択してください。"
+    );
+
+    return;
+
+  }
+
+  try {
+
+    const text =
+      await file.text();
+
+    const visitors =
+      parseVisitorCsv(
+        text
+      );
+
+    const visitorObject =
+      {};
+
+    visitors.forEach(
+      visitor => {
+
+        const key =
+          idToKey(
+            visitor.id
+          );
+
+        visitorObject[key] =
+          visitor;
+
+      }
+    );
+
+    const basePath =
+      "users/" +
+      currentUser.uid +
+      "/eventData/" +
+      currentEventId;
+
+    const changes =
+      {};
+
+    changes[
+      basePath +
+      "/visitors"
+    ] =
+      visitorObject;
+
+    changes[
+      basePath +
+      "/uploadedAt"
+    ] =
+      Date.now();
+
+    await update(
+      ref(database),
+      changes
+    );
+
+    const info =
+      document.getElementById(
+        "qrProgress"
+      );
+
+    info.textContent =
+      "参加者 " +
+      visitors.length +
+      "人を登録しました。";
+
+    info.style.display =
+      "block";
+
+  } catch (error) {
+
+    console.error(error);
+
+    showBoxMessage(
+      "visitorError",
+      error.message ||
+      "CSVの読み込みに失敗しました。"
+    );
+
+  }
+
+}
+
+
+document
+  .getElementById("downloadCsvTemplateButton")
+  .addEventListener(
+    "click",
+    downloadCsvTemplate
+  );
+
+
+document
+  .getElementById("uploadCsvButton")
+  .addEventListener(
+    "click",
+    () => {
+
+      document
+        .getElementById("csvFileInput")
+        .click();
+
+    }
+  );
+
+
+document
+  .getElementById("csvFileInput")
+  .addEventListener(
+    "change",
+    event => {
+
+      const file =
+        event.target.files &&
+        event.target.files[0];
+
+      handleCsvUpload(
+        file
+      );
+
+      event.target.value =
+        "";
+
+    }
+  );
+
+
+/* =========================
+   QR ZIP
+========================= */
+
+function safeFileName(name) {
+
+  return (
+    String(name)
+      .replace(
+        /[\\/:*?"<>|]/g,
+        "_"
+      )
+      .trim() ||
+    "QR"
+  );
+
+}
+
+
+function makeQrCanvas(
+  textValue
+) {
+
+  return new Promise(
+    (resolve, reject) => {
+
+      try {
+
+        const holder =
+          document.createElement(
+            "div"
+          );
+
+        holder.style.position =
+          "fixed";
+
+        holder.style.left =
+          "-99999px";
+
+        holder.style.top =
+          "-99999px";
+
+        document.body.appendChild(
+          holder
+        );
+
+        new QRCode(
+          holder,
+          {
+            text:
+              textValue,
+
+            width:
+              1000,
+
+            height:
+              1000,
+
+            correctLevel:
+              QRCode.CorrectLevel.H
+          }
+        );
+
+        setTimeout(
+          () => {
+
+            try {
+
+              const sourceCanvas =
+                holder.querySelector(
+                  "canvas"
+                );
+
+              if (!sourceCanvas) {
+
+                holder.remove();
+
+                reject(
+                  new Error(
+                    "QR画像の生成に失敗しました。"
+                  )
+                );
+
+                return;
+
+              }
+
+              const outCanvas =
+                document.createElement(
+                  "canvas"
+                );
+
+              outCanvas.width =
+                1200;
+
+              outCanvas.height =
+                1200;
+
+              const ctx =
+                outCanvas.getContext(
+                  "2d"
+                );
+
+              ctx.fillStyle =
+                "#ffffff";
+
+              ctx.fillRect(
+                0,
+                0,
+                1200,
+                1200
+              );
+
+              ctx.imageSmoothingEnabled =
+                false;
+
+              ctx.drawImage(
+                sourceCanvas,
+                100,
+                100,
+                1000,
+                1000
+              );
+
+              holder.remove();
+
+              resolve(
+                outCanvas
+              );
+
+            } catch (error) {
+
+              holder.remove();
+
+              reject(
+                error
+              );
+
+            }
+
+          },
+          50
+        );
+
+      } catch (error) {
+
+        reject(
+          error
+        );
+
+      }
+
+    }
+  );
+
+}
+
+
+function canvasToJpegBlob(
+  canvas
+) {
+
+  return new Promise(
+    (resolve, reject) => {
+
+      canvas.toBlob(
+        blob => {
+
+          if (!blob) {
+
+            reject(
+              new Error(
+                "JPG変換に失敗しました。"
+              )
+            );
+
+            return;
+
+          }
+
+          resolve(
+            blob
+          );
+
+        },
+        "image/jpeg",
+        0.96
+      );
+
+    }
+  );
+
+}
+
+
+async function downloadAllQrZip() {
+
+  clearMessage(
+    "visitorError"
+  );
+
+  if (
+    currentVisitors.length === 0
+  ) {
+
+    showBoxMessage(
+      "visitorError",
+      "先にCSVをアップロードしてください。"
+    );
+
+    return;
+
+  }
+
+  if (
+    typeof QRCode === "undefined" ||
+    typeof JSZip === "undefined"
+  ) {
+
+    showBoxMessage(
+      "visitorError",
+      "QR生成ライブラリを読み込めませんでした。"
+    );
+
+    return;
+
+  }
+
+  const progress =
+    document.getElementById(
+      "qrProgress"
+    );
+
+  const button =
+    document.getElementById(
+      "downloadQrZipButton"
+    );
+
+  progress.style.display =
+    "block";
+
+  button.disabled =
+    true;
+
+  try {
+
+    const zip =
+      new JSZip();
+
+    const usedNames =
+      new Map();
+
+    for (
+      let i = 0;
+      i < currentVisitors.length;
+      i++
+    ) {
+
+      const visitor =
+        currentVisitors[i];
+
+      progress.textContent =
+        "QRコードを生成中… " +
+        (i + 1) +
+        " / " +
+        currentVisitors.length;
+
+      const canvas =
+        await makeQrCanvas(
+          visitor.id
+        );
+
+      const blob =
+        await canvasToJpegBlob(
+          canvas
+        );
+
+      const baseName =
+        safeFileName(
+          visitor.name
+        );
+
+      const usedCount =
+        (
+          usedNames.get(
+            baseName
+          ) || 0
+        ) + 1;
+
+      usedNames.set(
+        baseName,
+        usedCount
+      );
+
+      const fileName =
+        usedCount === 1
+          ? baseName +
+            ".jpg"
+          : baseName +
+            "_" +
+            usedCount +
+            ".jpg";
+
+      zip.file(
+        fileName,
+        blob
+      );
+
+    }
+
+    progress.textContent =
+      "ZIPファイルを作成しています…";
+
+    const zipBlob =
+      await zip.generateAsync(
+        {
+          type:
+            "blob"
+        }
+      );
+
+    const url =
+      URL.createObjectURL(
+        zipBlob
+      );
+
+    const a =
+      document.createElement(
+        "a"
+      );
+
+    a.href =
+      url;
+
+    a.download =
+      "visitor_qr_codes.zip";
+
+    document.body.appendChild(
+      a
+    );
+
+    a.click();
+
+    a.remove();
+
+    URL.revokeObjectURL(
+      url
+    );
+
+    progress.textContent =
+      "QRコードのダウンロードが完了しました。";
+
+  } catch (error) {
+
+    console.error(error);
+
+    showBoxMessage(
+      "visitorError",
+      error.message ||
+      "QRコードの生成に失敗しました。"
+    );
+
+  } finally {
+
+    button.disabled =
+      currentVisitors.length === 0;
+
+  }
+
+}
+
+
+document
+  .getElementById("downloadQrZipButton")
+  .addEventListener(
+    "click",
+    downloadAllQrZip
+  );
+
+
+/* =========================
+   VISITOR LIST SCREEN
+========================= */
+
+function renderVisitorList() {
+
+  if (!currentEvent) {
+    return;
+  }
+
+  document
+    .getElementById("listEventName")
+    .textContent =
+    currentEvent.name ||
+    "イベント名";
+
+  const head =
+    document.getElementById(
+      "visitorListHead"
+    );
+
+  const body =
+    document.getElementById(
+      "visitorListBody"
+    );
+
+  const empty =
+    document.getElementById(
+      "listEmpty"
+    );
+
+  const search =
+    (
+      document
+        .getElementById("listSearch")
+        .value || ""
+    )
+      .trim()
+      .toLowerCase();
+
+  head.innerHTML =
+    "";
+
+  body.innerHTML =
+    "";
+
+  const trh =
+    document.createElement(
+      "tr"
+    );
+
+  [
+    "名前",
+    "number",
+    currentEvent.status1 || "項目1"
+  ].forEach(label => {
+
+    const th =
+      document.createElement(
+        "th"
+      );
+
+    th.textContent =
+      label;
+
+    trh.appendChild(
+      th
     );
 
   });
 
+  if (currentEvent.status2) {
+
+    const th =
+      document.createElement(
+        "th"
+      );
+
+    th.textContent =
+      currentEvent.status2;
+
+    trh.appendChild(
+      th
+    );
+
+  }
+
+  head.appendChild(
+    trh
+  );
+
+  let shown =
+    0;
+
+  currentVisitors.forEach(
+    visitor => {
+
+      const searchable =
+        (
+          visitor.name +
+          " " +
+          (visitor.number || "") +
+          " " +
+          visitor.id
+        ).toLowerCase();
+
+      if (
+        search &&
+        !searchable.includes(
+          search
+        )
+      ) {
+        return;
+      }
+
+      shown++;
+
+      const record =
+        currentAttendance[
+          visitor.key
+        ] || {};
+
+      const tr =
+        document.createElement(
+          "tr"
+        );
+
+      const nameTd =
+        document.createElement(
+          "td"
+        );
+
+      nameTd.className =
+        "nameCell";
+
+      nameTd.textContent =
+        visitor.name;
+
+      const idSub =
+        document.createElement(
+          "span"
+        );
+
+      idSub.className =
+        "idSub";
+
+      idSub.textContent =
+        visitor.id;
+
+      nameTd.appendChild(
+        idSub
+      );
+
+      const numberTd =
+        document.createElement(
+          "td"
+        );
+
+      numberTd.className =
+        "center";
+
+      numberTd.textContent =
+        visitor.number ||
+        "－";
+
+      const status1Td =
+        document.createElement(
+          "td"
+        );
+
+      status1Td.className =
+        "center " +
+        (
+          record.status1
+            ? "markYes"
+            : "markNo"
+        );
+
+      status1Td.textContent =
+        record.status1
+          ? "○"
+          : "－";
+
+      tr.appendChild(
+        nameTd
+      );
+
+      tr.appendChild(
+        numberTd
+      );
+
+      tr.appendChild(
+        status1Td
+      );
+
+      if (
+        currentEvent.status2
+      ) {
+
+        const status2Td =
+          document.createElement(
+            "td"
+          );
+
+        status2Td.className =
+          "center " +
+          (
+            record.status2
+              ? "markYes"
+              : "markNo"
+          );
+
+        status2Td.textContent =
+          record.status2
+            ? "○"
+            : "－";
+
+        tr.appendChild(
+          status2Td
+        );
+
+      }
+
+      body.appendChild(
+        tr
+      );
+
+    }
+  );
+
+  empty.style.display =
+    shown === 0
+      ? "block"
+      : "none";
+
+}
+
+
+document
+  .getElementById("dashboardListButton")
+  .addEventListener(
+    "click",
+    async () => {
+
+      await stopScanner();
+
+      renderVisitorList();
+
+      showScreen(
+        "visitorListScreen"
+      );
+
+    }
+  );
+
+
+document
+  .getElementById("listBackButton")
+  .addEventListener(
+    "click",
+    () => {
+
+      showScreen(
+        "eventDashboardScreen"
+      );
+
+    }
+  );
+
+
+document
+  .getElementById("listSearch")
+  .addEventListener(
+    "input",
+    renderVisitorList
+  );
+
 
 /* =========================
-   イベント削除
+   SCAN MODE
+========================= */
+
+function updateModeButtons() {
+
+  const button1 =
+    document.getElementById(
+      "dashboardStatus1Button"
+    );
+
+  const button2 =
+    document.getElementById(
+      "dashboardStatus2Button"
+    );
+
+  button1.classList.remove(
+    "active"
+  );
+
+  button2.classList.remove(
+    "active"
+  );
+
+  if (
+    currentScanMode ===
+    "status1"
+  ) {
+
+    button1.classList.add(
+      "active"
+    );
+
+    document
+      .getElementById("scanHeading")
+      .textContent =
+      currentEvent?.status1 ||
+      "項目1";
+
+  } else {
+
+    button2.classList.add(
+      "active"
+    );
+
+    document
+      .getElementById("scanHeading")
+      .textContent =
+      currentEvent?.status2 ||
+      "項目2";
+
+  }
+
+}
+
+
+document
+  .getElementById("dashboardStatus1Button")
+  .addEventListener(
+    "click",
+    async () => {
+
+      await stopScanner();
+
+      currentScanMode =
+        "status1";
+
+      clearScanResult();
+
+      updateModeButtons();
+
+    }
+  );
+
+
+document
+  .getElementById("dashboardStatus2Button")
+  .addEventListener(
+    "click",
+    async () => {
+
+      await stopScanner();
+
+      currentScanMode =
+        "status2";
+
+      clearScanResult();
+
+      updateModeButtons();
+
+    }
+  );
+
+
+/* =========================
+   QR SCANNER
+========================= */
+
+function clearScanResult() {
+
+  clearMessage(
+    "scanError"
+  );
+
+  document
+    .getElementById("scanResult")
+    .style
+    .display =
+    "none";
+
+  document
+    .getElementById("nextScanButton")
+    .style
+    .display =
+    "none";
+
+  document
+    .getElementById("scanStatus")
+    .textContent =
+    "";
+
+}
+
+
+async function startScanner() {
+
+  if (
+    scannerRunning ||
+    currentVisitors.length === 0
+  ) {
+    return;
+  }
+
+  clearScanResult();
+
+  alreadyRead =
+    false;
+
+  document
+    .getElementById("scanStatus")
+    .textContent =
+    "カメラを確認しています…";
+
+  if (
+    typeof Html5Qrcode ===
+    "undefined"
+  ) {
+
+    showBoxMessage(
+      "scanError",
+      "QR読取プログラムを読み込めませんでした。"
+    );
+
+    return;
+
+  }
+
+  try {
+
+    const cameras =
+      await Html5Qrcode.getCameras();
+
+    if (
+      !cameras ||
+      cameras.length === 0
+    ) {
+
+      throw new Error(
+        "使用できるカメラがありません"
+      );
+
+    }
+
+    function cameraScore(
+      camera,
+      index
+    ) {
+
+      const label =
+        (
+          camera.label ||
+          ""
+        ).toLowerCase();
+
+      let score =
+        0;
+
+      if (
+        label.includes("back") ||
+        label.includes("rear") ||
+        label.includes("environment") ||
+        label.includes("背面")
+      ) {
+        score += 100;
+      }
+
+      if (
+        label.includes("front") ||
+        label.includes("user") ||
+        label.includes("前面")
+      ) {
+        score -= 200;
+      }
+
+      if (
+        label.includes("ultra") ||
+        label.includes("超広角") ||
+        label.includes("tele") ||
+        label.includes("望遠") ||
+        label.includes("depth") ||
+        label.includes("lidar")
+      ) {
+        score -= 100;
+      }
+
+      score +=
+        index * 0.01;
+
+      return score;
+
+    }
+
+    let selectedCamera =
+      cameras[0].id;
+
+    let bestScore =
+      -Infinity;
+
+    cameras.forEach(
+      (camera, index) => {
+
+        const score =
+          cameraScore(
+            camera,
+            index
+          );
+
+        if (
+          score >
+          bestScore
+        ) {
+
+          bestScore =
+            score;
+
+          selectedCamera =
+            camera.id;
+
+        }
+
+      }
+    );
+
+    html5QrCode =
+      new Html5Qrcode(
+        "reader",
+        {
+          formatsToSupport:
+            typeof Html5QrcodeSupportedFormats !== "undefined"
+              ? [
+                  Html5QrcodeSupportedFormats.QR_CODE
+                ]
+              : undefined
+        }
+      );
+
+    scannerRunning =
+      true;
+
+    await html5QrCode.start(
+      selectedCamera,
+      {
+        fps:
+          15,
+
+        disableFlip:
+          true
+      },
+      decodedText => {
+
+        if (
+          alreadyRead
+        ) {
+          return;
+        }
+
+        alreadyRead =
+          true;
+
+        processScannedId(
+          decodedText
+        );
+
+      },
+      () => {}
+    );
+
+    document
+      .getElementById("scanStatus")
+      .textContent =
+      "QRコードをカメラにかざしてください";
+
+  } catch (error) {
+
+    scannerRunning =
+      false;
+
+    html5QrCode =
+      null;
+
+    showBoxMessage(
+      "scanError",
+      "カメラを起動できませんでした。\n\n" +
+      (
+        error?.message ||
+        String(error)
+      )
+    );
+
+  }
+
+}
+
+
+async function stopScanner() {
+
+  if (!html5QrCode) {
+
+    scannerRunning =
+      false;
+
+    return;
+
+  }
+
+  try {
+
+    if (
+      scannerRunning
+    ) {
+
+      await html5QrCode.stop();
+
+    }
+
+  } catch (error) {}
+
+  try {
+
+    html5QrCode.clear();
+
+  } catch (error) {}
+
+  html5QrCode =
+    null;
+
+  scannerRunning =
+    false;
+
+}
+
+
+async function processScannedId(
+  rawId
+) {
+
+  const id =
+    String(rawId)
+      .trim();
+
+  const visitor =
+    currentVisitors.find(
+      item =>
+        item.id === id
+    );
+
+  if (!visitor) {
+
+    await stopScanner();
+
+    showBoxMessage(
+      "scanError",
+      "登録されていないQRコードです。\n\n読取内容：" +
+      id
+    );
+
+    document
+      .getElementById("nextScanButton")
+      .style
+      .display =
+      "block";
+
+    return;
+
+  }
+
+  const existing =
+    currentAttendance[
+      visitor.key
+    ] || {};
+
+  const existingTime =
+    existing[
+      currentScanMode
+    ];
+
+  if (
+    existingTime
+  ) {
+
+    await stopScanner();
+
+    showScanResult(
+      visitor,
+      existingTime,
+      true
+    );
+
+    return;
+
+  }
+
+  try {
+
+    const now =
+      Date.now();
+
+    const path =
+      "users/" +
+      currentUser.uid +
+      "/eventData/" +
+      currentEventId +
+      "/attendance/" +
+      visitor.key +
+      "/" +
+      currentScanMode;
+
+    await set(
+      ref(
+        database,
+        path
+      ),
+      now
+    );
+
+    if (
+      !currentAttendance[
+        visitor.key
+      ]
+    ) {
+
+      currentAttendance[
+        visitor.key
+      ] =
+        {};
+
+    }
+
+    currentAttendance[
+      visitor.key
+    ][
+      currentScanMode
+    ] =
+      now;
+
+    await stopScanner();
+
+    showScanResult(
+      visitor,
+      now,
+      false
+    );
+
+    renderDashboardData();
+    renderVisitorList();
+
+  } catch (error) {
+
+    await stopScanner();
+
+    showFirebaseError(
+      "scanError",
+      error
+    );
+
+  }
+
+}
+
+
+function showScanResult(
+  visitor,
+  time,
+  already
+) {
+
+  const modeName =
+    currentScanMode ===
+    "status1"
+      ? (
+          currentEvent?.status1 ||
+          "項目1"
+        )
+      : (
+          currentEvent?.status2 ||
+          "項目2"
+        );
+
+  document
+    .getElementById("scanResultMessage")
+    .textContent =
+    already
+      ? modeName +
+        "済み"
+      : modeName +
+        "完了";
+
+  document
+    .getElementById("scanResultName")
+    .textContent =
+    visitor.name;
+
+  document
+    .getElementById("scanResultNumber")
+    .textContent =
+    visitor.number
+      ? "number：" +
+        visitor.number
+      : "";
+
+  document
+    .getElementById("scanResultTime")
+    .textContent =
+    modeName +
+    "時刻：" +
+    formatDateTime(
+      time
+    );
+
+  document
+    .getElementById("scanResult")
+    .style
+    .display =
+    "block";
+
+  document
+    .getElementById("nextScanButton")
+    .style
+    .display =
+    "block";
+
+  document
+    .getElementById("scanStatus")
+    .textContent =
+    already
+      ? "このQRは処理済みです"
+      : "登録しました";
+
+}
+
+
+document
+  .getElementById("scanButton")
+  .addEventListener(
+    "click",
+    startScanner
+  );
+
+
+document
+  .getElementById("nextScanButton")
+  .addEventListener(
+    "click",
+    async () => {
+
+      await stopScanner();
+
+      clearScanResult();
+
+      startScanner();
+
+    }
+  );
+
+
+/* =========================
+   RESET ATTENDANCE
 ========================= */
 
 document
-  .getElementById("deleteEventButton")
-  .addEventListener("click", async () => {
+  .getElementById("resetAttendanceButton")
+  .addEventListener(
+    "click",
+    async () => {
 
-    clearMessage(
-      "dashboardError"
-    );
+      if (
+        !currentUser ||
+        !currentEventId
+      ) {
+        return;
+      }
 
+      const first =
+        confirm(
+          "読み取り記録をすべてリセットします。\n\n参加者リストは残ります。\n続けますか？"
+        );
 
-    if (
-      !currentUser ||
-      !currentEventId
-    ) {
-      return;
+      if (!first) {
+        return;
+      }
+
+      const second =
+        confirm(
+          "本当にリセットしますか？\n\nこの操作は元に戻せません。"
+        );
+
+      if (!second) {
+        return;
+      }
+
+      try {
+
+        await remove(
+          ref(
+            database,
+            "users/" +
+              currentUser.uid +
+              "/eventData/" +
+              currentEventId +
+              "/attendance"
+          )
+        );
+
+        clearScanResult();
+
+      } catch (error) {
+
+        showFirebaseError(
+          "dashboardError",
+          error
+        );
+
+      }
+
     }
+  );
 
 
-    const eventName =
-      document
-        .getElementById("dashboardEventName")
-        .textContent;
+/* =========================
+   BACK / DELETE EVENT
+========================= */
 
+document
+  .getElementById("dashboardBackButton")
+  .addEventListener(
+    "click",
+    async () => {
 
-    const answer =
-      confirm(
-        "「" +
-          eventName +
-          "」を削除しますか？\n\nこの操作は元に戻せません。"
-      );
+      await stopScanner();
 
+      if (
+        stopEventDataListener
+      ) {
 
-    if (!answer) {
-      return;
-    }
+        stopEventDataListener();
 
+        stopEventDataListener =
+          null;
 
-    try {
-
-      await remove(
-        ref(
-          database,
-          "users/" +
-            currentUser.uid +
-            "/events/" +
-            currentEventId
-        )
-      );
-
+      }
 
       currentEventId =
         null;
 
+      currentEvent =
+        null;
+
+      currentVisitors =
+        [];
+
+      currentAttendance =
+        {};
 
       showScreen(
         "eventListScreen"
       );
 
+    }
+  );
 
-    } catch (error) {
 
-      showFirebaseError(
-        "dashboardError",
-        error
+document
+  .getElementById("deleteEventButton")
+  .addEventListener(
+    "click",
+    async () => {
+
+      clearMessage(
+        "dashboardError"
       );
 
-    }
+      if (
+        !currentUser ||
+        !currentEventId
+      ) {
+        return;
+      }
 
-  });
+      const eventName =
+        currentEvent?.name ||
+        "このイベント";
+
+      const answer =
+        confirm(
+          "「" +
+          eventName +
+          "」を削除しますか？\n\n参加者データと読み取り記録もすべて削除されます。\nこの操作は元に戻せません。"
+        );
+
+      if (!answer) {
+        return;
+      }
+
+      try {
+
+        await stopScanner();
+
+        const changes =
+          {};
+
+        changes[
+          "users/" +
+          currentUser.uid +
+          "/events/" +
+          currentEventId
+        ] =
+          null;
+
+        changes[
+          "users/" +
+          currentUser.uid +
+          "/eventData/" +
+          currentEventId
+        ] =
+          null;
+
+        await update(
+          ref(database),
+          changes
+        );
+
+        if (
+          stopEventDataListener
+        ) {
+
+          stopEventDataListener();
+
+          stopEventDataListener =
+            null;
+
+        }
+
+        currentEventId =
+          null;
+
+        currentEvent =
+          null;
+
+        currentVisitors =
+          [];
+
+        currentAttendance =
+          {};
+
+        showScreen(
+          "eventListScreen"
+        );
+
+      } catch (error) {
+
+        showFirebaseError(
+          "dashboardError",
+          error
+        );
+
+      }
+
+    }
+  );
 
 
 /* =========================
-   認証状態
+   AUTH STATE
 ========================= */
 
 onAuthStateChanged(
@@ -2289,7 +4032,6 @@ onAuthStateChanged(
     currentUser =
       user || null;
 
-
     if (user) {
 
       document
@@ -2298,41 +4040,54 @@ onAuthStateChanged(
         "ログイン中：" +
         user.email;
 
-
       showScreen(
         "eventListScreen"
       );
 
-
-      startEventListener();
-
+      startEventListListener();
 
     } else {
 
-      if (stopEventListener) {
+      if (
+        stopEventListListener
+      ) {
 
-        stopEventListener();
+        stopEventListListener();
 
-        stopEventListener =
+        stopEventListListener =
           null;
 
       }
 
+      if (
+        stopEventDataListener
+      ) {
+
+        stopEventDataListener();
+
+        stopEventDataListener =
+          null;
+
+      }
+
+      stopScanner();
 
       currentEventId =
+        null;
+
+      currentEvent =
         null;
 
       currentVisitors =
         [];
 
-      renderVisitors();
-
+      currentAttendance =
+        {};
 
       document
         .getElementById("eventList")
         .innerHTML =
         "";
-
 
       document
         .getElementById("eventLoading")
@@ -2340,13 +4095,11 @@ onAuthStateChanged(
         .display =
         "none";
 
-
       document
         .getElementById("emptyEventState")
         .style
         .display =
         "none";
-
 
       showScreen(
         "loginScreen"
