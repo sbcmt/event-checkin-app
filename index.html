@@ -743,7 +743,7 @@ button {
       <h2 class="pageTitle">スタッフログイン</h2>
 
       <div class="pageDescription">
-        登録済みのメールアドレスとパスワードでログインしてください
+        登録済みのメールアドレスとパスワードを入力してください
       </div>
 
       <div class="field">
@@ -1348,7 +1348,7 @@ function showAccessDenied() {
   document
     .getElementById("accessMessage")
     .textContent =
-    "このアカウントには、まだアプリの利用権限が設定されていません。";
+    "このアカウントは現在利用できません。管理者に確認してください。";
 
   document
     .getElementById("retryAccessButton")
@@ -1378,10 +1378,26 @@ async function checkAccess(user) {
 
   if (!snapshot.exists()) {
 
-    currentAccess =
-      null;
+    const testerAccess = {
+      type:
+        "tester",
 
-    return false;
+      active:
+        true,
+
+      createdAt:
+        Date.now()
+    };
+
+    await set(
+      accessRef,
+      testerAccess
+    );
+
+    currentAccess =
+      testerAccess;
+
+    return true;
 
   }
 
