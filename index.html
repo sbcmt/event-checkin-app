@@ -705,6 +705,67 @@ button {
 }
 
 
+.mailMiniButton {
+  display: inline-block;
+  margin-top: 7px;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 9px;
+  background: #111;
+  color: white;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.mailMiniButton:disabled {
+  opacity: .45;
+  cursor: default;
+}
+
+.mailSentBadge {
+  display: inline-block;
+  margin-top: 7px;
+  padding: 5px 7px;
+  border-radius: 8px;
+  background: #e9f8ed;
+  color: #197c3a;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.mailNoneBadge {
+  display: inline-block;
+  margin-top: 7px;
+  color: #aaa;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.emailSub {
+  display: block;
+  margin-top: 3px;
+  color: #888;
+  font-size: 9px;
+  font-weight: 400;
+  overflow-wrap: anywhere;
+}
+
+.mailSectionTitle {
+  margin-top: 18px;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.mailHelp {
+  margin-top: 6px;
+  color: #777;
+  text-align: center;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+
 @media (max-width: 380px) {
   .brandTitle {
     font-size: 32px;
@@ -1119,7 +1180,7 @@ button {
       <div class="csvTitle">参加者データ</div>
 
       <div class="csvDescription">
-        id・name は必須、number は任意です。<br>
+        id・name は必須、number・email は任意です。<br>
         QRコードには id だけを記録します。
       </div>
 
@@ -1146,6 +1207,23 @@ button {
       </button>
 
       <div id="qrProgress" class="infoNotice"></div>
+
+      <div class="mailSectionTitle">QRメール送信</div>
+
+      <div id="mailSummary" class="visitorStatus">
+        メール登録 0人 / 送信済み 0人
+      </div>
+
+      <button id="sendUnsentMailButton" class="primaryButton" disabled>
+        未送信の参加者へQRメール一括送信
+      </button>
+
+      <div class="mailHelp">
+        email が登録されている参加者だけが送信対象です。<br>
+        送信済みの参加者には再送しません。
+      </div>
+
+      <div id="mailProgress" class="infoNotice"></div>
 
       <div id="visitorError" class="notice"></div>
 
@@ -1204,6 +1282,11 @@ import {
   onDisconnect
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
 
+import {
+  getFunctions,
+  httpsCallable
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-functions.js";
+
 
 const firebaseConfig = {
   apiKey: "AIzaSyAAeHpco02MEDN58bXkhHcDof1kVFWQU0U",
@@ -1225,6 +1308,18 @@ const auth =
 const database =
   getDatabase(app);
 
+const functions =
+  getFunctions(
+    app,
+    "asia-northeast1"
+  );
+
+const sendParticipantQrCallable =
+  httpsCallable(
+    functions,
+    "sendParticipantQr"
+  );
+
 
 let currentUser =
   null;
@@ -1239,6 +1334,9 @@ let currentVisitors =
   [];
 
 let currentAttendance =
+  {};
+
+let currentMailStatus =
   {};
 
 let stopEventListListener =
@@ -3268,8 +3366,10 @@ function startEventDataListener() {
         currentAttendance =
           data.attendance || {};
 
+        currentMailStatus =
+          data.mailStatus || {};
+
         renderDashboardData();
-        renderVisitorList();
 
       },
 
@@ -3326,6 +3426,11 @@ async function maybeCleanupExpiredData(data) {
     changes[
       basePath +
       "/attendance"
+    ] = null;
+
+    changes[
+      basePath +
+      "/mailStatus"
     ] = null;
 
     changes[
@@ -3426,6 +3531,8 @@ function renderDashboardData() {
     .disabled =
     total === 0;
 
+  renderMailSummary();
+
   renderInlineVisitorList();
 
 }
@@ -3439,9 +3546,9 @@ function downloadCsvTemplate() {
 
   const content =
     "\uFEFF" +
-    "id,name,number\r\n" +
-    "SAMPLE-001,山田 太郎,1\r\n" +
-    "SAMPLE-002,佐藤 花子,\r\n";
+    "id,name,number,email\r\n" +
+    "SAMPLE-001,山田 太郎,1,yamada@example.com\r\n" +
+    "SAMPLE-002,佐藤 花子,,\r\n";
 
   const blob =
     new Blob(
@@ -3597,13 +3704,18 @@ function parseVisitorCsv(text) {
       "number"
     );
 
+  const emailIndex =
+    headers.indexOf(
+      "email"
+    );
+
   if (
     idIndex === -1 ||
     nameIndex === -1
   ) {
 
     throw new Error(
-      "CSVの1行目には id,name が必要です。number は任意です。"
+      "CSVの1行目には id,name が必要です。number・email は任意です。"
     );
 
   }
@@ -3644,6 +3756,15 @@ function parseVisitorCsv(text) {
             ] || ""
           ).trim();
 
+    const email =
+      emailIndex === -1
+        ? ""
+        : String(
+            columns[
+              emailIndex
+            ] || ""
+          ).trim();
+
     if (!id) {
 
       throw new Error(
@@ -3658,6 +3779,20 @@ function parseVisitorCsv(text) {
       throw new Error(
         (i + 1) +
         "行目：name が空欄です。"
+      );
+
+    }
+
+    if (
+      email &&
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+        email
+      )
+    ) {
+
+      throw new Error(
+        (i + 1) +
+        "行目：email の形式を確認してください。"
       );
 
     }
@@ -3681,6 +3816,7 @@ function parseVisitorCsv(text) {
       id,
       name,
       number,
+      email,
       order:
         visitors.length
     });
@@ -3770,6 +3906,49 @@ async function handleCsvUpload(file) {
       "/visitors"
     ] =
       visitorObject;
+
+    const preservedMailStatus =
+      {};
+
+    visitors.forEach(
+      visitor => {
+
+        const key =
+          idToKey(
+            visitor.id
+          );
+
+        const oldStatus =
+          currentMailStatus[
+            key
+          ];
+
+        if (
+          oldStatus?.sent === true &&
+          visitor.email &&
+          String(oldStatus.email || "").toLowerCase() ===
+            visitor.email.toLowerCase()
+        ) {
+
+          preservedMailStatus[
+            key
+          ] =
+            oldStatus;
+
+        }
+
+      }
+    );
+
+    changes[
+      basePath +
+      "/mailStatus"
+    ] =
+      Object.keys(
+        preservedMailStatus
+      ).length
+        ? preservedMailStatus
+        : null;
 
     changes[
       basePath +
@@ -4234,6 +4413,290 @@ document
 
 
 /* =========================
+   QR MAIL
+========================= */
+
+function hasValidEmail(value) {
+
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+    String(value || "").trim()
+  );
+
+}
+
+
+function renderMailSummary() {
+
+  const emailVisitors =
+    currentVisitors.filter(
+      visitor =>
+        hasValidEmail(
+          visitor.email
+        )
+    );
+
+  const sentCount =
+    emailVisitors.filter(
+      visitor =>
+        currentMailStatus[
+          visitor.key
+        ]?.sent === true
+    ).length;
+
+  const unsentCount =
+    emailVisitors.length -
+    sentCount;
+
+  document
+    .getElementById(
+      "mailSummary"
+    )
+    .textContent =
+    "メール登録 " +
+    emailVisitors.length +
+    "人 / 送信済み " +
+    sentCount +
+    "人";
+
+  document
+    .getElementById(
+      "sendUnsentMailButton"
+    )
+    .disabled =
+    unsentCount === 0;
+
+}
+
+
+async function sendQrMailToVisitor(
+  visitor,
+  showConfirm = true
+) {
+
+  clearMessage(
+    "visitorError"
+  );
+
+  if (
+    !visitor ||
+    !hasValidEmail(
+      visitor.email
+    )
+  ) {
+
+    throw new Error(
+      "メールアドレスが登録されていません。"
+    );
+
+  }
+
+  if (
+    currentMailStatus[
+      visitor.key
+    ]?.sent === true
+  ) {
+
+    throw new Error(
+      "この参加者にはすでに送信済みです。"
+    );
+
+  }
+
+  if (
+    showConfirm &&
+    !confirm(
+      visitor.name +
+      " さんへQRメールを送信しますか？\n\n" +
+      visitor.email
+    )
+  ) {
+
+    return false;
+
+  }
+
+  const result =
+    await sendParticipantQrCallable(
+      {
+        eventId:
+          currentEventId,
+
+        participantKey:
+          visitor.key
+      }
+    );
+
+  const data =
+    result.data || {};
+
+  currentMailStatus[
+    visitor.key
+  ] = {
+    sent:
+      true,
+
+    sentAt:
+      data.sentAt ||
+      Date.now(),
+
+    messageId:
+      data.messageId ||
+      "",
+
+    email:
+      visitor.email
+  };
+
+  renderMailSummary();
+  renderInlineVisitorList();
+
+  return true;
+
+}
+
+
+async function sendAllUnsentQrMails() {
+
+  clearMessage(
+    "visitorError"
+  );
+
+  const targets =
+    currentVisitors.filter(
+      visitor =>
+        hasValidEmail(
+          visitor.email
+        ) &&
+        currentMailStatus[
+          visitor.key
+        ]?.sent !== true
+    );
+
+  if (
+    targets.length === 0
+  ) {
+
+    showBoxMessage(
+      "mailProgress",
+      "未送信の対象者はいません。"
+    );
+
+    return;
+
+  }
+
+  const ok =
+    confirm(
+      "未送信の " +
+      targets.length +
+      "人へQRメールを送信します。\n\n" +
+      "送信後の再発行は行いません。\n続けますか？"
+    );
+
+  if (!ok) {
+    return;
+  }
+
+  const button =
+    document.getElementById(
+      "sendUnsentMailButton"
+    );
+
+  const progress =
+    document.getElementById(
+      "mailProgress"
+    );
+
+  button.disabled =
+    true;
+
+  progress.style.display =
+    "block";
+
+  let success =
+    0;
+
+  const failed =
+    [];
+
+  for (
+    let i = 0;
+    i < targets.length;
+    i++
+  ) {
+
+    const visitor =
+      targets[i];
+
+    progress.textContent =
+      "QRメール送信中… " +
+      (i + 1) +
+      " / " +
+      targets.length +
+      "\n" +
+      visitor.name;
+
+    try {
+
+      await sendQrMailToVisitor(
+        visitor,
+        false
+      );
+
+      success++;
+
+    } catch (error) {
+
+      console.error(
+        "QR mail failed:",
+        visitor.name,
+        error
+      );
+
+      failed.push(
+        visitor.name
+      );
+
+    }
+
+  }
+
+  if (
+    failed.length === 0
+  ) {
+
+    progress.textContent =
+      success +
+      "人へのQRメール送信が完了しました。";
+
+  } else {
+
+    progress.textContent =
+      success +
+      "人に送信しました。\n" +
+      failed.length +
+      "人は送信できませんでした：\n" +
+      failed.join("、");
+
+  }
+
+  renderMailSummary();
+  renderInlineVisitorList();
+
+}
+
+
+document
+  .getElementById(
+    "sendUnsentMailButton"
+  )
+  .addEventListener(
+    "click",
+    sendAllUnsentQrMails
+  );
+
+
+/* =========================
    PARTICIPANT LIST
 ========================= */
 
@@ -4412,7 +4875,9 @@ function renderInlineVisitorList() {
           " " +
           (visitor.number || "") +
           " " +
-          visitor.id
+          visitor.id +
+          " " +
+          (visitor.email || "")
         ).toLowerCase();
 
       if (
@@ -4456,6 +4921,134 @@ function renderInlineVisitorList() {
       nameTd.appendChild(
         idSub
       );
+
+      if (
+        visitor.email
+      ) {
+
+        const emailSub =
+          document.createElement(
+            "span"
+          );
+
+        emailSub.className =
+          "emailSub";
+
+        emailSub.textContent =
+          visitor.email;
+
+        nameTd.appendChild(
+          emailSub
+        );
+
+      }
+
+      const mailStatus =
+        currentMailStatus[
+          visitor.key
+        ] || {};
+
+      if (
+        mailStatus.sent === true
+      ) {
+
+        const sentBadge =
+          document.createElement(
+            "span"
+          );
+
+        sentBadge.className =
+          "mailSentBadge";
+
+        sentBadge.textContent =
+          "QR送信済み";
+
+        nameTd.appendChild(
+          sentBadge
+        );
+
+      } else if (
+        hasValidEmail(
+          visitor.email
+        )
+      ) {
+
+        const mailButton =
+          document.createElement(
+            "button"
+          );
+
+        mailButton.className =
+          "mailMiniButton";
+
+        mailButton.type =
+          "button";
+
+        mailButton.textContent =
+          "QRメール送信";
+
+        mailButton.addEventListener(
+          "click",
+          async event => {
+
+            event.stopPropagation();
+
+            mailButton.disabled =
+              true;
+
+            mailButton.textContent =
+              "送信中…";
+
+            try {
+
+              await sendQrMailToVisitor(
+                visitor,
+                true
+              );
+
+            } catch (error) {
+
+              console.error(error);
+
+              showBoxMessage(
+                "visitorError",
+                error?.message ||
+                "メール送信に失敗しました。"
+              );
+
+              mailButton.disabled =
+                false;
+
+              mailButton.textContent =
+                "QRメール送信";
+
+            }
+
+          }
+        );
+
+        nameTd.appendChild(
+          mailButton
+        );
+
+      } else {
+
+        const noMail =
+          document.createElement(
+            "span"
+          );
+
+        noMail.className =
+          "mailNoneBadge";
+
+        noMail.textContent =
+          "メールなし";
+
+        nameTd.appendChild(
+          noMail
+        );
+
+      }
 
       const numberTd =
         document.createElement(
@@ -5534,6 +6127,9 @@ onAuthStateChanged(
         [];
 
       currentAttendance =
+        {};
+
+      currentMailStatus =
         {};
 
       currentAccess =
