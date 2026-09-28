@@ -743,7 +743,7 @@ button {
       <h2 class="pageTitle">スタッフログイン</h2>
 
       <div class="pageDescription">
-        登録済みのメールアドレスとパスワードを入力してください
+        登録済みのメールアドレスとパスワードでログインしてください
       </div>
 
       <div class="field">
@@ -765,6 +765,41 @@ button {
       <div id="loginError" class="notice"></div>
 
     </div>
+  </section>
+
+
+  <!-- ACCESS CHECK / DENIED -->
+  <section id="accessScreen" class="screen">
+
+    <div class="card">
+
+      <h2 id="accessTitle" class="pageTitle">
+        利用権限を確認中
+      </h2>
+
+      <div id="accessMessage" class="pageDescription">
+        このアカウントの利用権限を確認しています…
+      </div>
+
+      <button
+        id="retryAccessButton"
+        class="primaryButton"
+        style="display:none;"
+      >
+        もう一度確認
+      </button>
+
+      <button
+        id="accessLogoutButton"
+        class="secondaryButton"
+      >
+        ログアウト
+      </button>
+
+      <div id="accessError" class="notice"></div>
+
+    </div>
+
   </section>
 
 
@@ -1242,6 +1277,12 @@ let deviceDisconnectHandle =
 let deviceSessionCheckRunning =
   false;
 
+let accessCheckRunning =
+  false;
+
+let currentAccess =
+  null;
+
 
 const VISITOR_RETENTION_MS =
   60 * 24 * 60 * 60 * 1000;
@@ -1260,6 +1301,234 @@ const DEVICE_ID_STORAGE_KEY =
 
 const DEVICE_ID =
   getOrCreateDeviceId();
+
+
+/* =========================
+   ACCESS CONTROL
+========================= */
+
+function showAccessChecking() {
+
+  clearMessage(
+    "accessError"
+  );
+
+  document
+    .getElementById("accessTitle")
+    .textContent =
+    "利用権限を確認中";
+
+  document
+    .getElementById("accessMessage")
+    .textContent =
+    "このアカウントの利用権限を確認しています…";
+
+  document
+    .getElementById("retryAccessButton")
+    .style.display =
+    "none";
+
+  showScreen(
+    "accessScreen"
+  );
+
+}
+
+
+function showAccessDenied() {
+
+  currentAccess =
+    null;
+
+  document
+    .getElementById("accessTitle")
+    .textContent =
+    "利用権限がありません";
+
+  document
+    .getElementById("accessMessage")
+    .textContent =
+    "このアカウントには、まだアプリの利用権限が設定されていません。";
+
+  document
+    .getElementById("retryAccessButton")
+    .style.display =
+    "block";
+
+  showScreen(
+    "accessScreen"
+  );
+
+}
+
+
+async function checkAccess(user) {
+
+  const accessRef =
+    ref(
+      database,
+      "access/" +
+        user.uid
+    );
+
+  const snapshot =
+    await get(
+      accessRef
+    );
+
+  if (!snapshot.exists()) {
+
+    currentAccess =
+      null;
+
+    return false;
+
+  }
+
+  const access =
+    snapshot.val() || {};
+
+  const type =
+    String(
+      access.type || ""
+    ).toLowerCase();
+
+  const allowedType =
+    type === "tester" ||
+    type === "paid" ||
+    type === "user";
+
+  const allowed =
+    access.active === true &&
+    allowedType;
+
+  currentAccess =
+    allowed
+      ? access
+      : null;
+
+  return allowed;
+
+}
+
+
+async function enterAfterAccessCheck(user) {
+
+  if (accessCheckRunning) {
+    return;
+  }
+
+  accessCheckRunning =
+    true;
+
+  showAccessChecking();
+
+  try {
+
+    const allowed =
+      await checkAccess(
+        user
+      );
+
+    if (!allowed) {
+
+      await releaseDeviceSession();
+
+      await showAccessDenied();
+
+      return;
+
+    }
+
+    await enterAppAfterSessionCheck(
+      user
+    );
+
+  } catch (error) {
+
+    console.error(
+      "access check failed:",
+      error
+    );
+
+    currentAccess =
+      null;
+
+    document
+      .getElementById("accessTitle")
+      .textContent =
+      "利用権限の確認エラー";
+
+    document
+      .getElementById("accessMessage")
+      .textContent =
+      "利用権限を確認できませんでした。通信状態を確認して、もう一度お試しください。";
+
+    document
+      .getElementById("retryAccessButton")
+      .style.display =
+      "block";
+
+    showFirebaseError(
+      "accessError",
+      error
+    );
+
+    showScreen(
+      "accessScreen"
+    );
+
+  } finally {
+
+    accessCheckRunning =
+      false;
+
+  }
+
+}
+
+
+document
+  .getElementById("retryAccessButton")
+  .addEventListener(
+    "click",
+    async () => {
+
+      if (!currentUser) {
+        return;
+      }
+
+      await enterAfterAccessCheck(
+        currentUser
+      );
+
+    }
+  );
+
+
+document
+  .getElementById("accessLogoutButton")
+  .addEventListener(
+    "click",
+    async () => {
+
+      try {
+
+        await releaseDeviceSession();
+
+        await signOut(auth);
+
+      } catch (error) {
+
+        showFirebaseError(
+          "accessError",
+          error
+        );
+
+      }
+
+    }
+  );
 
 
 /* =========================
@@ -5213,7 +5482,7 @@ onAuthStateChanged(
 
     if (user) {
 
-      await enterAppAfterSessionCheck(
+      await enterAfterAccessCheck(
         user
       );
 
@@ -5250,6 +5519,9 @@ onAuthStateChanged(
 
       currentAttendance =
         {};
+
+      currentAccess =
+        null;
 
       document
         .getElementById("eventList")
