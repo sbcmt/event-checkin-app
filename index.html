@@ -515,6 +515,22 @@ button {
   font-weight: 800;
 }
 
+.qrActionRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.qrActionRow .primaryButton {
+  width: 100%;
+  min-height: 64px;
+  margin-top: 0;
+  padding: 12px 8px;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
 .visitorStatus {
   margin-top: 13px;
   padding: 11px;
@@ -1202,9 +1218,17 @@ button {
         参加者データはまだ登録されていません
       </div>
 
-      <button id="downloadQrZipButton" class="primaryButton" disabled>
-        QRコードをまとめてダウンロード
-      </button>
+      <div class="qrActionRow">
+
+        <button id="downloadQrZipButton" class="primaryButton" disabled>
+          QRコードをまとめて<br>ダウンロード
+        </button>
+
+        <button id="printQrListButton" class="primaryButton" disabled>
+          QRコード一覧を<br>印刷
+        </button>
+
+      </div>
 
       <div id="qrProgress" class="infoNotice"></div>
 
@@ -3527,6 +3551,11 @@ function renderDashboardData() {
     total === 0;
 
   document
+    .getElementById("printQrListButton")
+    .disabled =
+    total === 0;
+
+  document
     .getElementById("scanButton")
     .disabled =
     total === 0;
@@ -4409,6 +4438,262 @@ document
   .addEventListener(
     "click",
     downloadAllQrZip
+  );
+
+
+/* =========================
+   QR PRINT LIST
+========================= */
+
+function escapePrintHtml(value) {
+
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+
+}
+
+
+async function printQrList() {
+
+  clearMessage(
+    "visitorError"
+  );
+
+  if (
+    currentVisitors.length === 0
+  ) {
+
+    showBoxMessage(
+      "visitorError",
+      "先にCSVをアップロードしてください。"
+    );
+
+    return;
+
+  }
+
+  if (
+    typeof QRCode === "undefined"
+  ) {
+
+    showBoxMessage(
+      "visitorError",
+      "QR生成ライブラリを読み込めませんでした。"
+    );
+
+    return;
+
+  }
+
+  const printWindow =
+    window.open(
+      "",
+      "_blank"
+    );
+
+  if (!printWindow) {
+
+    showBoxMessage(
+      "visitorError",
+      "印刷画面を開けませんでした。ブラウザのポップアップを許可して、もう一度お試しください。"
+    );
+
+    return;
+
+  }
+
+  printWindow.document.write(
+    "<!doctype html><html><head><meta charset=\"utf-8\"><title>QRコード一覧</title></head><body style=\"font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans JP',sans-serif;padding:24px;text-align:center;\">QRコード一覧を作成しています…</body></html>"
+  );
+
+  printWindow.document.close();
+
+  const progress =
+    document.getElementById(
+      "qrProgress"
+    );
+
+  const downloadButton =
+    document.getElementById(
+      "downloadQrZipButton"
+    );
+
+  const printButton =
+    document.getElementById(
+      "printQrListButton"
+    );
+
+  progress.style.display =
+    "block";
+
+  downloadButton.disabled =
+    true;
+
+  printButton.disabled =
+    true;
+
+  try {
+
+    const items = [];
+
+    for (
+      let i = 0;
+      i < currentVisitors.length;
+      i++
+    ) {
+
+      const visitor =
+        currentVisitors[i];
+
+      progress.textContent =
+        "印刷用QRコードを生成中… " +
+        (i + 1) +
+        " / " +
+        currentVisitors.length;
+
+      const canvas =
+        await makeQrCanvas(
+          visitor.id
+        );
+
+      items.push({
+        name:
+          visitor.name,
+        dataUrl:
+          canvas.toDataURL(
+            "image/png"
+          )
+      });
+
+    }
+
+    const pageSize = 10;
+
+    const pageCount =
+      Math.ceil(
+        items.length /
+        pageSize
+      );
+
+    const pages = [];
+
+    for (
+      let pageIndex = 0;
+      pageIndex < pageCount;
+      pageIndex++
+    ) {
+
+      const start =
+        pageIndex *
+        pageSize;
+
+      const pageItems =
+        items.slice(
+          start,
+          start + pageSize
+        );
+
+      const cards =
+        pageItems
+          .map(
+            item =>
+              `<div class="qr-card"><img src="${item.dataUrl}" alt="QR"><div class="person-name">${escapePrintHtml(item.name)}</div></div>`
+          )
+          .join("");
+
+      pages.push(
+        `<section class="print-page"><div class="page-head"><span>${escapePrintHtml(currentEvent?.name || "QRコード一覧")}</span><span>${pageIndex + 1} / ${pageCount}</span></div><div class="qr-grid">${cards}</div></section>`
+      );
+
+    }
+
+    const printHtml = `<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${escapePrintHtml(currentEvent?.name || "イベント")}_QRコード一覧</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #fff; color: #111; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP", "Yu Gothic", sans-serif; }
+  .screen-note { padding: 12px; text-align: center; font-size: 14px; color: #555; background: #f5f5f5; }
+  .print-page { width: 194mm; height: 281mm; margin: 0 auto; page-break-after: always; break-after: page; overflow: hidden; }
+  .print-page:last-child { page-break-after: auto; break-after: auto; }
+  .page-head { height: 9mm; display: flex; align-items: center; justify-content: space-between; padding: 0 2mm; font-size: 10pt; font-weight: 700; border-bottom: 0.25mm solid #bbb; }
+  .qr-grid { height: 272mm; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(5, 1fr); gap: 0; }
+  .qr-card { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 0; min-height: 0; padding: 2mm 4mm; border-right: 0.2mm solid #ddd; border-bottom: 0.2mm solid #ddd; }
+  .qr-card:nth-child(2n) { border-right: none; }
+  .qr-card:nth-last-child(-n+2) { border-bottom: none; }
+  .qr-card img { display: block; width: 39mm; height: 39mm; object-fit: contain; image-rendering: pixelated; }
+  .person-name { margin-top: 1.5mm; width: 100%; text-align: center; font-size: 12pt; font-weight: 800; line-height: 1.2; overflow-wrap: anywhere; }
+  @page { size: A4 portrait; margin: 8mm; }
+  @media print {
+    .screen-note { display: none; }
+    .print-page { margin: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="screen-note">印刷画面が開かない場合は、この画面の共有・印刷メニューから印刷してください。</div>
+${pages.join("")}
+<script>
+  window.addEventListener("load", () => {
+    setTimeout(() => window.print(), 350);
+  });
+<\/script>
+</body>
+</html>`;
+
+    printWindow.document.open();
+
+    printWindow.document.write(
+      printHtml
+    );
+
+    printWindow.document.close();
+
+    progress.textContent =
+      "QRコード一覧の印刷画面を開きました。";
+
+  } catch (error) {
+
+    console.error(error);
+
+    try {
+      printWindow.close();
+    } catch (_) {}
+
+    showBoxMessage(
+      "visitorError",
+      error.message ||
+      "QRコード一覧の作成に失敗しました。"
+    );
+
+  } finally {
+
+    const noVisitors =
+      currentVisitors.length === 0;
+
+    downloadButton.disabled =
+      noVisitors;
+
+    printButton.disabled =
+      noVisitors;
+
+  }
+
+}
+
+
+document
+  .getElementById("printQrListButton")
+  .addEventListener(
+    "click",
+    printQrList
   );
 
 
