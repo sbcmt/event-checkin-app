@@ -1121,6 +1121,10 @@ button {
     </div>
 
 
+    <button id="dashboardLogoutButton" class="secondaryButton">
+      ログアウト
+    </button>
+
     <button id="deleteEventButton" class="dangerButton">
       このイベントを削除
     </button>
@@ -5027,6 +5031,30 @@ document
 
     }
   );
+
+
+document
+  .getElementById("dashboardLogoutButton")
+  .addEventListener("click", async () => {
+
+    try {
+
+      await stopScanner();
+
+      await releaseDeviceSession();
+
+      await signOut(auth);
+
+    } catch (error) {
+
+      showFirebaseError(
+        "dashboardError",
+        error
+      );
+
+    }
+
+  });
 
 
 /* =========================
