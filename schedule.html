@@ -10,12 +10,10 @@
 :root{
   --bg:#f4f4f4;
   --card:#ffffff;
-  --soft:#eeeeee;
-  --soft2:#f8f8f8;
+  --soft:#f7f7f7;
   --line:#dddddd;
   --text:#111111;
   --sub:#737373;
-  --black:#111111;
 }
 
 *{box-sizing:border-box}
@@ -30,7 +28,6 @@ body{
               "Yu Gothic",Meiryo,"Segoe UI",sans-serif;
   -webkit-font-smoothing:antialiased;
 }
-
 button{font:inherit}
 
 .page{
@@ -67,46 +64,50 @@ button{font:inherit}
 /* ===== DAY tabs ===== */
 .day-tabs{
   display:grid;
-  grid-template-columns:repeat(3,minmax(0,1fr));
-  gap:9px;
+  gap:8px;
   margin-bottom:18px;
 }
+.day-tabs.cols-1{grid-template-columns:1fr}
+.day-tabs.cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.day-tabs.cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.day-tabs.cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.day-tabs.cols-5{grid-template-columns:repeat(5,minmax(0,1fr))}
+
 .day-tab{
   appearance:none;
   border:1px solid #d2d2d2;
-  border-radius:18px;
+  border-radius:16px;
   background:#fff;
   color:#222;
-  min-height:70px;
-  padding:10px 6px 9px;
+  min-height:68px;
+  padding:9px 5px 8px;
   cursor:pointer;
   transition:transform .08s ease, background .15s ease, color .15s ease;
 }
 .day-tab:active{transform:scale(.985)}
 .day-tab.active{
-  background:var(--black);
+  background:#111;
   color:#fff;
-  border-color:var(--black);
+  border-color:#111;
 }
 .day-tab .label{
   display:block;
-  font-size:16px;
+  font-size:15px;
   font-weight:900;
+  white-space:nowrap;
 }
 .day-tab .date{
   display:block;
   margin-top:4px;
-  font-size:13px;
+  font-size:12px;
   font-weight:800;
-  opacity:.75;
-}
-.day-tab .date.empty{
-  opacity:.35;
+  opacity:.72;
+  white-space:nowrap;
 }
 
 /* ===== Main card ===== */
 .schedule-wrap{
-  background:var(--card);
+  background:#fff;
   border-radius:24px;
   overflow:hidden;
   box-shadow:0 6px 24px rgba(0,0,0,.055);
@@ -142,7 +143,7 @@ button{font:inherit}
   grid-template-columns:92px 1fr;
   min-height:76px;
   border:1px solid #e1e1e1;
-  background:var(--soft2);
+  background:var(--soft);
   border-radius:17px;
   overflow:hidden;
 }
@@ -156,7 +157,6 @@ button{font:inherit}
   font-size:21px;
   font-weight:900;
   font-variant-numeric:tabular-nums;
-  letter-spacing:-.01em;
 }
 .detail{
   display:flex;
@@ -192,7 +192,6 @@ button{font:inherit}
   font-size:14px;
   line-height:1.75;
 }
-
 .footer{
   margin-top:16px;
   color:#a0a0a0;
@@ -200,14 +199,20 @@ button{font:inherit}
   text-align:center;
 }
 
-/* ===== Mobile ===== */
+/* 5日表示でもスマホで読めるように調整 */
+@media(max-width:560px){
+  .day-tabs.cols-4,
+  .day-tabs.cols-5{
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+}
 @media(max-width:430px){
   .page{padding-left:12px;padding-right:12px}
   .event-name{font-size:32px}
   .day-tabs{gap:7px}
-  .day-tab{min-height:66px;border-radius:16px}
-  .day-tab .label{font-size:15px}
-  .day-tab .date{font-size:12px}
+  .day-tab{min-height:64px;border-radius:15px}
+  .day-tab .label{font-size:14px}
+  .day-tab .date{font-size:11px}
   .schedule-head{padding:21px 18px 14px}
   .day-title{font-size:26px}
   .schedule-body{padding:13px 10px 15px}
@@ -220,14 +225,6 @@ button{font:inherit}
   .detail{padding:12px 13px}
   .item-title{font-size:17px}
   .item-note{font-size:13px}
-}
-
-@media(max-width:350px){
-  .event-name{font-size:29px}
-  .day-tab .label{font-size:14px}
-  .day-tab .date{font-size:11px}
-  .schedule-row{grid-template-columns:70px 1fr}
-  .time{font-size:17px}
 }
 </style>
 </head>
@@ -262,28 +259,34 @@ button{font:inherit}
 
 <script>
 /*
-  現在は画面確認用のサンプルデータです。
-  次の工程でFirebase上のイベントデータと接続します。
+  現在は表示確認用データです。
+  次の工程で管理者画面/Firebaseと接続します。
 
-  仕様：
-  ・DAY1〜DAY3
-  ・各DAY最大20件
+  本番仕様：
+  ・開催日数を 1〜5日から選択
+  ・選んだ日数だけDAYタブを表示
+  ・各DAY 最大20件
   ・1件につき「開始時間 / 内容 / 備考」
+  ・日数を減らしてもFirebase上の未表示DAYデータは保持する予定
 */
 
 const scheduleData = {
   eventName: "SBCMT",
+
+  // ★ここが開催日数。1〜5で変更可能
+  dayCount: 2,
+
   days: [
     {
       label: "DAY1",
       date: "11月21日",
       items: [
-        { time: "8:00",  title: "入場開始",       note: "" },
-        { time: "10:00", title: "受付開始",       note: "本部幕にて受付" },
-        { time: "14:00", title: "開会式",         note: "椅子と飲み物持参" },
-        { time: "14:20", title: "ビンゴ大会",     note: "" },
+        { time: "8:00",  title: "入場開始", note: "" },
+        { time: "10:00", title: "受付開始", note: "本部幕にて受付" },
+        { time: "14:00", title: "開会式", note: "椅子と飲み物持参" },
+        { time: "14:20", title: "ビンゴ大会", note: "" },
         { time: "15:10", title: "じゃんけん大会", note: "" },
-        { time: "16:00", title: "フリータイム",   note: "" },
+        { time: "16:00", title: "フリータイム", note: "" },
         { time: "22:00", title: "クワイアットタイム", note: "" }
       ]
     },
@@ -296,7 +299,17 @@ const scheduleData = {
     },
     {
       label: "DAY3",
-      date: "",
+      date: "11月23日",
+      items: []
+    },
+    {
+      label: "DAY4",
+      date: "11月24日",
+      items: []
+    },
+    {
+      label: "DAY5",
+      date: "11月25日",
       items: []
     }
   ]
@@ -304,18 +317,22 @@ const scheduleData = {
 
 let activeDayIndex = 0;
 
-const eventNameEl   = document.getElementById("eventName");
-const dayTabsEl     = document.getElementById("dayTabs");
-const dayTitleEl    = document.getElementById("dayTitle");
-const scheduleListEl= document.getElementById("scheduleList");
-const emptyStateEl  = document.getElementById("emptyState");
+const eventNameEl    = document.getElementById("eventName");
+const dayTabsEl      = document.getElementById("dayTabs");
+const dayTitleEl     = document.getElementById("dayTitle");
+const scheduleListEl = document.getElementById("scheduleList");
+const emptyStateEl   = document.getElementById("emptyState");
+
+const safeDayCount = Math.max(1, Math.min(5, Number(scheduleData.dayCount) || 1));
+const visibleDays = scheduleData.days.slice(0, safeDayCount);
 
 eventNameEl.textContent = scheduleData.eventName || "イベント";
 
 function renderTabs(){
   dayTabsEl.innerHTML = "";
+  dayTabsEl.className = `day-tabs cols-${safeDayCount}`;
 
-  scheduleData.days.forEach((day,index)=>{
+  visibleDays.forEach((day,index)=>{
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "day-tab" + (index === activeDayIndex ? " active" : "");
@@ -325,8 +342,8 @@ function renderTabs(){
     label.textContent = day.label || `DAY${index+1}`;
 
     const date = document.createElement("span");
-    date.className = "date" + (!day.date ? " empty" : "");
-    date.textContent = day.date || "未設定";
+    date.className = "date";
+    date.textContent = day.date || "日付未設定";
 
     btn.appendChild(label);
     btn.appendChild(date);
@@ -334,7 +351,7 @@ function renderTabs(){
     btn.addEventListener("click",()=>{
       activeDayIndex = index;
       render();
-      window.scrollTo({ top:0, behavior:"smooth" });
+      window.scrollTo({top:0,behavior:"smooth"});
     });
 
     dayTabsEl.appendChild(btn);
@@ -342,11 +359,18 @@ function renderTabs(){
 }
 
 function renderSchedule(){
-  const day = scheduleData.days[activeDayIndex];
+  const day = visibleDays[activeDayIndex];
+
+  if(!day){
+    dayTitleEl.textContent = "";
+    scheduleListEl.innerHTML = "";
+    emptyStateEl.style.display = "block";
+    return;
+  }
 
   dayTitleEl.textContent = day.date
     ? `${day.label}  ${day.date}`
-    : `${day.label}`;
+    : day.label;
 
   scheduleListEl.innerHTML = "";
 
