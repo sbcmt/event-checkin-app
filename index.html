@@ -995,6 +995,73 @@ button {
   }
 }
 
+
+/* ===== SCHEDULE EDITOR LAYOUT FIX v2026.10.01.4 ===== */
+.scheduleEditRowTop{
+  display:grid !important;
+  grid-template-columns:minmax(0,3fr) minmax(0,6fr) !important;
+  gap:10px !important;
+  align-items:end;
+}
+
+.scheduleEditRowTop > div{
+  min-width:0 !important;
+}
+
+.scheduleTimeInput,
+.scheduleTextInput{
+  display:block !important;
+  width:100% !important;
+  max-width:100% !important;
+  min-width:0 !important;
+  height:52px !important;
+  min-height:52px !important;
+  padding:10px 12px !important;
+  margin:0 !important;
+  box-sizing:border-box !important;
+  border:1px solid #cfcfcf !important;
+  border-radius:12px !important;
+  background:#fff !important;
+  color:#111 !important;
+  font-size:16px !important;
+  line-height:1.2 !important;
+  box-shadow:none !important;
+  -webkit-appearance:none !important;
+  appearance:none !important;
+}
+
+.scheduleTimeInput{
+  text-align:center !important;
+  font-variant-numeric:tabular-nums;
+}
+
+.scheduleTimeInput::-webkit-date-and-time-value{
+  text-align:center;
+  min-height:1.2em;
+}
+
+.scheduleNoteWrap{
+  margin-top:10px !important;
+}
+
+@media(max-width:560px){
+  .scheduleEditRowTop{
+    grid-template-columns:minmax(0,3fr) minmax(0,6fr) !important;
+    gap:8px !important;
+  }
+
+  .scheduleEditorActions{
+    grid-template-columns:1fr !important;
+  }
+
+  .scheduleTimeInput,
+  .scheduleTextInput{
+    height:50px !important;
+    min-height:50px !important;
+    font-size:16px !important;
+  }
+}
+
 </style>
 </head>
 
@@ -1575,7 +1642,7 @@ button {
 /* =========================
    APP VERSION CHECK
 ========================= */
-const APP_VERSION = "2026.10.01.3";
+const APP_VERSION = "2026.10.01.4";
 const APP_VERSION_FILE = "version.json";
 
 (async function checkAppVersion() {
