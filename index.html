@@ -1055,14 +1055,95 @@ button {
 }
 
 
-/* ===== SCHEDULE DATE FIELD FINAL FIX v2026.10.01.9 ===== */
+
+/* ===== NATIVE DATE/TIME PICKERS WITH FIXED LAYOUT v2026.10.01.10 ===== */
+
 .scheduleDayEditor .field{
   width:100% !important;
   min-width:0 !important;
   max-width:100% !important;
 }
 
-#scheduleActiveDate.scheduleDateInput{
+.scheduleNativePickerShell{
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  height:50px;
+  min-height:50px;
+  padding:10px 12px;
+  box-sizing:border-box;
+  overflow:hidden;
+  border:1px solid #cfcfcf;
+  border-radius:11px;
+  background:#fff;
+  color:#111;
+}
+
+.scheduleNativePickerDisplay{
+  display:block;
+  width:100%;
+  min-width:0;
+  overflow:hidden;
+  text-align:center;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+  font-size:16px;
+  line-height:1.2;
+  color:#111;
+  font-variant-numeric:tabular-nums;
+  pointer-events:none;
+}
+
+.scheduleNativePickerDisplay.placeholder{
+  color:#aaa;
+}
+
+/* Native iPhone/iPad picker is kept above the shell, but invisible. */
+.scheduleNativePickerInput{
+  position:absolute !important;
+  inset:0 !important;
+  display:block !important;
+  width:100% !important;
+  height:100% !important;
+  max-width:100% !important;
+  min-width:0 !important;
+  margin:0 !important;
+  padding:0 !important;
+  border:0 !important;
+  opacity:0.001 !important;
+  cursor:pointer !important;
+  box-sizing:border-box !important;
+  -webkit-appearance:auto !important;
+  appearance:auto !important;
+}
+
+/* Time/content stay 3:6 on PC, iPhone and iPad. */
+.scheduleEditRowTop{
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) minmax(0,2fr) !important;
+  gap:8px !important;
+  align-items:end !important;
+  width:100% !important;
+  min-width:0 !important;
+}
+
+.scheduleEditRowTop > div{
+  width:100% !important;
+  min-width:0 !important;
+  max-width:100% !important;
+}
+
+.scheduleTimePickerShell{
+  width:100% !important;
+  min-width:0 !important;
+  max-width:100% !important;
+}
+
+.scheduleTextInput{
   display:block !important;
   width:100% !important;
   max-width:100% !important;
@@ -1078,10 +1159,29 @@ button {
   color:#111 !important;
   font-size:16px !important;
   line-height:1.2 !important;
-  text-align:center !important;
   box-shadow:none !important;
-  -webkit-appearance:none !important;
-  appearance:none !important;
+}
+
+.scheduleNoteWrap{
+  width:100% !important;
+  min-width:0 !important;
+  margin-top:10px !important;
+}
+
+@media(max-width:560px){
+  .scheduleEditRowTop{
+    grid-template-columns:minmax(0,1fr) minmax(0,2fr) !important;
+  }
+
+  .scheduleEditorActions{
+    grid-template-columns:1fr !important;
+  }
+}
+
+@media(max-width:420px){
+  .scheduleEditRowTop{
+    grid-template-columns:minmax(0,1fr) minmax(0,2fr) !important;
+  }
 }
 
 </style>
@@ -1634,7 +1734,10 @@ button {
 
         <div class="field">
           <label class="fieldLabel" for="scheduleActiveDate">日付</label>
-          <input id="scheduleActiveDate" class="scheduleDateInput" type="text" inputmode="numeric" autocomplete="off" placeholder="2026/11/21" maxlength="10">
+          <div class="scheduleNativePickerShell scheduleDatePickerShell">
+            <span id="scheduleActiveDateDisplay" class="scheduleNativePickerDisplay">日付を選択</span>
+            <input id="scheduleActiveDate" class="scheduleNativePickerInput" type="date" aria-label="日付を選択">
+          </div>
         </div>
 
         <div id="scheduleItemCount" class="scheduleItemCount">0 / 20件</div>
@@ -1664,7 +1767,7 @@ button {
 /* =========================
    APP VERSION CHECK
 ========================= */
-const APP_VERSION = "2026.10.01.9";
+const APP_VERSION = "2026.10.01.10";
 const APP_VERSION_FILE = "version.json";
 
 (async function checkAppVersion() {
@@ -7224,68 +7327,24 @@ function normalizeScheduleDraft(value) {
 }
 
 
-function formatScheduleDateInputValue(dateValue) {
-  if (!dateValue) return "";
-
-  const value =
-    String(dateValue).trim();
-
-  const m =
-    value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-
-  if (!m) {
-    return value.replace(/-/g, "/");
+function formatScheduleDateDisplay(dateValue) {
+  if (!dateValue) {
+    return "日付を選択";
   }
 
-  return `${m[1]}/${m[2]}/${m[3]}`;
-}
+  const parts =
+    String(dateValue).split("-");
 
-function normalizeScheduleDateInput(value) {
-  const raw =
-    String(value || "")
-      .trim()
-      .replace(/\./g, "/")
-      .replace(/-/g, "/");
-
-  const m =
-    raw.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/);
-
-  if (!m) {
-    return "";
-  }
-
-  const y = Number(m[1]);
-  const mo = Number(m[2]);
-  const d = Number(m[3]);
-
-  if (
-    y < 2000 ||
-    y > 2100 ||
-    mo < 1 ||
-    mo > 12 ||
-    d < 1 ||
-    d > 31
-  ) {
-    return "";
-  }
-
-  const date =
-    new Date(y, mo - 1, d);
-
-  if (
-    date.getFullYear() !== y ||
-    date.getMonth() !== mo - 1 ||
-    date.getDate() !== d
-  ) {
-    return "";
+  if (parts.length !== 3) {
+    return String(dateValue);
   }
 
   return (
-    String(y).padStart(4, "0") +
-    "-" +
-    String(mo).padStart(2, "0") +
-    "-" +
-    String(d).padStart(2, "0")
+    Number(parts[0]) +
+    "/" +
+    Number(parts[1]) +
+    "/" +
+    Number(parts[2])
   );
 }
 
@@ -7591,14 +7650,28 @@ function renderActiveScheduleDay() {
         1
       );
 
-  document
-    .getElementById(
+  const scheduleDateInput =
+    document.getElementById(
       "scheduleActiveDate"
-    )
-    .value =
-    formatScheduleDateInputValue(
+    );
+
+  const scheduleDateDisplay =
+    document.getElementById(
+      "scheduleActiveDateDisplay"
+    );
+
+  scheduleDateInput.value =
+    day.date || "";
+
+  scheduleDateDisplay.textContent =
+    formatScheduleDateDisplay(
       day.date || ""
     );
+
+  scheduleDateDisplay.classList.toggle(
+    "placeholder",
+    !day.date
+  );
 
   const rows =
     document.getElementById(
@@ -7663,134 +7736,73 @@ function renderActiveScheduleDay() {
       timeLabel.textContent =
         "開始時間";
 
+      const timeShell =
+        document.createElement(
+          "div"
+        );
+
+      timeShell.className =
+        "scheduleNativePickerShell scheduleTimePickerShell";
+
+      const timeDisplay =
+        document.createElement(
+          "span"
+        );
+
+      timeDisplay.className =
+        "scheduleNativePickerDisplay";
+
+      timeDisplay.textContent =
+        item.time || "時間を選択";
+
+      timeDisplay.classList.toggle(
+        "placeholder",
+        !item.time
+      );
+
       const timeInput =
         document.createElement(
           "input"
         );
 
       timeInput.type =
-        "text";
-
-      timeInput.inputMode =
-        "numeric";
-
-      timeInput.autocomplete =
-        "off";
-
-      timeInput.maxLength =
-        5;
-
-      timeInput.placeholder =
-        "8:00";
+        "time";
 
       timeInput.className =
-        "scheduleTimeInput";
+        "scheduleNativePickerInput";
+
+      timeInput.setAttribute(
+        "aria-label",
+        "開始時間を選択"
+      );
 
       timeInput.value =
         item.time || "";
 
       timeInput.addEventListener(
-        "input",
+        "change",
         () => {
 
-          let value =
-            timeInput.value
-              .replace(/[^0-9:]/g, "")
-              .slice(0, 5);
-
-          timeInput.value =
-            value;
-
           item.time =
-            value;
+            timeInput.value || "";
+
+          timeDisplay.textContent =
+            item.time || "時間を選択";
+
+          timeDisplay.classList.toggle(
+            "placeholder",
+            !item.time
+          );
 
         }
       );
 
-      timeInput.addEventListener(
-        "blur",
-        () => {
+      timeShell.appendChild(
+        timeDisplay
+      );
 
-          const raw =
-            String(
-              timeInput.value || ""
-            ).trim();
-
-          let normalized =
-            raw;
-
-          const digits =
-            raw.replace(/\D/g, "");
-
-          if (/^\d{3,4}$/.test(digits)) {
-            const hour =
-              Number(
-                digits.slice(0, -2)
-              );
-
-            const minute =
-              Number(
-                digits.slice(-2)
-              );
-
-            if (
-              hour >= 0 &&
-              hour <= 23 &&
-              minute >= 0 &&
-              minute <= 59
-            ) {
-              normalized =
-                hour +
-                ":" +
-                String(minute).padStart(2, "0");
-            }
-
-          } else if (/^\d{1,2}$/.test(digits)) {
-            const hour =
-              Number(digits);
-
-            if (
-              hour >= 0 &&
-              hour <= 23
-            ) {
-              normalized =
-                hour + ":00";
-            }
-
-          } else {
-            const match =
-              raw.match(
-                /^(\d{1,2}):(\d{2})$/
-              );
-
-            if (match) {
-              const hour =
-                Number(match[1]);
-
-              const minute =
-                Number(match[2]);
-
-              if (
-                hour >= 0 &&
-                hour <= 23 &&
-                minute >= 0 &&
-                minute <= 59
-              ) {
-                normalized =
-                  hour +
-                  ":" +
-                  String(minute).padStart(2, "0");
-              }
-            }
-          }
-
-          timeInput.value =
-            normalized;
-
-          item.time =
-            normalized;
-
-        }
+      timeShell.appendChild(
+        timeInput
       );
 
       timeWrap.appendChild(
@@ -7798,7 +7810,7 @@ function renderActiveScheduleDay() {
       );
 
       timeWrap.appendChild(
-        timeInput
+        timeShell
       );
 
       const titleWrap =
@@ -8039,24 +8051,7 @@ document
     "scheduleActiveDate"
   )
   .addEventListener(
-    "input",
-    event => {
-      let value =
-        String(event.target.value || "")
-          .replace(/[^0-9\/\-.]/g, "")
-          .slice(0, 10);
-
-      event.target.value =
-        value;
-    }
-  );
-
-document
-  .getElementById(
-    "scheduleActiveDate"
-  )
-  .addEventListener(
-    "blur",
+    "change",
     event => {
 
       if (!scheduleWorkingDraft) {
@@ -8073,40 +8068,14 @@ document
         return;
       }
 
-      const normalized =
-        normalizeScheduleDateInput(
-          event.target.value
-        );
-
-      if (!normalized) {
-        if (
-          String(event.target.value || "").trim()
-        ) {
-          event.target.value =
-            formatScheduleDateInputValue(
-              day.date || ""
-            );
-
-          setScheduleMessage(
-            "日付は 2026/11/21 の形式で入力してください。",
-            true
-          );
-        }
-        return;
-      }
-
       day.date =
-        normalized;
-
-      event.target.value =
-        formatScheduleDateInputValue(
-          normalized
-        );
+        event.target.value || "";
 
       renderScheduleEditor();
 
     }
   );
+
 
 document
   .getElementById(
