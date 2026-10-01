@@ -1767,7 +1767,7 @@ button {
 /* =========================
    APP VERSION CHECK
 ========================= */
-const APP_VERSION = "2026.10.01.10";
+const APP_VERSION = "2026.10.01.11";
 const APP_VERSION_FILE = "version.json";
 
 (async function checkAppVersion() {
@@ -1935,6 +1935,12 @@ let scannerRunning =
   false;
 
 let alreadyRead =
+  false;
+
+let scanAudioContext =
+  null;
+
+let scanSoundUnlocked =
   false;
 
 let expiryCleanupRunning =
@@ -6282,6 +6288,224 @@ document
   );
 
 
+
+/* =========================
+   QR SUCCESS SOUND
+========================= */
+
+function getScanAudioContext() {
+  if (!scanAudioContext) {
+    const AudioContextClass =
+      window.AudioContext ||
+      window.webkitAudioContext;
+
+    if (!AudioContextClass) {
+      return null;
+    }
+
+    scanAudioContext =
+      new AudioContextClass();
+  }
+
+  return scanAudioContext;
+}
+
+
+async function unlockScanSound() {
+  try {
+    const context =
+      getScanAudioContext();
+
+    if (!context) {
+      return;
+    }
+
+    if (
+      context.state ===
+      "suspended"
+    ) {
+      await context.resume();
+    }
+
+    /*
+      iPhone / iPadではユーザー操作時に
+      一度音声を有効化しておく必要があるため、
+      聞こえない短い音を再生してアンロックします。
+    */
+    const oscillator =
+      context.createOscillator();
+
+    const gain =
+      context.createGain();
+
+    gain.gain.setValueAtTime(
+      0.00001,
+      context.currentTime
+    );
+
+    oscillator.connect(gain);
+    gain.connect(
+      context.destination
+    );
+
+    oscillator.start();
+    oscillator.stop(
+      context.currentTime +
+      0.02
+    );
+
+    scanSoundUnlocked =
+      true;
+
+  } catch (error) {
+    console.warn(
+      "QR sound unlock skipped:",
+      error
+    );
+  }
+}
+
+
+async function playScanSuccessSound() {
+  try {
+    const context =
+      getScanAudioContext();
+
+    if (!context) {
+      return;
+    }
+
+    if (
+      context.state ===
+      "suspended"
+    ) {
+      await context.resume();
+    }
+
+    const start =
+      context.currentTime;
+
+    const master =
+      context.createGain();
+
+    master.gain.setValueAtTime(
+      0.0001,
+      start
+    );
+
+    master.gain.exponentialRampToValueAtTime(
+      0.15,
+      start + 0.015
+    );
+
+    master.gain.exponentialRampToValueAtTime(
+      0.0001,
+      start + 0.38
+    );
+
+    master.connect(
+      context.destination
+    );
+
+    /*
+      短い「ピロン♪」
+      1音目 → 2音目を少し高くして、
+      受付完了が分かりやすい音にしています。
+    */
+    const first =
+      context.createOscillator();
+
+    const firstGain =
+      context.createGain();
+
+    first.type =
+      "sine";
+
+    first.frequency.setValueAtTime(
+      880,
+      start
+    );
+
+    firstGain.gain.setValueAtTime(
+      0.9,
+      start
+    );
+
+    firstGain.gain.exponentialRampToValueAtTime(
+      0.0001,
+      start + 0.16
+    );
+
+    first.connect(
+      firstGain
+    );
+
+    firstGain.connect(
+      master
+    );
+
+    first.start(
+      start
+    );
+
+    first.stop(
+      start + 0.17
+    );
+
+    const second =
+      context.createOscillator();
+
+    const secondGain =
+      context.createGain();
+
+    second.type =
+      "sine";
+
+    second.frequency.setValueAtTime(
+      1174.66,
+      start + 0.12
+    );
+
+    secondGain.gain.setValueAtTime(
+      0.0001,
+      start
+    );
+
+    secondGain.gain.setValueAtTime(
+      0.85,
+      start + 0.12
+    );
+
+    secondGain.gain.exponentialRampToValueAtTime(
+      0.0001,
+      start + 0.36
+    );
+
+    second.connect(
+      secondGain
+    );
+
+    secondGain.connect(
+      master
+    );
+
+    second.start(
+      start + 0.12
+    );
+
+    second.stop(
+      start + 0.38
+    );
+
+  } catch (error) {
+    console.warn(
+      "QR success sound skipped:",
+      error
+    );
+  }
+}
+
+
 /* =========================
    QR SCANNER
 ========================= */
@@ -6669,6 +6893,8 @@ async function processScannedId(
 
     await stopScanner();
 
+    await playScanSuccessSound();
+
     showScanResult(
       visitor,
       now,
@@ -6781,7 +7007,13 @@ document
   .getElementById("scanButton")
   .addEventListener(
     "click",
-    startScanner
+    async () => {
+
+      await unlockScanSound();
+
+      startScanner();
+
+    }
   );
 
 
@@ -6790,6 +7022,8 @@ document
   .addEventListener(
     "click",
     async () => {
+
+      await unlockScanSound();
 
       await stopScanner();
 
