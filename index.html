@@ -1054,6 +1054,36 @@ button {
   text-align:center !important;
 }
 
+
+/* ===== SCHEDULE DATE FIELD FINAL FIX v2026.10.01.9 ===== */
+.scheduleDayEditor .field{
+  width:100% !important;
+  min-width:0 !important;
+  max-width:100% !important;
+}
+
+#scheduleActiveDate.scheduleDateInput{
+  display:block !important;
+  width:100% !important;
+  max-width:100% !important;
+  min-width:0 !important;
+  height:50px !important;
+  min-height:50px !important;
+  margin:0 !important;
+  padding:10px 12px !important;
+  box-sizing:border-box !important;
+  border:1px solid #cfcfcf !important;
+  border-radius:11px !important;
+  background:#fff !important;
+  color:#111 !important;
+  font-size:16px !important;
+  line-height:1.2 !important;
+  text-align:center !important;
+  box-shadow:none !important;
+  -webkit-appearance:none !important;
+  appearance:none !important;
+}
+
 </style>
 </head>
 
@@ -1604,7 +1634,7 @@ button {
 
         <div class="field">
           <label class="fieldLabel" for="scheduleActiveDate">日付</label>
-          <input id="scheduleActiveDate" class="input" type="date">
+          <input id="scheduleActiveDate" class="scheduleDateInput" type="text" inputmode="numeric" autocomplete="off" placeholder="2026/11/21" maxlength="10">
         </div>
 
         <div id="scheduleItemCount" class="scheduleItemCount">0 / 20件</div>
@@ -1634,7 +1664,7 @@ button {
 /* =========================
    APP VERSION CHECK
 ========================= */
-const APP_VERSION = "2026.10.01.7";
+const APP_VERSION = "2026.10.01.9";
 const APP_VERSION_FILE = "version.json";
 
 (async function checkAppVersion() {
@@ -1753,6 +1783,12 @@ const publishScheduleCallable =
   httpsCallable(
     functions,
     "publishSchedule"
+  );
+
+const sendScheduleMailCallable =
+  httpsCallable(
+    functions,
+    "sendScheduleMail"
   );
 
 
@@ -3887,6 +3923,11 @@ async function maybeCleanupExpiredData(data) {
 
     changes[
       basePath +
+      "/scheduleMailStatus"
+    ] = null;
+
+    changes[
+      basePath +
       "/uploadedAt"
     ] = null;
 
@@ -5965,6 +6006,74 @@ document
   );
 
 
+
+/* =========================
+   SCHEDULE MAIL AFTER REQUIRED QR SCAN
+========================= */
+
+async function sendScheduleMailAfterRequiredScan(
+  visitor
+) {
+  if (
+    !visitor ||
+    !currentUser ||
+    !currentEventId
+  ) {
+    return;
+  }
+
+  try {
+    const result =
+      await sendScheduleMailCallable({
+        eventId:
+          currentEventId,
+
+        participantKey:
+          visitor.key
+      });
+
+    const data =
+      result.data || {};
+
+    if (data.sent === true) {
+      console.log(
+        "Schedule mail sent:",
+        visitor.id
+      );
+
+      return;
+    }
+
+    if (data.alreadySent === true) {
+      console.log(
+        "Schedule mail already sent:",
+        visitor.id
+      );
+
+      return;
+    }
+
+    if (data.skipped) {
+      console.log(
+        "Schedule mail skipped:",
+        data.skipped,
+        visitor.id
+      );
+    }
+
+  } catch (error) {
+    /*
+      入場/受付処理そのものは成功扱いのままにする。
+      メール障害でQR受付を止めない。
+    */
+    console.error(
+      "Schedule mail send error:",
+      error
+    );
+  }
+}
+
+
 /* =========================
    SCAN MODE
 ========================= */
@@ -6394,6 +6503,20 @@ async function processScannedId(
       true
     );
 
+    /*
+      必須項目（status1）の再読取時も、
+      まだスケジュールメールが送られていなければ送信を試みる。
+      Functions側で重複送信を防止。
+    */
+    if (
+      currentScanMode ===
+      "status1"
+    ) {
+      sendScheduleMailAfterRequiredScan(
+        visitor
+      );
+    }
+
     return;
 
   }
@@ -6451,6 +6574,20 @@ async function processScannedId(
 
     renderDashboardData();
     renderInlineVisitorList();
+
+    /*
+      status1 はイベント作成時の必須項目。
+      QRでstatus1を記録した時だけ、参加者へ
+      公開済みスケジュールURLを自動送信する。
+    */
+    if (
+      currentScanMode ===
+      "status1"
+    ) {
+      sendScheduleMailAfterRequiredScan(
+        visitor
+      );
+    }
 
   } catch (error) {
 
@@ -7086,6 +7223,73 @@ function normalizeScheduleDraft(value) {
   return result;
 }
 
+
+function formatScheduleDateInputValue(dateValue) {
+  if (!dateValue) return "";
+
+  const value =
+    String(dateValue).trim();
+
+  const m =
+    value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+
+  if (!m) {
+    return value.replace(/-/g, "/");
+  }
+
+  return `${m[1]}/${m[2]}/${m[3]}`;
+}
+
+function normalizeScheduleDateInput(value) {
+  const raw =
+    String(value || "")
+      .trim()
+      .replace(/\./g, "/")
+      .replace(/-/g, "/");
+
+  const m =
+    raw.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/);
+
+  if (!m) {
+    return "";
+  }
+
+  const y = Number(m[1]);
+  const mo = Number(m[2]);
+  const d = Number(m[3]);
+
+  if (
+    y < 2000 ||
+    y > 2100 ||
+    mo < 1 ||
+    mo > 12 ||
+    d < 1 ||
+    d > 31
+  ) {
+    return "";
+  }
+
+  const date =
+    new Date(y, mo - 1, d);
+
+  if (
+    date.getFullYear() !== y ||
+    date.getMonth() !== mo - 1 ||
+    date.getDate() !== d
+  ) {
+    return "";
+  }
+
+  return (
+    String(y).padStart(4, "0") +
+    "-" +
+    String(mo).padStart(2, "0") +
+    "-" +
+    String(d).padStart(2, "0")
+  );
+}
+
+
 function formatScheduleTabDate(dateValue) {
   if (!dateValue) {
     return "日付未設定";
@@ -7392,7 +7596,9 @@ function renderActiveScheduleDay() {
       "scheduleActiveDate"
     )
     .value =
-    day.date || "";
+    formatScheduleDateInputValue(
+      day.date || ""
+    );
 
   const rows =
     document.getElementById(
@@ -7833,7 +8039,24 @@ document
     "scheduleActiveDate"
   )
   .addEventListener(
-    "change",
+    "input",
+    event => {
+      let value =
+        String(event.target.value || "")
+          .replace(/[^0-9\/\-.]/g, "")
+          .slice(0, 10);
+
+      event.target.value =
+        value;
+    }
+  );
+
+document
+  .getElementById(
+    "scheduleActiveDate"
+  )
+  .addEventListener(
+    "blur",
     event => {
 
       if (!scheduleWorkingDraft) {
@@ -7850,8 +8073,35 @@ document
         return;
       }
 
+      const normalized =
+        normalizeScheduleDateInput(
+          event.target.value
+        );
+
+      if (!normalized) {
+        if (
+          String(event.target.value || "").trim()
+        ) {
+          event.target.value =
+            formatScheduleDateInputValue(
+              day.date || ""
+            );
+
+          setScheduleMessage(
+            "日付は 2026/11/21 の形式で入力してください。",
+            true
+          );
+        }
+        return;
+      }
+
       day.date =
-        event.target.value || "";
+        normalized;
+
+      event.target.value =
+        formatScheduleDateInputValue(
+          normalized
+        );
 
       renderScheduleEditor();
 
