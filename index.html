@@ -929,6 +929,72 @@ button {
   }
 }
 
+
+/* ===== SCHEDULE SHARE ===== */
+.scheduleShareArea{
+  display:none;
+  margin-top:12px;
+  padding:14px;
+  border:1px solid #ddd;
+  border-radius:16px;
+  background:#fafafa;
+}
+.scheduleShareLabel{
+  color:#777;
+  font-size:11px;
+  font-weight:800;
+}
+.scheduleShareUrl{
+  margin-top:6px;
+  padding:10px 11px;
+  border:1px solid #ddd;
+  border-radius:11px;
+  background:#fff;
+  font-size:12px;
+  line-height:1.5;
+  word-break:break-all;
+}
+.scheduleShareButtons{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-top:10px;
+}
+.scheduleShareButtons button{
+  margin-top:0 !important;
+}
+.scheduleQrArea{
+  display:none;
+  margin-top:12px;
+  padding:14px;
+  border-radius:14px;
+  background:#fff;
+  text-align:center;
+}
+.scheduleQrHolder{
+  display:flex;
+  justify-content:center;
+  margin-top:8px;
+}
+.scheduleQrTitle{
+  font-size:14px;
+  font-weight:900;
+}
+.schedulePublishMessage{
+  display:none;
+  margin-top:10px;
+  padding:10px;
+  border-radius:11px;
+  text-align:center;
+  font-size:12px;
+  font-weight:800;
+}
+@media(max-width:560px){
+  .scheduleShareButtons{
+    grid-template-columns:1fr;
+  }
+}
+
 </style>
 </head>
 
@@ -1327,7 +1393,40 @@ button {
         DAY1〜DAY5のタイムテーブルを設定します。<br>
         1日につき最大20件まで登録できます。
       </div>
-      <button id="openScheduleEditorButton" class="secondaryButton">スケジュールを編集</button>
+
+      <button id="openScheduleEditorButton" class="secondaryButton">
+        スケジュールを編集
+      </button>
+
+      <button id="publishScheduleButton" class="primaryButton">
+        スケジュールを公開・更新
+      </button>
+
+      <div id="schedulePublishMessage" class="schedulePublishMessage"></div>
+
+      <div id="scheduleShareArea" class="scheduleShareArea">
+        <div class="scheduleShareLabel">参加者向けスケジュールURL</div>
+        <div id="scheduleShareUrl" class="scheduleShareUrl"></div>
+
+        <div class="scheduleShareButtons">
+          <button id="copyScheduleUrlButton" class="secondaryButton">
+            URLをコピー
+          </button>
+
+          <button id="openScheduleUrlButton" class="secondaryButton">
+            スケジュールを開く
+          </button>
+
+          <button id="toggleScheduleQrButton" class="secondaryButton">
+            QRコードを表示
+          </button>
+        </div>
+
+        <div id="scheduleQrArea" class="scheduleQrArea">
+          <div class="scheduleQrTitle">スケジュールQR</div>
+          <div id="scheduleQrHolder" class="scheduleQrHolder"></div>
+        </div>
+      </div>
     </div>
 
     <!-- RESET -->
@@ -1476,7 +1575,7 @@ button {
 /* =========================
    APP VERSION CHECK
 ========================= */
-const APP_VERSION = "2026.10.01.2";
+const APP_VERSION = "2026.10.01.3";
 const APP_VERSION_FILE = "version.json";
 
 (async function checkAppVersion() {
@@ -1591,6 +1690,12 @@ const sendParticipantQrCallable =
     "sendParticipantQr"
   );
 
+const publishScheduleCallable =
+  httpsCallable(
+    functions,
+    "publishSchedule"
+  );
+
 
 let currentUser =
   null;
@@ -1609,6 +1714,9 @@ let currentAttendance =
 
 let currentMailStatus =
   {};
+
+let currentScheduleShare =
+  null;
 
 let stopEventListListener =
   null;
@@ -3431,6 +3539,9 @@ async function openEvent(eventId) {
     currentEvent =
       snapshot.val();
 
+    currentScheduleShare =
+      null;
+
     applyEventToDashboard();
 
     startEventDataListener();
@@ -3647,7 +3758,11 @@ function startEventDataListener() {
         currentMailStatus =
           data.mailStatus || {};
 
+        currentScheduleShare =
+          data.scheduleShare || null;
+
         renderDashboardData();
+        renderScheduleShareArea();
 
       },
 
@@ -6475,6 +6590,353 @@ document
 
 
 
+
+/* =========================
+   SCHEDULE SHARE
+========================= */
+
+const PUBLIC_SCHEDULE_BASE_URL =
+  "https://sbcmt.github.io/event-checkin-app/schedule.html";
+
+function buildSchedulePublicUrl(publicId) {
+  if (!publicId) return "";
+
+  const url =
+    new URL(
+      PUBLIC_SCHEDULE_BASE_URL
+    );
+
+  url.searchParams.set(
+    "s",
+    publicId
+  );
+
+  return url.toString();
+}
+
+function setSchedulePublishMessage(
+  message,
+  isError = false
+) {
+  const box =
+    document.getElementById(
+      "schedulePublishMessage"
+    );
+
+  if (!box) return;
+
+  box.textContent =
+    message;
+
+  box.style.display =
+    "block";
+
+  box.style.background =
+    isError
+      ? "#fdecec"
+      : "#edf7ed";
+
+  box.style.color =
+    isError
+      ? "#a12a2a"
+      : "#326b32";
+}
+
+function renderScheduleShareArea() {
+  const area =
+    document.getElementById(
+      "scheduleShareArea"
+    );
+
+  const urlBox =
+    document.getElementById(
+      "scheduleShareUrl"
+    );
+
+  const qrArea =
+    document.getElementById(
+      "scheduleQrArea"
+    );
+
+  const qrHolder =
+    document.getElementById(
+      "scheduleQrHolder"
+    );
+
+  if (
+    !currentScheduleShare ||
+    !currentScheduleShare.publicId
+  ) {
+    area.style.display =
+      "none";
+
+    if (qrArea) {
+      qrArea.style.display =
+        "none";
+    }
+
+    if (qrHolder) {
+      qrHolder.innerHTML =
+        "";
+    }
+
+    return;
+  }
+
+  const url =
+    buildSchedulePublicUrl(
+      currentScheduleShare.publicId
+    );
+
+  area.style.display =
+    "block";
+
+  urlBox.textContent =
+    url;
+}
+
+function renderScheduleQr() {
+  const holder =
+    document.getElementById(
+      "scheduleQrHolder"
+    );
+
+  if (
+    !holder ||
+    !currentScheduleShare ||
+    !currentScheduleShare.publicId
+  ) {
+    return;
+  }
+
+  holder.innerHTML =
+    "";
+
+  const url =
+    buildSchedulePublicUrl(
+      currentScheduleShare.publicId
+    );
+
+  new QRCode(
+    holder,
+    {
+      text: url,
+      width: 220,
+      height: 220,
+      correctLevel:
+        QRCode.CorrectLevel.H
+    }
+  );
+}
+
+document
+  .getElementById(
+    "publishScheduleButton"
+  )
+  .addEventListener(
+    "click",
+    async () => {
+
+      if (
+        !currentEventId ||
+        !currentUser
+      ) {
+        return;
+      }
+
+      const button =
+        document.getElementById(
+          "publishScheduleButton"
+        );
+
+      button.disabled =
+        true;
+
+      button.textContent =
+        "公開中...";
+
+      setSchedulePublishMessage(
+        "スケジュールを公開しています..."
+      );
+
+      try {
+        const result =
+          await publishScheduleCallable({
+            eventId:
+              currentEventId
+          });
+
+        const data =
+          result.data || {};
+
+        if (
+          !data.ok ||
+          !data.publicId
+        ) {
+          throw new Error(
+            "公開URLを作成できませんでした。"
+          );
+        }
+
+        currentScheduleShare = {
+          publicId:
+            data.publicId,
+          active: true,
+          updatedAt:
+            Date.now()
+        };
+
+        renderScheduleShareArea();
+
+        setSchedulePublishMessage(
+          "スケジュールを公開しました。"
+        );
+
+      } catch (error) {
+        console.error(
+          "publishSchedule error",
+          error
+        );
+
+        let message =
+          "スケジュールを公開できませんでした。";
+
+        const code =
+          String(
+            error?.code || ""
+          );
+
+        if (
+          code.includes(
+            "failed-precondition"
+          )
+        ) {
+          message =
+            "先にスケジュールを保存してください。";
+        }
+
+        setSchedulePublishMessage(
+          message,
+          true
+        );
+
+      } finally {
+        button.disabled =
+          false;
+
+        button.textContent =
+          "スケジュールを公開・更新";
+      }
+    }
+  );
+
+document
+  .getElementById(
+    "copyScheduleUrlButton"
+  )
+  .addEventListener(
+    "click",
+    async () => {
+
+      if (
+        !currentScheduleShare ||
+        !currentScheduleShare.publicId
+      ) {
+        return;
+      }
+
+      const url =
+        buildSchedulePublicUrl(
+          currentScheduleShare.publicId
+        );
+
+      try {
+        await navigator.clipboard.writeText(
+          url
+        );
+
+        setSchedulePublishMessage(
+          "スケジュールURLをコピーしました。"
+        );
+
+      } catch (error) {
+        console.error(error);
+
+        setSchedulePublishMessage(
+          "URLをコピーできませんでした。",
+          true
+        );
+      }
+    }
+  );
+
+document
+  .getElementById(
+    "openScheduleUrlButton"
+  )
+  .addEventListener(
+    "click",
+    () => {
+
+      if (
+        !currentScheduleShare ||
+        !currentScheduleShare.publicId
+      ) {
+        return;
+      }
+
+      const url =
+        buildSchedulePublicUrl(
+          currentScheduleShare.publicId
+        );
+
+      window.open(
+        url,
+        "_blank",
+        "noopener"
+      );
+    }
+  );
+
+document
+  .getElementById(
+    "toggleScheduleQrButton"
+  )
+  .addEventListener(
+    "click",
+    () => {
+
+      if (
+        !currentScheduleShare ||
+        !currentScheduleShare.publicId
+      ) {
+        return;
+      }
+
+      const qrArea =
+        document.getElementById(
+          "scheduleQrArea"
+        );
+
+      const isOpen =
+        qrArea.style.display ===
+        "block";
+
+      if (isOpen) {
+        qrArea.style.display =
+          "none";
+
+        return;
+      }
+
+      qrArea.style.display =
+        "block";
+
+      renderScheduleQr();
+    }
+  );
+
+
 /* =========================
    SCHEDULE EDITOR
    Firebase persistence
@@ -7440,6 +7902,9 @@ document
       currentAttendance =
         {};
 
+      currentScheduleShare =
+        null;
+
       showScreen(
         "eventListScreen"
       );
@@ -7601,6 +8066,9 @@ onAuthStateChanged(
 
       currentMailStatus =
         {};
+
+      currentScheduleShare =
+        null;
 
       currentAccess =
         null;
