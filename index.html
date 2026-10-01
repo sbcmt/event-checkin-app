@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="CHECK-IN">
@@ -801,7 +804,7 @@ button {
   }
 }
 
-/* ===== Schedule editor (UI preview; Firebase save is connected next) ===== */
+/* ===== Schedule editor ===== */
 .scheduleAdminPanel{margin-top:14px}
 .scheduleAdminTitle{text-align:center;font-size:20px;font-weight:900}
 .scheduleAdminDescription{margin-top:6px;color:#777;text-align:center;font-size:12px;line-height:1.6}
@@ -840,10 +843,59 @@ button {
 @media(max-width:560px){.scheduleDayTabs.cols4,.scheduleDayTabs.cols5{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:420px){.scheduleEditRowTop{grid-template-columns:92px 1fr}.scheduleEditorActions{grid-template-columns:1fr}}
 
+
+/* ===== APP UPDATE OVERLAY ===== */
+#appUpdateOverlay{
+  position:fixed;
+  inset:0;
+  z-index:99999;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+  background:rgba(243,243,243,.96);
+}
+#appUpdateOverlay.show{display:flex}
+.appUpdateCard{
+  width:min(360px,100%);
+  padding:24px 20px;
+  border-radius:22px;
+  background:#fff;
+  box-shadow:0 8px 28px rgba(0,0,0,.10);
+  text-align:center;
+}
+.appUpdateTitle{
+  font-size:20px;
+  font-weight:900;
+}
+.appUpdateText{
+  margin-top:8px;
+  color:#777;
+  font-size:13px;
+  line-height:1.6;
+}
+.appUpdateSpinner{
+  width:30px;
+  height:30px;
+  margin:18px auto 0;
+  border:3px solid #ddd;
+  border-top-color:#111;
+  border-radius:50%;
+  animation:appUpdateSpin .8s linear infinite;
+}
+@keyframes appUpdateSpin{to{transform:rotate(360deg)}}
+
 </style>
 </head>
 
 <body>
+<div id="appUpdateOverlay" aria-live="polite">
+  <div class="appUpdateCard">
+    <div class="appUpdateTitle">新しいバージョンを反映しています</div>
+    <div class="appUpdateText">そのまま少しお待ちください。</div>
+    <div class="appUpdateSpinner"></div>
+  </div>
+</div>
 
 <div class="app">
 
@@ -860,7 +912,7 @@ button {
       <h2 class="pageTitle">スタッフログイン</h2>
 
       <div class="pageDescription">
-        登録済みのメールアドレスとパスワードを入力してください
+        登録済みのメールアドレスとパスワードでログインしてください
       </div>
 
       <div class="field">
@@ -1360,13 +1412,13 @@ button {
       </div>
 
       <div class="scheduleEditorNote">
-        現在は管理画面の入力・操作確認用です。<br>
-        Firebaseへの保存は次の工程で接続します。
+        保存した内容は、このイベント専用のスケジュールとしてFirebaseに保存されます。<br>
+        開催日数を減らしても、非表示になったDAYの登録内容は残ります。
       </div>
 
       <div class="scheduleEditorActions">
         <button id="scheduleEditorCancelButton" class="secondaryButton">管理画面に戻る</button>
-        <button id="scheduleDraftSaveButton" class="primaryButton">入力内容を一時保存</button>
+        <button id="scheduleDraftSaveButton" class="primaryButton">スケジュールを保存</button>
       </div>
 
       <div id="scheduleSavedMessage" class="scheduleSavedMessage"></div>
@@ -1375,6 +1427,55 @@ button {
 
 </div>
 
+
+<script>
+/* =========================
+   APP VERSION CHECK
+========================= */
+const APP_VERSION = "2026.10.01.1";
+const APP_VERSION_FILE = "version.json";
+
+(async function checkAppVersion() {
+  try {
+    const versionUrl = new URL(APP_VERSION_FILE, window.location.href);
+    versionUrl.searchParams.set("_t", Date.now().toString());
+
+    const response = await fetch(versionUrl.toString(), {
+      cache: "no-store"
+    });
+
+    if (!response.ok) {
+      return;
+    }
+
+    const remote = await response.json();
+    const latestVersion = String(remote.version || "").trim();
+
+    if (!latestVersion || latestVersion === APP_VERSION) {
+      localStorage.setItem("eventCheckinAppVersion", APP_VERSION);
+      return;
+    }
+
+    const overlay = document.getElementById("appUpdateOverlay");
+    if (overlay) {
+      overlay.classList.add("show");
+    }
+
+    localStorage.setItem("eventCheckinAppVersion", latestVersion);
+
+    const nextUrl = new URL(window.location.href);
+    nextUrl.searchParams.set("_appv", latestVersion);
+    nextUrl.searchParams.set("_reload", Date.now().toString());
+
+    setTimeout(() => {
+      window.location.replace(nextUrl.toString());
+    }, 350);
+
+  } catch (error) {
+    console.warn("Version check skipped:", error);
+  }
+})();
+</script>
 
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -1507,10 +1608,7 @@ let accessCheckRunning =
 let currentAccess =
   null;
 
-/* Schedule editor UI draft (Firebase persistence is added next) */
-const scheduleDraftByEvent =
-  new Map();
-
+/* Schedule editor */
 let scheduleWorkingDraft =
   null;
 
@@ -6335,13 +6433,14 @@ document
 
 /* =========================
    SCHEDULE EDITOR
-   UI preview only; Firebase persistence is connected next.
+   Firebase persistence
 ========================= */
 
 function createEmptyScheduleDraft() {
   return {
     dayCount: 1,
-    days: Array.from({length:5}, (_,index) => ({
+    updatedAt: 0,
+    days: Array.from({ length: 5 }, (_, index) => ({
       label: "DAY" + (index + 1),
       date: "",
       items: []
@@ -6353,268 +6452,913 @@ function cloneScheduleDraft(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
-function formatScheduleTabDate(dateValue) {
-  if (!dateValue) return "日付未設定";
-  const parts = dateValue.split("-");
-  if (parts.length !== 3) return dateValue;
-  return Number(parts[1]) + "月" + Number(parts[2]) + "日";
-}
+function normalizeScheduleDraft(value) {
+  const result = createEmptyScheduleDraft();
 
-function ensureScheduleWorkingDraft() {
-  if (!currentEventId) return;
-  const saved = scheduleDraftByEvent.get(currentEventId);
-  scheduleWorkingDraft = saved
-    ? cloneScheduleDraft(saved)
-    : createEmptyScheduleDraft();
-
-  if (activeScheduleDayIndex >= scheduleWorkingDraft.dayCount) {
-    activeScheduleDayIndex = Math.max(0, scheduleWorkingDraft.dayCount - 1);
+  if (!value || typeof value !== "object") {
+    return result;
   }
+
+  result.dayCount = Math.max(
+    1,
+    Math.min(5, Number(value.dayCount) || 1)
+  );
+
+  result.updatedAt =
+    Number(value.updatedAt) || 0;
+
+  const sourceDays =
+    Array.isArray(value.days)
+      ? value.days
+      : [];
+
+  result.days = Array.from(
+    { length: 5 },
+    (_, index) => {
+      const source =
+        sourceDays[index] &&
+        typeof sourceDays[index] === "object"
+          ? sourceDays[index]
+          : {};
+
+      const sourceItems =
+        Array.isArray(source.items)
+          ? source.items
+          : [];
+
+      return {
+        label:
+          "DAY" + (index + 1),
+
+        date:
+          typeof source.date === "string"
+            ? source.date
+            : "",
+
+        items:
+          sourceItems
+            .slice(0, 20)
+            .map(item => ({
+              time:
+                typeof item?.time === "string"
+                  ? item.time
+                  : "",
+
+              title:
+                typeof item?.title === "string"
+                  ? item.title
+                  : "",
+
+              note:
+                typeof item?.note === "string"
+                  ? item.note
+                  : ""
+            }))
+      };
+    }
+  );
+
+  return result;
 }
 
-function openScheduleEditor() {
-  if (!currentEventId || !currentEvent) return;
+function formatScheduleTabDate(dateValue) {
+  if (!dateValue) {
+    return "日付未設定";
+  }
 
-  ensureScheduleWorkingDraft();
+  const parts =
+    dateValue.split("-");
 
-  document.getElementById("scheduleEditorEventName").textContent =
-    currentEvent.name || "イベント名";
+  if (parts.length !== 3) {
+    return dateValue;
+  }
 
-  document.getElementById("scheduleDayCount").value =
-    String(scheduleWorkingDraft.dayCount);
+  return (
+    Number(parts[1]) +
+    "月" +
+    Number(parts[2]) +
+    "日"
+  );
+}
 
-  document.getElementById("scheduleSavedMessage").style.display = "none";
+function setScheduleMessage(message, isError = false) {
+  const box =
+    document.getElementById(
+      "scheduleSavedMessage"
+    );
 
-  renderScheduleEditor();
-  showScreen("scheduleEditorScreen");
+  if (!box) {
+    return;
+  }
+
+  box.textContent =
+    message;
+
+  box.style.display =
+    "block";
+
+  box.style.background =
+    isError
+      ? "#fdecec"
+      : "#edf7ed";
+
+  box.style.color =
+    isError
+      ? "#a12a2a"
+      : "#326b32";
+}
+
+async function loadScheduleFromFirebase() {
+  if (!currentUser || !currentEventId) {
+    scheduleWorkingDraft =
+      createEmptyScheduleDraft();
+
+    return;
+  }
+
+  const scheduleRef =
+    ref(
+      database,
+      "users/" +
+        currentUser.uid +
+        "/eventData/" +
+        currentEventId +
+        "/schedule"
+    );
+
+  const snapshot =
+    await get(scheduleRef);
+
+  scheduleWorkingDraft =
+    snapshot.exists()
+      ? normalizeScheduleDraft(
+          snapshot.val()
+        )
+      : createEmptyScheduleDraft();
+}
+
+async function openScheduleEditor() {
+  if (!currentEventId || !currentEvent) {
+    return;
+  }
+
+  const message =
+    document.getElementById(
+      "scheduleSavedMessage"
+    );
+
+  if (message) {
+    message.style.display =
+      "none";
+  }
+
+  try {
+    await loadScheduleFromFirebase();
+
+    activeScheduleDayIndex =
+      Math.min(
+        activeScheduleDayIndex,
+        scheduleWorkingDraft.dayCount - 1
+      );
+
+    if (activeScheduleDayIndex < 0) {
+      activeScheduleDayIndex = 0;
+    }
+
+    document
+      .getElementById(
+        "scheduleEditorEventName"
+      )
+      .textContent =
+      currentEvent.name ||
+      "イベント名";
+
+    document
+      .getElementById(
+        "scheduleDayCount"
+      )
+      .value =
+      String(
+        scheduleWorkingDraft.dayCount
+      );
+
+    renderScheduleEditor();
+
+    showScreen(
+      "scheduleEditorScreen"
+    );
+
+  } catch (error) {
+    console.error(error);
+
+    scheduleWorkingDraft =
+      createEmptyScheduleDraft();
+
+    document
+      .getElementById(
+        "scheduleEditorEventName"
+      )
+      .textContent =
+      currentEvent.name ||
+      "イベント名";
+
+    document
+      .getElementById(
+        "scheduleDayCount"
+      )
+      .value = "1";
+
+    renderScheduleEditor();
+
+    showScreen(
+      "scheduleEditorScreen"
+    );
+
+    setScheduleMessage(
+      "スケジュールを読み込めませんでした。通信状態を確認してください。",
+      true
+    );
+  }
 }
 
 function renderScheduleEditor() {
-  if (!scheduleWorkingDraft) return;
-
-  const count = Math.max(
-    1,
-    Math.min(5, Number(scheduleWorkingDraft.dayCount) || 1)
-  );
-  scheduleWorkingDraft.dayCount = count;
-
-  if (activeScheduleDayIndex >= count) {
-    activeScheduleDayIndex = count - 1;
+  if (!scheduleWorkingDraft) {
+    return;
   }
 
-  const tabs = document.getElementById("scheduleDayTabs");
-  tabs.innerHTML = "";
-  tabs.className = "scheduleDayTabs cols" + count;
+  const count =
+    Math.max(
+      1,
+      Math.min(
+        5,
+        Number(
+          scheduleWorkingDraft.dayCount
+        ) || 1
+      )
+    );
 
-  for (let index = 0; index < count; index++) {
-    const day = scheduleWorkingDraft.days[index];
-    const button = document.createElement("button");
-    button.type = "button";
+  scheduleWorkingDraft.dayCount =
+    count;
+
+  if (
+    activeScheduleDayIndex >= count
+  ) {
+    activeScheduleDayIndex =
+      count - 1;
+  }
+
+  const tabs =
+    document.getElementById(
+      "scheduleDayTabs"
+    );
+
+  tabs.innerHTML =
+    "";
+
+  tabs.className =
+    "scheduleDayTabs cols" +
+    count;
+
+  for (
+    let index = 0;
+    index < count;
+    index++
+  ) {
+
+    const day =
+      scheduleWorkingDraft.days[index];
+
+    const button =
+      document.createElement(
+        "button"
+      );
+
+    button.type =
+      "button";
+
     button.className =
-      "scheduleDayTab" + (index === activeScheduleDayIndex ? " active" : "");
+      "scheduleDayTab" +
+      (
+        index === activeScheduleDayIndex
+          ? " active"
+          : ""
+      );
 
-    const label = document.createElement("span");
-    label.textContent = day.label || ("DAY" + (index + 1));
+    const label =
+      document.createElement(
+        "span"
+      );
 
-    const date = document.createElement("span");
-    date.className = "scheduleDayTabDate";
-    date.textContent = formatScheduleTabDate(day.date);
+    label.textContent =
+      day.label ||
+      "DAY" + (index + 1);
 
-    button.appendChild(label);
-    button.appendChild(date);
+    const date =
+      document.createElement(
+        "span"
+      );
 
-    button.addEventListener("click", () => {
-      activeScheduleDayIndex = index;
-      renderScheduleEditor();
-    });
+    date.className =
+      "scheduleDayTabDate";
 
-    tabs.appendChild(button);
+    date.textContent =
+      formatScheduleTabDate(
+        day.date
+      );
+
+    button.appendChild(
+      label
+    );
+
+    button.appendChild(
+      date
+    );
+
+    button.addEventListener(
+      "click",
+      () => {
+
+        activeScheduleDayIndex =
+          index;
+
+        renderScheduleEditor();
+
+      }
+    );
+
+    tabs.appendChild(
+      button
+    );
+
   }
 
   renderActiveScheduleDay();
 }
 
 function renderActiveScheduleDay() {
-  if (!scheduleWorkingDraft) return;
+  if (!scheduleWorkingDraft) {
+    return;
+  }
 
-  const day = scheduleWorkingDraft.days[activeScheduleDayIndex];
-  if (!day) return;
+  const day =
+    scheduleWorkingDraft
+      .days[
+        activeScheduleDayIndex
+      ];
 
-  document.getElementById("scheduleActiveDayHeading").textContent =
-    day.label || ("DAY" + (activeScheduleDayIndex + 1));
+  if (!day) {
+    return;
+  }
 
-  document.getElementById("scheduleActiveDate").value = day.date || "";
+  document
+    .getElementById(
+      "scheduleActiveDayHeading"
+    )
+    .textContent =
+    day.label ||
+    "DAY" +
+      (
+        activeScheduleDayIndex +
+        1
+      );
 
-  const rows = document.getElementById("scheduleRows");
-  rows.innerHTML = "";
+  document
+    .getElementById(
+      "scheduleActiveDate"
+    )
+    .value =
+    day.date || "";
 
-  const items = Array.isArray(day.items) ? day.items : [];
+  const rows =
+    document.getElementById(
+      "scheduleRows"
+    );
 
-  document.getElementById("scheduleItemCount").textContent =
-    items.length + " / 20件";
+  rows.innerHTML =
+    "";
 
-  document.getElementById("scheduleAddRowButton").disabled =
+  const items =
+    Array.isArray(day.items)
+      ? day.items
+      : [];
+
+  document
+    .getElementById(
+      "scheduleItemCount"
+    )
+    .textContent =
+    items.length +
+    " / 20件";
+
+  document
+    .getElementById(
+      "scheduleAddRowButton"
+    )
+    .disabled =
     items.length >= 20;
 
-  items.forEach((item, itemIndex) => {
-    const row = document.createElement("div");
-    row.className = "scheduleEditRow";
+  items.forEach(
+    (item, itemIndex) => {
 
-    const top = document.createElement("div");
-    top.className = "scheduleEditRowTop";
+      const row =
+        document.createElement(
+          "div"
+        );
 
-    const timeWrap = document.createElement("div");
-    const timeLabel = document.createElement("label");
-    timeLabel.className = "scheduleMiniLabel";
-    timeLabel.textContent = "開始時間";
+      row.className =
+        "scheduleEditRow";
 
-    const timeInput = document.createElement("input");
-    timeInput.type = "time";
-    timeInput.className = "scheduleTimeInput";
-    timeInput.value = item.time || "";
-    timeInput.addEventListener("input", () => {
-      item.time = timeInput.value;
-    });
+      const top =
+        document.createElement(
+          "div"
+        );
 
-    timeWrap.appendChild(timeLabel);
-    timeWrap.appendChild(timeInput);
+      top.className =
+        "scheduleEditRowTop";
 
-    const titleWrap = document.createElement("div");
-    const titleLabel = document.createElement("label");
-    titleLabel.className = "scheduleMiniLabel";
-    titleLabel.textContent = "内容";
+      const timeWrap =
+        document.createElement(
+          "div"
+        );
 
-    const titleInput = document.createElement("input");
-    titleInput.type = "text";
-    titleInput.className = "scheduleTextInput";
-    titleInput.placeholder = "例：受付開始";
-    titleInput.maxLength = 80;
-    titleInput.value = item.title || "";
-    titleInput.addEventListener("input", () => {
-      item.title = titleInput.value;
-    });
+      const timeLabel =
+        document.createElement(
+          "label"
+        );
 
-    titleWrap.appendChild(titleLabel);
-    titleWrap.appendChild(titleInput);
+      timeLabel.className =
+        "scheduleMiniLabel";
 
-    top.appendChild(timeWrap);
-    top.appendChild(titleWrap);
+      timeLabel.textContent =
+        "開始時間";
 
-    const noteWrap = document.createElement("div");
-    noteWrap.className = "scheduleNoteWrap";
+      const timeInput =
+        document.createElement(
+          "input"
+        );
 
-    const noteLabel = document.createElement("label");
-    noteLabel.className = "scheduleMiniLabel";
-    noteLabel.textContent = "備考";
+      timeInput.type =
+        "time";
 
-    const noteInput = document.createElement("input");
-    noteInput.type = "text";
-    noteInput.className = "scheduleTextInput";
-    noteInput.placeholder = "例：本部幕にて受付";
-    noteInput.maxLength = 120;
-    noteInput.value = item.note || "";
-    noteInput.addEventListener("input", () => {
-      item.note = noteInput.value;
-    });
+      timeInput.className =
+        "scheduleTimeInput";
 
-    noteWrap.appendChild(noteLabel);
-    noteWrap.appendChild(noteInput);
+      timeInput.value =
+        item.time || "";
 
-    const bottom = document.createElement("div");
-    bottom.className = "scheduleRowBottom";
+      timeInput.addEventListener(
+        "input",
+        () => {
 
-    const deleteButton = document.createElement("button");
-    deleteButton.type = "button";
-    deleteButton.className = "scheduleDeleteRowButton";
-    deleteButton.textContent = "この予定を削除";
-    deleteButton.addEventListener("click", () => {
-      day.items.splice(itemIndex, 1);
-      renderActiveScheduleDay();
-    });
+          item.time =
+            timeInput.value;
 
-    bottom.appendChild(deleteButton);
-    row.appendChild(top);
-    row.appendChild(noteWrap);
-    row.appendChild(bottom);
-    rows.appendChild(row);
-  });
+        }
+      );
+
+      timeWrap.appendChild(
+        timeLabel
+      );
+
+      timeWrap.appendChild(
+        timeInput
+      );
+
+      const titleWrap =
+        document.createElement(
+          "div"
+        );
+
+      const titleLabel =
+        document.createElement(
+          "label"
+        );
+
+      titleLabel.className =
+        "scheduleMiniLabel";
+
+      titleLabel.textContent =
+        "内容";
+
+      const titleInput =
+        document.createElement(
+          "input"
+        );
+
+      titleInput.type =
+        "text";
+
+      titleInput.className =
+        "scheduleTextInput";
+
+      titleInput.placeholder =
+        "例：受付開始";
+
+      titleInput.maxLength =
+        80;
+
+      titleInput.value =
+        item.title || "";
+
+      titleInput.addEventListener(
+        "input",
+        () => {
+
+          item.title =
+            titleInput.value;
+
+        }
+      );
+
+      titleWrap.appendChild(
+        titleLabel
+      );
+
+      titleWrap.appendChild(
+        titleInput
+      );
+
+      top.appendChild(
+        timeWrap
+      );
+
+      top.appendChild(
+        titleWrap
+      );
+
+      const noteWrap =
+        document.createElement(
+          "div"
+        );
+
+      noteWrap.className =
+        "scheduleNoteWrap";
+
+      const noteLabel =
+        document.createElement(
+          "label"
+        );
+
+      noteLabel.className =
+        "scheduleMiniLabel";
+
+      noteLabel.textContent =
+        "備考";
+
+      const noteInput =
+        document.createElement(
+          "input"
+        );
+
+      noteInput.type =
+        "text";
+
+      noteInput.className =
+        "scheduleTextInput";
+
+      noteInput.placeholder =
+        "例：本部幕にて受付";
+
+      noteInput.maxLength =
+        120;
+
+      noteInput.value =
+        item.note || "";
+
+      noteInput.addEventListener(
+        "input",
+        () => {
+
+          item.note =
+            noteInput.value;
+
+        }
+      );
+
+      noteWrap.appendChild(
+        noteLabel
+      );
+
+      noteWrap.appendChild(
+        noteInput
+      );
+
+      const bottom =
+        document.createElement(
+          "div"
+        );
+
+      bottom.className =
+        "scheduleRowBottom";
+
+      const deleteButton =
+        document.createElement(
+          "button"
+        );
+
+      deleteButton.type =
+        "button";
+
+      deleteButton.className =
+        "scheduleDeleteRowButton";
+
+      deleteButton.textContent =
+        "この予定を削除";
+
+      deleteButton.addEventListener(
+        "click",
+        () => {
+
+          day.items.splice(
+            itemIndex,
+            1
+          );
+
+          renderActiveScheduleDay();
+
+        }
+      );
+
+      bottom.appendChild(
+        deleteButton
+      );
+
+      row.appendChild(
+        top
+      );
+
+      row.appendChild(
+        noteWrap
+      );
+
+      row.appendChild(
+        bottom
+      );
+
+      rows.appendChild(
+        row
+      );
+
+    }
+  );
 }
 
-document.getElementById("openScheduleEditorButton")
-  .addEventListener("click", async () => {
-    await stopScanner();
-    openScheduleEditor();
-  });
+document
+  .getElementById(
+    "openScheduleEditorButton"
+  )
+  .addEventListener(
+    "click",
+    async () => {
 
-document.getElementById("scheduleDayCount")
-  .addEventListener("change", event => {
-    if (!scheduleWorkingDraft) return;
+      await stopScanner();
 
-    scheduleWorkingDraft.dayCount = Math.max(
-      1,
-      Math.min(5, Number(event.target.value) || 1)
-    );
+      await openScheduleEditor();
 
-    if (activeScheduleDayIndex >= scheduleWorkingDraft.dayCount) {
-      activeScheduleDayIndex = scheduleWorkingDraft.dayCount - 1;
     }
+  );
 
-    renderScheduleEditor();
-  });
+document
+  .getElementById(
+    "scheduleDayCount"
+  )
+  .addEventListener(
+    "change",
+    event => {
 
-document.getElementById("scheduleActiveDate")
-  .addEventListener("change", event => {
-    if (!scheduleWorkingDraft) return;
-    const day = scheduleWorkingDraft.days[activeScheduleDayIndex];
-    if (!day) return;
-    day.date = event.target.value || "";
-    renderScheduleEditor();
-  });
+      if (!scheduleWorkingDraft) {
+        return;
+      }
 
-document.getElementById("scheduleAddRowButton")
-  .addEventListener("click", () => {
-    if (!scheduleWorkingDraft) return;
-    const day = scheduleWorkingDraft.days[activeScheduleDayIndex];
-    if (!day) return;
+      scheduleWorkingDraft.dayCount =
+        Math.max(
+          1,
+          Math.min(
+            5,
+            Number(
+              event.target.value
+            ) || 1
+          )
+        );
 
-    if (!Array.isArray(day.items)) day.items = [];
-    if (day.items.length >= 20) return;
+      if (
+        activeScheduleDayIndex >=
+        scheduleWorkingDraft.dayCount
+      ) {
 
-    day.items.push({time:"", title:"", note:""});
-    renderActiveScheduleDay();
+        activeScheduleDayIndex =
+          scheduleWorkingDraft.dayCount -
+          1;
 
-    setTimeout(() => {
-      const inputs = document.querySelectorAll(
-        "#scheduleRows .scheduleTimeInput"
+      }
+
+      renderScheduleEditor();
+
+    }
+  );
+
+document
+  .getElementById(
+    "scheduleActiveDate"
+  )
+  .addEventListener(
+    "change",
+    event => {
+
+      if (!scheduleWorkingDraft) {
+        return;
+      }
+
+      const day =
+        scheduleWorkingDraft
+          .days[
+            activeScheduleDayIndex
+          ];
+
+      if (!day) {
+        return;
+      }
+
+      day.date =
+        event.target.value || "";
+
+      renderScheduleEditor();
+
+    }
+  );
+
+document
+  .getElementById(
+    "scheduleAddRowButton"
+  )
+  .addEventListener(
+    "click",
+    () => {
+
+      if (!scheduleWorkingDraft) {
+        return;
+      }
+
+      const day =
+        scheduleWorkingDraft
+          .days[
+            activeScheduleDayIndex
+          ];
+
+      if (!day) {
+        return;
+      }
+
+      if (
+        !Array.isArray(day.items)
+      ) {
+        day.items =
+          [];
+      }
+
+      if (
+        day.items.length >= 20
+      ) {
+        return;
+      }
+
+      day.items.push(
+        {
+          time: "",
+          title: "",
+          note: ""
+        }
       );
-      if (inputs.length) inputs[inputs.length - 1].focus();
-    }, 0);
-  });
 
-document.getElementById("scheduleDraftSaveButton")
-  .addEventListener("click", () => {
-    if (!scheduleWorkingDraft || !currentEventId) return;
+      renderActiveScheduleDay();
 
-    scheduleDraftByEvent.set(
-      currentEventId,
-      cloneScheduleDraft(scheduleWorkingDraft)
-    );
+      setTimeout(
+        () => {
 
-    const message = document.getElementById("scheduleSavedMessage");
-    message.textContent =
-      "入力内容を一時保存しました。Firebaseへの保存は次工程で接続します。";
-    message.style.display = "block";
-  });
+          const inputs =
+            document.querySelectorAll(
+              "#scheduleRows .scheduleTimeInput"
+            );
+
+          if (inputs.length) {
+            inputs[
+              inputs.length - 1
+            ].focus();
+          }
+
+        },
+        0
+      );
+
+    }
+  );
+
+document
+  .getElementById(
+    "scheduleDraftSaveButton"
+  )
+  .addEventListener(
+    "click",
+    async () => {
+
+      if (
+        !scheduleWorkingDraft ||
+        !currentUser ||
+        !currentEventId
+      ) {
+        return;
+      }
+
+      const saveButton =
+        document.getElementById(
+          "scheduleDraftSaveButton"
+        );
+
+      saveButton.disabled =
+        true;
+
+      saveButton.textContent =
+        "保存中...";
+
+      try {
+
+        const cleanDraft =
+          normalizeScheduleDraft(
+            scheduleWorkingDraft
+          );
+
+        cleanDraft.updatedAt =
+          Date.now();
+
+        const scheduleRef =
+          ref(
+            database,
+            "users/" +
+              currentUser.uid +
+              "/eventData/" +
+              currentEventId +
+              "/schedule"
+          );
+
+        await set(
+          scheduleRef,
+          cleanDraft
+        );
+
+        scheduleWorkingDraft =
+          cloneScheduleDraft(
+            cleanDraft
+          );
+
+        setScheduleMessage(
+          "スケジュールを保存しました。"
+        );
+
+      } catch (error) {
+
+        console.error(error);
+
+        setScheduleMessage(
+          "保存できませんでした。通信状態を確認して、もう一度お試しください。",
+          true
+        );
+
+      } finally {
+
+        saveButton.disabled =
+          false;
+
+        saveButton.textContent =
+          "スケジュールを保存";
+
+      }
+
+    }
+  );
 
 function backFromScheduleEditor() {
-  showScreen("eventDashboardScreen");
+  showScreen(
+    "eventDashboardScreen"
+  );
 }
 
-document.getElementById("scheduleEditorBackButton")
-  .addEventListener("click", backFromScheduleEditor);
+document
+  .getElementById(
+    "scheduleEditorBackButton"
+  )
+  .addEventListener(
+    "click",
+    backFromScheduleEditor
+  );
 
-document.getElementById("scheduleEditorCancelButton")
-  .addEventListener("click", backFromScheduleEditor);
+document
+  .getElementById(
+    "scheduleEditorCancelButton"
+  )
+  .addEventListener(
+    "click",
+    backFromScheduleEditor
+  );
 
 
 /* =========================
