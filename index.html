@@ -901,34 +901,6 @@ button {
   box-sizing:border-box;
 }
 
-@media(max-width:560px){
-  .scheduleEditRowTop{
-    grid-template-columns:1fr;
-    gap:10px;
-  }
-
-  .scheduleEditorActions{
-    grid-template-columns:1fr;
-  }
-
-  .scheduleEditorActions .primaryButton,
-  .scheduleEditorActions .secondaryButton{
-    width:100%;
-    min-height:56px;
-    white-space:normal;
-  }
-
-  .scheduleTimeInput,
-  .scheduleTextInput{
-    width:100%;
-    max-width:100%;
-  }
-
-  .scheduleTimeInput{
-    min-height:50px;
-  }
-}
-
 
 /* ===== SCHEDULE SHARE ===== */
 .scheduleShareArea{
@@ -1059,6 +1031,73 @@ button {
     height:50px !important;
     min-height:50px !important;
     font-size:16px !important;
+  }
+}
+
+
+/* ===== SCHEDULE EDITOR FINAL ROW LAYOUT v2026.10.01.5 ===== */
+/* PC / iPhone / iPad 共通：開始時間 1 / 内容 2 の横並び */
+.scheduleEditRowTop{
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) minmax(0,2fr) !important;
+  gap:8px !important;
+  align-items:end !important;
+  width:100% !important;
+}
+
+.scheduleEditRowTop > div{
+  min-width:0 !important;
+  width:100% !important;
+}
+
+.scheduleTimeInput,
+.scheduleTextInput{
+  display:block !important;
+  width:100% !important;
+  max-width:100% !important;
+  min-width:0 !important;
+  box-sizing:border-box !important;
+  margin:0 !important;
+  padding:11px 12px !important;
+  height:50px !important;
+  min-height:50px !important;
+  border:1px solid #cfcfcf !important;
+  border-radius:11px !important;
+  background:#fff !important;
+  color:#111 !important;
+  font-size:16px !important;
+  line-height:1.2 !important;
+  box-shadow:none !important;
+}
+
+.scheduleTimeInput{
+  text-align:center !important;
+  -webkit-appearance:auto !important;
+  appearance:auto !important;
+}
+
+.scheduleTimeInput::-webkit-date-and-time-value{
+  text-align:center !important;
+}
+
+.scheduleNoteWrap{
+  margin-top:10px !important;
+}
+
+/* スマホでも開始時間と内容は横並びのまま */
+@media(max-width:560px){
+  .scheduleEditRowTop{
+    grid-template-columns:minmax(0,1fr) minmax(0,2fr) !important;
+  }
+
+  .scheduleEditorActions{
+    grid-template-columns:1fr !important;
+  }
+}
+
+@media(max-width:420px){
+  .scheduleEditRowTop{
+    grid-template-columns:minmax(0,1fr) minmax(0,2fr) !important;
   }
 }
 
@@ -1642,7 +1681,7 @@ button {
 /* =========================
    APP VERSION CHECK
 ========================= */
-const APP_VERSION = "2026.10.01.4";
+const APP_VERSION = "2026.10.01.5";
 const APP_VERSION_FILE = "version.json";
 
 (async function checkAppVersion() {
