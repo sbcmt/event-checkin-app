@@ -469,9 +469,14 @@ button {
 }
 
 .scanResultNumber {
-  margin-top: 5px;
-  color: #666;
-  font-size: 16px;
+  display: none;
+  margin-top: 8px;
+  color: #111;
+  font-size: 38px;
+  line-height: 1.05;
+  font-weight: 900;
+  letter-spacing: .02em;
+  word-break: break-word;
 }
 
 .scanResultTime {
@@ -1767,7 +1772,7 @@ button {
 /* =========================
    APP VERSION CHECK
 ========================= */
-const APP_VERSION = "2026.10.01.12";
+const APP_VERSION = "2026.10.01.13";
 const APP_VERSION_FILE = "version.json";
 
 (async function checkAppVersion() {
@@ -1935,12 +1940,6 @@ let scannerRunning =
   false;
 
 let alreadyRead =
-  false;
-
-let scanAudioContext =
-  null;
-
-let scanSoundUnlocked =
   false;
 
 let expiryCleanupRunning =
@@ -6288,199 +6287,6 @@ document
   );
 
 
-
-/* =========================
-   QR SUCCESS SOUND
-   iPhone / iPad 対応強化版
-========================= */
-
-function getScanAudioContext() {
-  if (!scanAudioContext) {
-    const AudioContextClass =
-      window.AudioContext ||
-      window.webkitAudioContext;
-
-    if (!AudioContextClass) {
-      return null;
-    }
-
-    scanAudioContext =
-      new AudioContextClass();
-  }
-
-  return scanAudioContext;
-}
-
-
-/*
-  iOS Safari / ホーム画面追加版では、
-  ユーザーが実際に画面へ触れた瞬間に
-  AudioContextを起動しておく必要があります。
-  ここではawaitを使わず、その場でresume + 無音再生します。
-*/
-function unlockScanSoundNow() {
-  try {
-    const context =
-      getScanAudioContext();
-
-    if (!context) {
-      return;
-    }
-
-    if (context.state === "suspended") {
-      context.resume().catch(() => {});
-    }
-
-    const oscillator =
-      context.createOscillator();
-
-    const gain =
-      context.createGain();
-
-    gain.gain.setValueAtTime(
-      0.00001,
-      context.currentTime
-    );
-
-    oscillator.connect(gain);
-    gain.connect(context.destination);
-
-    oscillator.start(
-      context.currentTime
-    );
-
-    oscillator.stop(
-      context.currentTime + 0.03
-    );
-
-    scanSoundUnlocked =
-      true;
-
-  } catch (error) {
-    console.warn(
-      "QR sound unlock skipped:",
-      error
-    );
-  }
-}
-
-
-async function playScanSuccessSound() {
-  try {
-    const context =
-      getScanAudioContext();
-
-    if (!context) {
-      return;
-    }
-
-    if (context.state === "suspended") {
-      try {
-        await context.resume();
-      } catch (_) {}
-    }
-
-    const start =
-      context.currentTime + 0.01;
-
-    const master =
-      context.createGain();
-
-    master.gain.setValueAtTime(
-      0.0001,
-      start
-    );
-
-    master.gain.exponentialRampToValueAtTime(
-      0.34,
-      start + 0.015
-    );
-
-    master.gain.exponentialRampToValueAtTime(
-      0.0001,
-      start + 0.52
-    );
-
-    master.connect(
-      context.destination
-    );
-
-    // 1音目
-    const first =
-      context.createOscillator();
-
-    const firstGain =
-      context.createGain();
-
-    first.type =
-      "sine";
-
-    first.frequency.setValueAtTime(
-      784,
-      start
-    );
-
-    firstGain.gain.setValueAtTime(
-      0.95,
-      start
-    );
-
-    firstGain.gain.exponentialRampToValueAtTime(
-      0.0001,
-      start + 0.22
-    );
-
-    first.connect(firstGain);
-    firstGain.connect(master);
-
-    first.start(start);
-    first.stop(start + 0.24);
-
-    // 2音目
-    const second =
-      context.createOscillator();
-
-    const secondGain =
-      context.createGain();
-
-    second.type =
-      "sine";
-
-    second.frequency.setValueAtTime(
-      1175,
-      start + 0.16
-    );
-
-    secondGain.gain.setValueAtTime(
-      0.0001,
-      start
-    );
-
-    secondGain.gain.setValueAtTime(
-      0.95,
-      start + 0.16
-    );
-
-    secondGain.gain.exponentialRampToValueAtTime(
-      0.0001,
-      start + 0.50
-    );
-
-    second.connect(secondGain);
-    secondGain.connect(master);
-
-    second.start(start + 0.16);
-    second.stop(start + 0.52);
-
-  } catch (error) {
-    console.warn(
-      "QR success sound skipped:",
-      error
-    );
-  }
-}
-
-
 /* =========================
    QR SCANNER
 ========================= */
@@ -6814,7 +6620,7 @@ async function processScannedId(
       currentScanMode ===
       "status1"
     ) {
-      sendScheduleMailAfterRequiredScan(
+      await sendScheduleMailAfterRequiredScan(
         visitor
       );
     }
@@ -6868,8 +6674,6 @@ async function processScannedId(
 
     await stopScanner();
 
-    await playScanSuccessSound();
-
     showScanResult(
       visitor,
       now,
@@ -6888,7 +6692,7 @@ async function processScannedId(
       currentScanMode ===
       "status1"
     ) {
-      sendScheduleMailAfterRequiredScan(
+      await sendScheduleMailAfterRequiredScan(
         visitor
       );
     }
@@ -6939,13 +6743,29 @@ function showScanResult(
     .textContent =
     visitor.name;
 
-  document
-    .getElementById("scanResultNumber")
-    .textContent =
-    visitor.number
-      ? "number：" +
-        visitor.number
-      : "";
+  const scanResultNumber =
+    document.getElementById(
+      "scanResultNumber"
+    );
+
+  const visitorNumber =
+    String(
+      visitor.number || ""
+    ).trim();
+
+  if (visitorNumber) {
+    scanResultNumber.textContent =
+      visitorNumber;
+
+    scanResultNumber.style.display =
+      "block";
+  } else {
+    scanResultNumber.textContent =
+      "";
+
+    scanResultNumber.style.display =
+      "none";
+  }
 
   document
     .getElementById("scanResultTime")
@@ -6978,66 +6798,28 @@ function showScanResult(
 }
 
 
-const scanButtonForSound =
-  document.getElementById(
-    "scanButton"
+document
+  .getElementById("scanButton")
+  .addEventListener(
+    "click",
+    startScanner
   );
 
-scanButtonForSound.addEventListener(
-  "pointerdown",
-  unlockScanSoundNow,
-  { passive: true }
-);
 
-scanButtonForSound.addEventListener(
-  "touchstart",
-  unlockScanSoundNow,
-  { passive: true }
-);
+document
+  .getElementById("nextScanButton")
+  .addEventListener(
+    "click",
+    async () => {
 
-scanButtonForSound.addEventListener(
-  "click",
-  () => {
+      await stopScanner();
 
-    unlockScanSoundNow();
+      clearScanResult();
 
-    startScanner();
+      startScanner();
 
-  }
-);
-
-
-const nextScanButtonForSound =
-  document.getElementById(
-    "nextScanButton"
+    }
   );
-
-nextScanButtonForSound.addEventListener(
-  "pointerdown",
-  unlockScanSoundNow,
-  { passive: true }
-);
-
-nextScanButtonForSound.addEventListener(
-  "touchstart",
-  unlockScanSoundNow,
-  { passive: true }
-);
-
-nextScanButtonForSound.addEventListener(
-  "click",
-  async () => {
-
-    unlockScanSoundNow();
-
-    await stopScanner();
-
-    clearScanResult();
-
-    startScanner();
-
-  }
-);
 
 
 /* =========================
@@ -7059,7 +6841,7 @@ document
 
       const first =
         confirm(
-          "読み取り記録をすべてリセットします。\n\n参加者リストは残ります。\n続けますか？"
+          "読み取り記録をすべてリセットします。\n\n参加者リストは残ります。\nスケジュールメールの送信履歴もリセットされます。\n続けますか？"
         );
 
       if (!first) {
@@ -7077,15 +6859,27 @@ document
 
       try {
 
-        await remove(
-          ref(
-            database,
-            "users/" +
-              currentUser.uid +
-              "/eventData/" +
-              currentEventId +
-              "/attendance"
-          )
+        const basePath =
+          "users/" +
+          currentUser.uid +
+          "/eventData/" +
+          currentEventId;
+
+        const resetUpdates = {};
+
+        resetUpdates[
+          basePath +
+          "/attendance"
+        ] = null;
+
+        resetUpdates[
+          basePath +
+          "/scheduleMailStatus"
+        ] = null;
+
+        await update(
+          ref(database),
+          resetUpdates
         );
 
         clearScanResult();
