@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#f4f4f4">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+
 <title>イベントスケジュール</title>
 
 <style>
@@ -17,17 +21,20 @@
 }
 
 *{box-sizing:border-box}
+
 html,body{
   margin:0;
   padding:0;
   background:var(--bg);
   color:var(--text);
 }
+
 body{
   font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue","Hiragino Sans",
               "Yu Gothic",Meiryo,"Segoe UI",sans-serif;
   -webkit-font-smoothing:antialiased;
 }
+
 button{font:inherit}
 
 .page{
@@ -36,24 +43,26 @@ button{font:inherit}
   margin:0 auto;
   min-height:100vh;
   padding:
-    max(28px, env(safe-area-inset-top))
+    max(28px,env(safe-area-inset-top))
     16px
     calc(36px + env(safe-area-inset-bottom));
 }
 
-/* ===== Header ===== */
+/* ===== HEADER ===== */
 .hero{
   text-align:center;
   padding:6px 6px 20px;
 }
+
 .event-name{
   margin:0;
   font-size:36px;
   line-height:1.1;
   font-weight:900;
-  letter-spacing:-0.03em;
+  letter-spacing:-.03em;
   word-break:break-word;
 }
+
 .hero-sub{
   margin-top:8px;
   color:var(--sub);
@@ -61,12 +70,13 @@ button{font:inherit}
   font-weight:700;
 }
 
-/* ===== DAY tabs ===== */
+/* ===== DAY TABS ===== */
 .day-tabs{
   display:grid;
   gap:8px;
   margin-bottom:18px;
 }
+
 .day-tabs.cols-1{grid-template-columns:1fr}
 .day-tabs.cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
 .day-tabs.cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
@@ -82,20 +92,26 @@ button{font:inherit}
   min-height:68px;
   padding:9px 5px 8px;
   cursor:pointer;
-  transition:transform .08s ease, background .15s ease, color .15s ease;
+  transition:transform .08s ease,background .15s ease,color .15s ease;
 }
-.day-tab:active{transform:scale(.985)}
+
+.day-tab:active{
+  transform:scale(.985);
+}
+
 .day-tab.active{
   background:#111;
   color:#fff;
   border-color:#111;
 }
+
 .day-tab .label{
   display:block;
   font-size:15px;
   font-weight:900;
   white-space:nowrap;
 }
+
 .day-tab .date{
   display:block;
   margin-top:4px;
@@ -105,23 +121,26 @@ button{font:inherit}
   white-space:nowrap;
 }
 
-/* ===== Main card ===== */
+/* ===== MAIN CARD ===== */
 .schedule-wrap{
   background:#fff;
   border-radius:24px;
   overflow:hidden;
   box-shadow:0 6px 24px rgba(0,0,0,.055);
 }
+
 .schedule-head{
   padding:24px 20px 16px;
   background:linear-gradient(180deg,#f0f0f0 0%,#f8f8f8 100%);
 }
+
 .day-title{
   margin:0;
   font-size:29px;
   font-weight:900;
   letter-spacing:-.03em;
 }
+
 .section-title{
   margin-top:7px;
   color:#555;
@@ -132,12 +151,13 @@ button{font:inherit}
 .schedule-body{
   padding:16px 14px 18px;
 }
+
 .schedule-list{
   display:grid;
   gap:10px;
 }
 
-/* ===== Schedule item ===== */
+/* ===== SCHEDULE ROW ===== */
 .schedule-row{
   display:grid;
   grid-template-columns:92px 1fr;
@@ -147,6 +167,7 @@ button{font:inherit}
   border-radius:17px;
   overflow:hidden;
 }
+
 .time{
   display:flex;
   align-items:center;
@@ -158,6 +179,7 @@ button{font:inherit}
   font-weight:900;
   font-variant-numeric:tabular-nums;
 }
+
 .detail{
   display:flex;
   flex-direction:column;
@@ -165,12 +187,14 @@ button{font:inherit}
   min-width:0;
   padding:13px 16px;
 }
+
 .item-title{
   font-size:18px;
   line-height:1.35;
   font-weight:900;
   word-break:break-word;
 }
+
 .item-note{
   margin-top:5px;
   color:var(--sub);
@@ -178,6 +202,41 @@ button{font:inherit}
   line-height:1.45;
   font-weight:600;
   word-break:break-word;
+}
+
+/* ===== STATES ===== */
+.state-card{
+  background:#fff;
+  border-radius:22px;
+  padding:34px 20px;
+  text-align:center;
+  box-shadow:0 6px 24px rgba(0,0,0,.055);
+}
+
+.state-title{
+  font-size:20px;
+  font-weight:900;
+}
+
+.state-text{
+  margin-top:10px;
+  color:#777;
+  font-size:13px;
+  line-height:1.7;
+}
+
+.spinner{
+  width:34px;
+  height:34px;
+  margin:20px auto 0;
+  border:3px solid #ddd;
+  border-top-color:#111;
+  border-radius:50%;
+  animation:spin .8s linear infinite;
+}
+
+@keyframes spin{
+  to{transform:rotate(360deg)}
 }
 
 .empty-state{
@@ -192,6 +251,7 @@ button{font:inherit}
   font-size:14px;
   line-height:1.75;
 }
+
 .footer{
   margin-top:16px;
   color:#a0a0a0;
@@ -199,32 +259,78 @@ button{font:inherit}
   text-align:center;
 }
 
-/* 5日表示でもスマホで読めるように調整 */
+.hidden{
+  display:none !important;
+}
+
+/* ===== MOBILE ===== */
 @media(max-width:560px){
   .day-tabs.cols-4,
   .day-tabs.cols-5{
     grid-template-columns:repeat(3,minmax(0,1fr));
   }
 }
+
 @media(max-width:430px){
-  .page{padding-left:12px;padding-right:12px}
-  .event-name{font-size:32px}
-  .day-tabs{gap:7px}
-  .day-tab{min-height:64px;border-radius:15px}
-  .day-tab .label{font-size:14px}
-  .day-tab .date{font-size:11px}
-  .schedule-head{padding:21px 18px 14px}
-  .day-title{font-size:26px}
-  .schedule-body{padding:13px 10px 15px}
+  .page{
+    padding-left:12px;
+    padding-right:12px;
+  }
+
+  .event-name{
+    font-size:32px;
+  }
+
+  .day-tabs{
+    gap:7px;
+  }
+
+  .day-tab{
+    min-height:64px;
+    border-radius:15px;
+  }
+
+  .day-tab .label{
+    font-size:14px;
+  }
+
+  .day-tab .date{
+    font-size:11px;
+  }
+
+  .schedule-head{
+    padding:21px 18px 14px;
+  }
+
+  .day-title{
+    font-size:26px;
+  }
+
+  .schedule-body{
+    padding:13px 10px 15px;
+  }
+
   .schedule-row{
     grid-template-columns:78px 1fr;
     min-height:72px;
     border-radius:15px;
   }
-  .time{font-size:19px}
-  .detail{padding:12px 13px}
-  .item-title{font-size:17px}
-  .item-note{font-size:13px}
+
+  .time{
+    font-size:19px;
+  }
+
+  .detail{
+    padding:12px 13px;
+  }
+
+  .item-title{
+    font-size:17px;
+  }
+
+  .item-note{
+    font-size:13px;
+  }
 }
 </style>
 </head>
@@ -232,194 +338,565 @@ button{font:inherit}
 <body>
 <div class="page">
 
-  <header class="hero">
-    <h1 id="eventName" class="event-name">SBCMT</h1>
-    <div class="hero-sub">イベントスケジュール</div>
-  </header>
+  <!-- LOADING -->
+  <div id="loadingState" class="state-card">
+    <div class="state-title">スケジュールを読み込んでいます</div>
+    <div class="state-text">そのまま少しお待ちください。</div>
+    <div class="spinner"></div>
+  </div>
 
-  <nav id="dayTabs" class="day-tabs" aria-label="日程切り替え"></nav>
+  <!-- ERROR -->
+  <div id="errorState" class="state-card hidden">
+    <div id="errorTitle" class="state-title">スケジュールを表示できません</div>
+    <div id="errorText" class="state-text">
+      URLをご確認いただくか、イベント主催者へお問い合わせください。
+    </div>
+  </div>
 
-  <main class="schedule-wrap">
-    <section class="schedule-head">
-      <h2 id="dayTitle" class="day-title"></h2>
-      <div class="section-title">スケジュール</div>
-    </section>
+  <!-- SCHEDULE -->
+  <div id="schedulePage" class="hidden">
 
-    <section class="schedule-body">
-      <div id="scheduleList" class="schedule-list"></div>
-      <div id="emptyState" class="empty-state">
-        この日のスケジュールはまだ登録されていません。
-      </div>
-    </section>
-  </main>
+    <header class="hero">
+      <h1 id="eventName" class="event-name">イベント</h1>
+      <div class="hero-sub">イベントスケジュール</div>
+    </header>
 
-  <div class="footer">最新のスケジュールを表示しています</div>
+    <nav id="dayTabs" class="day-tabs" aria-label="日程切り替え"></nav>
+
+    <main class="schedule-wrap">
+      <section class="schedule-head">
+        <h2 id="dayTitle" class="day-title"></h2>
+        <div class="section-title">スケジュール</div>
+      </section>
+
+      <section class="schedule-body">
+        <div id="scheduleList" class="schedule-list"></div>
+
+        <div id="emptyState" class="empty-state">
+          この日のスケジュールはまだ登録されていません。
+        </div>
+      </section>
+    </main>
+
+    <div class="footer">最新のスケジュールを表示しています</div>
+
+  </div>
 
 </div>
 
 <script>
-/*
-  現在は表示確認用データです。
-  次の工程で管理者画面/Firebaseと接続します。
+/* =========================
+   PUBLIC SCHEDULE VIEW
+========================= */
 
-  本番仕様：
-  ・開催日数を 1〜5日から選択
-  ・選んだ日数だけDAYタブを表示
-  ・各DAY 最大20件
-  ・1件につき「開始時間 / 内容 / 備考」
-  ・日数を減らしてもFirebase上の未表示DAYデータは保持する予定
-*/
+const GET_PUBLIC_SCHEDULE_URL =
+  "https://asia-northeast1-event-checkin-app-987b3.cloudfunctions.net/getPublicSchedule";
 
-const scheduleData = {
-  eventName: "SBCMT",
-
-  // ★ここが開催日数。1〜5で変更可能
-  dayCount: 2,
-
-  days: [
-    {
-      label: "DAY1",
-      date: "11月21日",
-      items: [
-        { time: "8:00",  title: "入場開始", note: "" },
-        { time: "10:00", title: "受付開始", note: "本部幕にて受付" },
-        { time: "14:00", title: "開会式", note: "椅子と飲み物持参" },
-        { time: "14:20", title: "ビンゴ大会", note: "" },
-        { time: "15:10", title: "じゃんけん大会", note: "" },
-        { time: "16:00", title: "フリータイム", note: "" },
-        { time: "22:00", title: "クワイアットタイム", note: "" }
-      ]
-    },
-    {
-      label: "DAY2",
-      date: "11月22日",
-      items: [
-        { time: "15:30", title: "完全撤収", note: "" }
-      ]
-    },
-    {
-      label: "DAY3",
-      date: "11月23日",
-      items: []
-    },
-    {
-      label: "DAY4",
-      date: "11月24日",
-      items: []
-    },
-    {
-      label: "DAY5",
-      date: "11月25日",
-      items: []
-    }
-  ]
-};
-
+let scheduleData = null;
 let activeDayIndex = 0;
 
-const eventNameEl    = document.getElementById("eventName");
-const dayTabsEl      = document.getElementById("dayTabs");
-const dayTitleEl     = document.getElementById("dayTitle");
-const scheduleListEl = document.getElementById("scheduleList");
-const emptyStateEl   = document.getElementById("emptyState");
+const loadingState =
+  document.getElementById("loadingState");
 
-const safeDayCount = Math.max(1, Math.min(5, Number(scheduleData.dayCount) || 1));
-const visibleDays = scheduleData.days.slice(0, safeDayCount);
+const errorState =
+  document.getElementById("errorState");
 
-eventNameEl.textContent = scheduleData.eventName || "イベント";
+const errorTitle =
+  document.getElementById("errorTitle");
 
-function renderTabs(){
-  dayTabsEl.innerHTML = "";
-  dayTabsEl.className = `day-tabs cols-${safeDayCount}`;
+const errorText =
+  document.getElementById("errorText");
 
-  visibleDays.forEach((day,index)=>{
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "day-tab" + (index === activeDayIndex ? " active" : "");
+const schedulePage =
+  document.getElementById("schedulePage");
 
-    const label = document.createElement("span");
-    label.className = "label";
-    label.textContent = day.label || `DAY${index+1}`;
+const eventNameEl =
+  document.getElementById("eventName");
 
-    const date = document.createElement("span");
-    date.className = "date";
-    date.textContent = day.date || "日付未設定";
+const dayTabsEl =
+  document.getElementById("dayTabs");
 
-    btn.appendChild(label);
-    btn.appendChild(date);
+const dayTitleEl =
+  document.getElementById("dayTitle");
 
-    btn.addEventListener("click",()=>{
-      activeDayIndex = index;
-      render();
-      window.scrollTo({top:0,behavior:"smooth"});
-    });
+const scheduleListEl =
+  document.getElementById("scheduleList");
 
-    dayTabsEl.appendChild(btn);
-  });
+const emptyStateEl =
+  document.getElementById("emptyState");
+
+
+function showError(title, text) {
+
+  loadingState.classList.add("hidden");
+  schedulePage.classList.add("hidden");
+
+  errorTitle.textContent =
+    title;
+
+  errorText.textContent =
+    text;
+
+  errorState.classList.remove("hidden");
 }
 
-function renderSchedule(){
-  const day = visibleDays[activeDayIndex];
 
-  if(!day){
-    dayTitleEl.textContent = "";
-    scheduleListEl.innerHTML = "";
-    emptyStateEl.style.display = "block";
-    return;
+function formatDisplayDate(value) {
+
+  if (!value) {
+    return "";
   }
 
-  dayTitleEl.textContent = day.date
-    ? `${day.label}  ${day.date}`
-    : day.label;
+  const parts =
+    String(value).split("-");
 
-  scheduleListEl.innerHTML = "";
-
-  const items = Array.isArray(day.items)
-    ? day.items.slice(0,20)
-    : [];
-
-  if(items.length === 0){
-    emptyStateEl.style.display = "block";
-    return;
+  if (parts.length !== 3) {
+    return value;
   }
 
-  emptyStateEl.style.display = "none";
+  return (
+    Number(parts[1]) +
+    "月" +
+    Number(parts[2]) +
+    "日"
+  );
+}
 
-  items.forEach(item=>{
-    const row = document.createElement("div");
-    row.className = "schedule-row";
 
-    const time = document.createElement("div");
-    time.className = "time";
-    time.textContent = item.time || "";
+function normalizeSchedule(value) {
 
-    const detail = document.createElement("div");
-    detail.className = "detail";
+  if (
+    !value ||
+    typeof value !== "object"
+  ) {
+    return null;
+  }
 
-    const title = document.createElement("div");
-    title.className = "item-title";
-    title.textContent = item.title || "";
-    detail.appendChild(title);
+  const dayCount =
+    Math.max(
+      1,
+      Math.min(
+        5,
+        Number(value.dayCount) || 1
+      )
+    );
 
-    if(item.note){
-      const note = document.createElement("div");
-      note.className = "item-note";
-      note.textContent = item.note;
-      detail.appendChild(note);
+  const sourceDays =
+    Array.isArray(value.days)
+      ? value.days
+      : [];
+
+  const days =
+    Array.from(
+      { length: dayCount },
+      (_, index) => {
+
+        const sourceDay =
+          sourceDays[index] &&
+          typeof sourceDays[index] === "object"
+            ? sourceDays[index]
+            : {};
+
+        const sourceItems =
+          Array.isArray(sourceDay.items)
+            ? sourceDay.items
+            : [];
+
+        return {
+          label:
+            sourceDay.label ||
+            ("DAY" + (index + 1)),
+
+          date:
+            typeof sourceDay.date === "string"
+              ? sourceDay.date
+              : "",
+
+          items:
+            sourceItems
+              .slice(0,20)
+              .map(item => ({
+                time:
+                  typeof item?.time === "string"
+                    ? item.time
+                    : "",
+
+                title:
+                  typeof item?.title === "string"
+                    ? item.title
+                    : "",
+
+                note:
+                  typeof item?.note === "string"
+                    ? item.note
+                    : ""
+              }))
+        };
+      }
+    );
+
+  return {
+    eventName:
+      String(
+        value.eventName ||
+        "イベント"
+      ),
+
+    dayCount,
+    days,
+
+    updatedAt:
+      Number(value.updatedAt) || 0
+  };
+}
+
+
+function renderTabs() {
+
+  const days =
+    scheduleData.days;
+
+  const count =
+    days.length;
+
+  dayTabsEl.innerHTML =
+    "";
+
+  dayTabsEl.className =
+    "day-tabs cols-" + count;
+
+  days.forEach(
+    (day,index) => {
+
+      const button =
+        document.createElement(
+          "button"
+        );
+
+      button.type =
+        "button";
+
+      button.className =
+        "day-tab" +
+        (
+          index === activeDayIndex
+            ? " active"
+            : ""
+        );
+
+      const label =
+        document.createElement(
+          "span"
+        );
+
+      label.className =
+        "label";
+
+      label.textContent =
+        day.label ||
+        ("DAY" + (index + 1));
+
+      const date =
+        document.createElement(
+          "span"
+        );
+
+      date.className =
+        "date";
+
+      date.textContent =
+        formatDisplayDate(
+          day.date
+        ) ||
+        "日付未設定";
+
+      button.appendChild(
+        label
+      );
+
+      button.appendChild(
+        date
+      );
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          activeDayIndex =
+            index;
+
+          render();
+
+          window.scrollTo({
+            top:0,
+            behavior:"smooth"
+          });
+
+        }
+      );
+
+      dayTabsEl.appendChild(
+        button
+      );
+
     }
-
-    row.appendChild(time);
-    row.appendChild(detail);
-    scheduleListEl.appendChild(row);
-  });
+  );
 }
 
-function render(){
+
+function renderSchedule() {
+
+  const day =
+    scheduleData.days[
+      activeDayIndex
+    ];
+
+  if (!day) {
+    return;
+  }
+
+  const displayDate =
+    formatDisplayDate(
+      day.date
+    );
+
+  dayTitleEl.textContent =
+    displayDate
+      ? `${day.label}  ${displayDate}`
+      : day.label;
+
+  scheduleListEl.innerHTML =
+    "";
+
+  const items =
+    Array.isArray(day.items)
+      ? day.items
+      : [];
+
+  if (!items.length) {
+
+    emptyStateEl.style.display =
+      "block";
+
+    return;
+  }
+
+  emptyStateEl.style.display =
+    "none";
+
+  items.forEach(
+    item => {
+
+      const row =
+        document.createElement(
+          "div"
+        );
+
+      row.className =
+        "schedule-row";
+
+      const time =
+        document.createElement(
+          "div"
+        );
+
+      time.className =
+        "time";
+
+      time.textContent =
+        item.time || "";
+
+      const detail =
+        document.createElement(
+          "div"
+        );
+
+      detail.className =
+        "detail";
+
+      const title =
+        document.createElement(
+          "div"
+        );
+
+      title.className =
+        "item-title";
+
+      title.textContent =
+        item.title || "";
+
+      detail.appendChild(
+        title
+      );
+
+      if (item.note) {
+
+        const note =
+          document.createElement(
+            "div"
+          );
+
+        note.className =
+          "item-note";
+
+        note.textContent =
+          item.note;
+
+        detail.appendChild(
+          note
+        );
+      }
+
+      row.appendChild(
+        time
+      );
+
+      row.appendChild(
+        detail
+      );
+
+      scheduleListEl.appendChild(
+        row
+      );
+
+    }
+  );
+}
+
+
+function render() {
+
+  eventNameEl.textContent =
+    scheduleData.eventName;
+
   renderTabs();
   renderSchedule();
 }
 
-render();
+
+async function loadPublicSchedule() {
+
+  const params =
+    new URLSearchParams(
+      window.location.search
+    );
+
+  const publicId =
+    String(
+      params.get("s") || ""
+    ).trim();
+
+  if (!publicId) {
+
+    showError(
+      "スケジュールURLが正しくありません",
+      "イベント主催者から案内されたURLまたはQRコードから開いてください。"
+    );
+
+    return;
+  }
+
+  try {
+
+    const url =
+      new URL(
+        GET_PUBLIC_SCHEDULE_URL
+      );
+
+    url.searchParams.set(
+      "s",
+      publicId
+    );
+
+    url.searchParams.set(
+      "_t",
+      Date.now().toString()
+    );
+
+    const response =
+      await fetch(
+        url.toString(),
+        {
+          method:"GET",
+          cache:"no-store"
+        }
+      );
+
+    if (response.status === 404) {
+
+      showError(
+        "スケジュールが見つかりません",
+        "このスケジュールはまだ公開されていないか、URLが無効になっています。"
+      );
+
+      return;
+    }
+
+    if (!response.ok) {
+
+      throw new Error(
+        "HTTP " + response.status
+      );
+    }
+
+    const result =
+      await response.json();
+
+    if (
+      !result.ok ||
+      !result.schedule
+    ) {
+
+      throw new Error(
+        "Invalid schedule response"
+      );
+    }
+
+    scheduleData =
+      normalizeSchedule(
+        result.schedule
+      );
+
+    if (!scheduleData) {
+
+      throw new Error(
+        "Schedule data is invalid"
+      );
+    }
+
+    activeDayIndex =
+      0;
+
+    render();
+
+    loadingState.classList.add(
+      "hidden"
+    );
+
+    errorState.classList.add(
+      "hidden"
+    );
+
+    schedulePage.classList.remove(
+      "hidden"
+    );
+
+  } catch (error) {
+
+    console.error(
+      "Schedule load error:",
+      error
+    );
+
+    showError(
+      "スケジュールを読み込めませんでした",
+      "通信状態をご確認のうえ、もう一度ページを開いてください。"
+    );
+  }
+}
+
+
+loadPublicSchedule();
 </script>
 </body>
 </html>
