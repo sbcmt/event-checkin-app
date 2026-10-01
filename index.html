@@ -800,6 +800,46 @@ button {
     font-size: 14px;
   }
 }
+
+/* ===== Schedule editor (UI preview; Firebase save is connected next) ===== */
+.scheduleAdminPanel{margin-top:14px}
+.scheduleAdminTitle{text-align:center;font-size:20px;font-weight:900}
+.scheduleAdminDescription{margin-top:6px;color:#777;text-align:center;font-size:12px;line-height:1.6}
+.scheduleEditorCard{background:#fff;border-radius:22px;padding:20px 18px;box-shadow:0 5px 20px rgba(0,0,0,.07)}
+.scheduleEditorEventName{margin:0;text-align:center;font-size:26px;font-weight:900;word-break:break-word}
+.scheduleEditorSub{margin-top:5px;color:#777;text-align:center;font-size:13px}
+.scheduleSelect{width:100%;padding:15px;border:1px solid #ccc;border-radius:13px;background:#fff;color:#111;font-size:16px;outline:none}
+.scheduleSelect:focus{border-color:#111}
+.scheduleDayTabs{display:grid;gap:7px;margin-top:18px}
+.scheduleDayTabs.cols1{grid-template-columns:1fr}
+.scheduleDayTabs.cols2{grid-template-columns:repeat(2,1fr)}
+.scheduleDayTabs.cols3{grid-template-columns:repeat(3,1fr)}
+.scheduleDayTabs.cols4{grid-template-columns:repeat(4,1fr)}
+.scheduleDayTabs.cols5{grid-template-columns:repeat(5,1fr)}
+.scheduleDayTab{min-height:62px;padding:9px 5px;border:1px solid #ccc;border-radius:14px;background:#fff;color:#222;font-size:13px;font-weight:900}
+.scheduleDayTab.active{border-color:#111;background:#111;color:#fff}
+.scheduleDayTabDate{display:block;margin-top:3px;font-size:11px;font-weight:700;opacity:.68}
+.scheduleDayEditor{margin-top:14px;padding:16px;border-radius:18px;background:#f7f7f7}
+.scheduleDayHeading{margin:0;font-size:20px;font-weight:900}
+.scheduleItemCount{margin-top:5px;color:#777;font-size:12px;font-weight:700}
+.scheduleRows{display:grid;gap:10px;margin-top:14px}
+.scheduleEditRow{padding:13px;border:1px solid #ddd;border-radius:15px;background:#fff}
+.scheduleEditRowTop{display:grid;grid-template-columns:108px 1fr;gap:8px}
+.scheduleMiniLabel{display:block;margin:0 0 5px 2px;color:#777;font-size:11px;font-weight:800}
+.scheduleTimeInput,.scheduleTextInput{width:100%;min-width:0;padding:12px;border:1px solid #ccc;border-radius:11px;background:#fff;color:#111;font-size:15px;outline:none}
+.scheduleTimeInput:focus,.scheduleTextInput:focus{border-color:#111}
+.scheduleNoteWrap{margin-top:9px}
+.scheduleRowBottom{display:flex;justify-content:flex-end;margin-top:9px}
+.scheduleDeleteRowButton{padding:8px 12px;border:1px solid #bbb;border-radius:10px;background:#fff;color:#666;font-size:12px;font-weight:800}
+.scheduleAddButton{width:100%;margin-top:12px;padding:14px;border:1px dashed #999;border-radius:13px;background:#fff;color:#333;font-size:14px;font-weight:900}
+.scheduleAddButton:disabled{opacity:.35;cursor:default}
+.scheduleEditorNote{margin-top:14px;padding:11px;border-radius:12px;background:#f1f1f1;color:#666;text-align:center;font-size:12px;line-height:1.6}
+.scheduleEditorActions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+.scheduleEditorActions .primaryButton,.scheduleEditorActions .secondaryButton{margin-top:0}
+.scheduleSavedMessage{display:none;margin-top:12px;padding:11px;border-radius:12px;background:#edf7ed;color:#326b32;text-align:center;font-size:13px;font-weight:800}
+@media(max-width:560px){.scheduleDayTabs.cols4,.scheduleDayTabs.cols5{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:420px){.scheduleEditRowTop{grid-template-columns:92px 1fr}.scheduleEditorActions{grid-template-columns:1fr}}
+
 </style>
 </head>
 
@@ -1184,6 +1224,16 @@ button {
     </div>
 
 
+    <!-- SCHEDULE -->
+    <div class="panel scheduleAdminPanel">
+      <div class="scheduleAdminTitle">スケジュール</div>
+      <div class="scheduleAdminDescription">
+        DAY1〜DAY5のタイムテーブルを設定します。<br>
+        1日につき最大20件まで登録できます。
+      </div>
+      <button id="openScheduleEditorButton" class="secondaryButton">スケジュールを編集</button>
+    </div>
+
     <!-- RESET -->
     <button id="resetAttendanceButton" class="dangerButton">
       読み取り記録をリセット
@@ -1270,6 +1320,58 @@ button {
 
   </section>
 
+  <!-- SCHEDULE EDITOR -->
+  <section id="scheduleEditorScreen" class="screen">
+    <div class="topBar">
+      <button id="scheduleEditorBackButton" class="backButton" aria-label="戻る">‹</button>
+      <h2 class="topBarTitle">スケジュール編集</h2>
+      <div class="topBarSpacer"></div>
+    </div>
+
+    <div class="scheduleEditorCard">
+      <h2 id="scheduleEditorEventName" class="scheduleEditorEventName">イベント名</h2>
+      <div class="scheduleEditorSub">イベントスケジュール設定</div>
+
+      <div class="field">
+        <label class="fieldLabel" for="scheduleDayCount">開催日数</label>
+        <select id="scheduleDayCount" class="scheduleSelect">
+          <option value="1">1日</option>
+          <option value="2">2日</option>
+          <option value="3">3日</option>
+          <option value="4">4日</option>
+          <option value="5">5日</option>
+        </select>
+      </div>
+
+      <div id="scheduleDayTabs" class="scheduleDayTabs"></div>
+
+      <div class="scheduleDayEditor">
+        <h3 id="scheduleActiveDayHeading" class="scheduleDayHeading">DAY1</h3>
+
+        <div class="field">
+          <label class="fieldLabel" for="scheduleActiveDate">日付</label>
+          <input id="scheduleActiveDate" class="input" type="date">
+        </div>
+
+        <div id="scheduleItemCount" class="scheduleItemCount">0 / 20件</div>
+        <div id="scheduleRows" class="scheduleRows"></div>
+
+        <button id="scheduleAddRowButton" class="scheduleAddButton">＋ スケジュールを追加</button>
+      </div>
+
+      <div class="scheduleEditorNote">
+        現在は管理画面の入力・操作確認用です。<br>
+        Firebaseへの保存は次の工程で接続します。
+      </div>
+
+      <div class="scheduleEditorActions">
+        <button id="scheduleEditorCancelButton" class="secondaryButton">管理画面に戻る</button>
+        <button id="scheduleDraftSaveButton" class="primaryButton">入力内容を一時保存</button>
+      </div>
+
+      <div id="scheduleSavedMessage" class="scheduleSavedMessage"></div>
+    </div>
+  </section>
 
 </div>
 
@@ -1404,6 +1506,16 @@ let accessCheckRunning =
 
 let currentAccess =
   null;
+
+/* Schedule editor UI draft (Firebase persistence is added next) */
+const scheduleDraftByEvent =
+  new Map();
+
+let scheduleWorkingDraft =
+  null;
+
+let activeScheduleDayIndex =
+  0;
 
 
 const VISITOR_RETENTION_MS =
@@ -6218,6 +6330,291 @@ document
     }
 
   });
+
+
+
+/* =========================
+   SCHEDULE EDITOR
+   UI preview only; Firebase persistence is connected next.
+========================= */
+
+function createEmptyScheduleDraft() {
+  return {
+    dayCount: 1,
+    days: Array.from({length:5}, (_,index) => ({
+      label: "DAY" + (index + 1),
+      date: "",
+      items: []
+    }))
+  };
+}
+
+function cloneScheduleDraft(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+function formatScheduleTabDate(dateValue) {
+  if (!dateValue) return "日付未設定";
+  const parts = dateValue.split("-");
+  if (parts.length !== 3) return dateValue;
+  return Number(parts[1]) + "月" + Number(parts[2]) + "日";
+}
+
+function ensureScheduleWorkingDraft() {
+  if (!currentEventId) return;
+  const saved = scheduleDraftByEvent.get(currentEventId);
+  scheduleWorkingDraft = saved
+    ? cloneScheduleDraft(saved)
+    : createEmptyScheduleDraft();
+
+  if (activeScheduleDayIndex >= scheduleWorkingDraft.dayCount) {
+    activeScheduleDayIndex = Math.max(0, scheduleWorkingDraft.dayCount - 1);
+  }
+}
+
+function openScheduleEditor() {
+  if (!currentEventId || !currentEvent) return;
+
+  ensureScheduleWorkingDraft();
+
+  document.getElementById("scheduleEditorEventName").textContent =
+    currentEvent.name || "イベント名";
+
+  document.getElementById("scheduleDayCount").value =
+    String(scheduleWorkingDraft.dayCount);
+
+  document.getElementById("scheduleSavedMessage").style.display = "none";
+
+  renderScheduleEditor();
+  showScreen("scheduleEditorScreen");
+}
+
+function renderScheduleEditor() {
+  if (!scheduleWorkingDraft) return;
+
+  const count = Math.max(
+    1,
+    Math.min(5, Number(scheduleWorkingDraft.dayCount) || 1)
+  );
+  scheduleWorkingDraft.dayCount = count;
+
+  if (activeScheduleDayIndex >= count) {
+    activeScheduleDayIndex = count - 1;
+  }
+
+  const tabs = document.getElementById("scheduleDayTabs");
+  tabs.innerHTML = "";
+  tabs.className = "scheduleDayTabs cols" + count;
+
+  for (let index = 0; index < count; index++) {
+    const day = scheduleWorkingDraft.days[index];
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className =
+      "scheduleDayTab" + (index === activeScheduleDayIndex ? " active" : "");
+
+    const label = document.createElement("span");
+    label.textContent = day.label || ("DAY" + (index + 1));
+
+    const date = document.createElement("span");
+    date.className = "scheduleDayTabDate";
+    date.textContent = formatScheduleTabDate(day.date);
+
+    button.appendChild(label);
+    button.appendChild(date);
+
+    button.addEventListener("click", () => {
+      activeScheduleDayIndex = index;
+      renderScheduleEditor();
+    });
+
+    tabs.appendChild(button);
+  }
+
+  renderActiveScheduleDay();
+}
+
+function renderActiveScheduleDay() {
+  if (!scheduleWorkingDraft) return;
+
+  const day = scheduleWorkingDraft.days[activeScheduleDayIndex];
+  if (!day) return;
+
+  document.getElementById("scheduleActiveDayHeading").textContent =
+    day.label || ("DAY" + (activeScheduleDayIndex + 1));
+
+  document.getElementById("scheduleActiveDate").value = day.date || "";
+
+  const rows = document.getElementById("scheduleRows");
+  rows.innerHTML = "";
+
+  const items = Array.isArray(day.items) ? day.items : [];
+
+  document.getElementById("scheduleItemCount").textContent =
+    items.length + " / 20件";
+
+  document.getElementById("scheduleAddRowButton").disabled =
+    items.length >= 20;
+
+  items.forEach((item, itemIndex) => {
+    const row = document.createElement("div");
+    row.className = "scheduleEditRow";
+
+    const top = document.createElement("div");
+    top.className = "scheduleEditRowTop";
+
+    const timeWrap = document.createElement("div");
+    const timeLabel = document.createElement("label");
+    timeLabel.className = "scheduleMiniLabel";
+    timeLabel.textContent = "開始時間";
+
+    const timeInput = document.createElement("input");
+    timeInput.type = "time";
+    timeInput.className = "scheduleTimeInput";
+    timeInput.value = item.time || "";
+    timeInput.addEventListener("input", () => {
+      item.time = timeInput.value;
+    });
+
+    timeWrap.appendChild(timeLabel);
+    timeWrap.appendChild(timeInput);
+
+    const titleWrap = document.createElement("div");
+    const titleLabel = document.createElement("label");
+    titleLabel.className = "scheduleMiniLabel";
+    titleLabel.textContent = "内容";
+
+    const titleInput = document.createElement("input");
+    titleInput.type = "text";
+    titleInput.className = "scheduleTextInput";
+    titleInput.placeholder = "例：受付開始";
+    titleInput.maxLength = 80;
+    titleInput.value = item.title || "";
+    titleInput.addEventListener("input", () => {
+      item.title = titleInput.value;
+    });
+
+    titleWrap.appendChild(titleLabel);
+    titleWrap.appendChild(titleInput);
+
+    top.appendChild(timeWrap);
+    top.appendChild(titleWrap);
+
+    const noteWrap = document.createElement("div");
+    noteWrap.className = "scheduleNoteWrap";
+
+    const noteLabel = document.createElement("label");
+    noteLabel.className = "scheduleMiniLabel";
+    noteLabel.textContent = "備考";
+
+    const noteInput = document.createElement("input");
+    noteInput.type = "text";
+    noteInput.className = "scheduleTextInput";
+    noteInput.placeholder = "例：本部幕にて受付";
+    noteInput.maxLength = 120;
+    noteInput.value = item.note || "";
+    noteInput.addEventListener("input", () => {
+      item.note = noteInput.value;
+    });
+
+    noteWrap.appendChild(noteLabel);
+    noteWrap.appendChild(noteInput);
+
+    const bottom = document.createElement("div");
+    bottom.className = "scheduleRowBottom";
+
+    const deleteButton = document.createElement("button");
+    deleteButton.type = "button";
+    deleteButton.className = "scheduleDeleteRowButton";
+    deleteButton.textContent = "この予定を削除";
+    deleteButton.addEventListener("click", () => {
+      day.items.splice(itemIndex, 1);
+      renderActiveScheduleDay();
+    });
+
+    bottom.appendChild(deleteButton);
+    row.appendChild(top);
+    row.appendChild(noteWrap);
+    row.appendChild(bottom);
+    rows.appendChild(row);
+  });
+}
+
+document.getElementById("openScheduleEditorButton")
+  .addEventListener("click", async () => {
+    await stopScanner();
+    openScheduleEditor();
+  });
+
+document.getElementById("scheduleDayCount")
+  .addEventListener("change", event => {
+    if (!scheduleWorkingDraft) return;
+
+    scheduleWorkingDraft.dayCount = Math.max(
+      1,
+      Math.min(5, Number(event.target.value) || 1)
+    );
+
+    if (activeScheduleDayIndex >= scheduleWorkingDraft.dayCount) {
+      activeScheduleDayIndex = scheduleWorkingDraft.dayCount - 1;
+    }
+
+    renderScheduleEditor();
+  });
+
+document.getElementById("scheduleActiveDate")
+  .addEventListener("change", event => {
+    if (!scheduleWorkingDraft) return;
+    const day = scheduleWorkingDraft.days[activeScheduleDayIndex];
+    if (!day) return;
+    day.date = event.target.value || "";
+    renderScheduleEditor();
+  });
+
+document.getElementById("scheduleAddRowButton")
+  .addEventListener("click", () => {
+    if (!scheduleWorkingDraft) return;
+    const day = scheduleWorkingDraft.days[activeScheduleDayIndex];
+    if (!day) return;
+
+    if (!Array.isArray(day.items)) day.items = [];
+    if (day.items.length >= 20) return;
+
+    day.items.push({time:"", title:"", note:""});
+    renderActiveScheduleDay();
+
+    setTimeout(() => {
+      const inputs = document.querySelectorAll(
+        "#scheduleRows .scheduleTimeInput"
+      );
+      if (inputs.length) inputs[inputs.length - 1].focus();
+    }, 0);
+  });
+
+document.getElementById("scheduleDraftSaveButton")
+  .addEventListener("click", () => {
+    if (!scheduleWorkingDraft || !currentEventId) return;
+
+    scheduleDraftByEvent.set(
+      currentEventId,
+      cloneScheduleDraft(scheduleWorkingDraft)
+    );
+
+    const message = document.getElementById("scheduleSavedMessage");
+    message.textContent =
+      "入力内容を一時保存しました。Firebaseへの保存は次工程で接続します。";
+    message.style.display = "block";
+  });
+
+function backFromScheduleEditor() {
+  showScreen("eventDashboardScreen");
+}
+
+document.getElementById("scheduleEditorBackButton")
+  .addEventListener("click", backFromScheduleEditor);
+
+document.getElementById("scheduleEditorCancelButton")
+  .addEventListener("click", backFromScheduleEditor);
 
 
 /* =========================
