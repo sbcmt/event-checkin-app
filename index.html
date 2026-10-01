@@ -885,6 +885,50 @@ button {
 }
 @keyframes appUpdateSpin{to{transform:rotate(360deg)}}
 
+
+/* ===== SCHEDULE EDITOR MOBILE FIX ===== */
+.scheduleEditRowTop{
+  min-width:0;
+}
+.scheduleEditRowTop > div{
+  min-width:0;
+}
+.scheduleTimeInput,
+.scheduleTextInput{
+  display:block;
+  max-width:100%;
+  min-width:0;
+  box-sizing:border-box;
+}
+
+@media(max-width:560px){
+  .scheduleEditRowTop{
+    grid-template-columns:1fr;
+    gap:10px;
+  }
+
+  .scheduleEditorActions{
+    grid-template-columns:1fr;
+  }
+
+  .scheduleEditorActions .primaryButton,
+  .scheduleEditorActions .secondaryButton{
+    width:100%;
+    min-height:56px;
+    white-space:normal;
+  }
+
+  .scheduleTimeInput,
+  .scheduleTextInput{
+    width:100%;
+    max-width:100%;
+  }
+
+  .scheduleTimeInput{
+    min-height:50px;
+  }
+}
+
 </style>
 </head>
 
@@ -1432,7 +1476,7 @@ button {
 /* =========================
    APP VERSION CHECK
 ========================= */
-const APP_VERSION = "2026.10.01.1";
+const APP_VERSION = "2026.10.01.2";
 const APP_VERSION_FILE = "version.json";
 
 (async function checkAppVersion() {
