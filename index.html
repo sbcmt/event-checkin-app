@@ -1028,6 +1028,32 @@ button {
   }
 }
 
+
+/* ===== SCHEDULE DATE INPUT WIDTH FIX v2026.10.01.7 ===== */
+.scheduleDayEditor .field{
+  width:100% !important;
+  min-width:0 !important;
+}
+
+#scheduleActiveDate{
+  display:block !important;
+  inline-size:100% !important;
+  width:100% !important;
+  max-inline-size:100% !important;
+  max-width:100% !important;
+  min-inline-size:0 !important;
+  min-width:0 !important;
+  box-sizing:border-box !important;
+  margin:0 !important;
+}
+
+/* iPhone / iPad の date input が親幅を越えないよう固定 */
+#scheduleActiveDate::-webkit-date-and-time-value{
+  min-width:0 !important;
+  width:100% !important;
+  text-align:center !important;
+}
+
 </style>
 </head>
 
@@ -1608,7 +1634,7 @@ button {
 /* =========================
    APP VERSION CHECK
 ========================= */
-const APP_VERSION = "2026.10.01.6";
+const APP_VERSION = "2026.10.01.7";
 const APP_VERSION_FILE = "version.json";
 
 (async function checkAppVersion() {
