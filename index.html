@@ -826,8 +826,8 @@ button {
 .scheduleDayHeading{margin:0;font-size:20px;font-weight:900}
 .scheduleItemCount{margin-top:5px;color:#777;font-size:12px;font-weight:700}
 .scheduleRows{display:grid;gap:10px;margin-top:14px}
-.scheduleEditRow{padding:13px;border:1px solid #ddd;border-radius:15px;background:#fff}
-.scheduleEditRowTop{display:grid;grid-template-columns:108px 1fr;gap:8px}
+.scheduleEditRow{padding:13px;border:1px solid #ddd;border-radius:15px;background:#fff;overflow:hidden}
+.scheduleEditRowTop{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:8px;align-items:end;width:100%}
 .scheduleMiniLabel{display:block;margin:0 0 5px 2px;color:#777;font-size:11px;font-weight:800}
 .scheduleTimeInput,.scheduleTextInput{width:100%;min-width:0;padding:12px;border:1px solid #ccc;border-radius:11px;background:#fff;color:#111;font-size:15px;outline:none}
 .scheduleTimeInput:focus,.scheduleTextInput:focus{border-color:#111}
@@ -841,7 +841,7 @@ button {
 .scheduleEditorActions .primaryButton,.scheduleEditorActions .secondaryButton{margin-top:0}
 .scheduleSavedMessage{display:none;margin-top:12px;padding:11px;border-radius:12px;background:#edf7ed;color:#326b32;text-align:center;font-size:13px;font-weight:800}
 @media(max-width:560px){.scheduleDayTabs.cols4,.scheduleDayTabs.cols5{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:420px){.scheduleEditRowTop{grid-template-columns:92px 1fr}.scheduleEditorActions{grid-template-columns:1fr}}
+@media(max-width:420px){.scheduleEditorActions{grid-template-columns:1fr}}
 
 
 /* ===== APP UPDATE OVERLAY ===== */
@@ -884,22 +884,6 @@ button {
   animation:appUpdateSpin .8s linear infinite;
 }
 @keyframes appUpdateSpin{to{transform:rotate(360deg)}}
-
-
-/* ===== SCHEDULE EDITOR MOBILE FIX ===== */
-.scheduleEditRowTop{
-  min-width:0;
-}
-.scheduleEditRowTop > div{
-  min-width:0;
-}
-.scheduleTimeInput,
-.scheduleTextInput{
-  display:block;
-  max-width:100%;
-  min-width:0;
-  box-sizing:border-box;
-}
 
 
 /* ===== SCHEDULE SHARE ===== */
@@ -968,99 +952,44 @@ button {
 }
 
 
-/* ===== SCHEDULE EDITOR LAYOUT FIX v2026.10.01.4 ===== */
-.scheduleEditRowTop{
-  display:grid !important;
-  grid-template-columns:minmax(0,3fr) minmax(0,6fr) !important;
-  gap:10px !important;
-  align-items:end;
-}
 
-.scheduleEditRowTop > div{
-  min-width:0 !important;
-}
-
-.scheduleTimeInput,
-.scheduleTextInput{
-  display:block !important;
-  width:100% !important;
-  max-width:100% !important;
-  min-width:0 !important;
-  height:52px !important;
-  min-height:52px !important;
-  padding:10px 12px !important;
-  margin:0 !important;
-  box-sizing:border-box !important;
-  border:1px solid #cfcfcf !important;
-  border-radius:12px !important;
-  background:#fff !important;
-  color:#111 !important;
-  font-size:16px !important;
-  line-height:1.2 !important;
-  box-shadow:none !important;
-  -webkit-appearance:none !important;
-  appearance:none !important;
-}
-
-.scheduleTimeInput{
-  text-align:center !important;
-  font-variant-numeric:tabular-nums;
-}
-
-.scheduleTimeInput::-webkit-date-and-time-value{
-  text-align:center;
-  min-height:1.2em;
-}
-
-.scheduleNoteWrap{
-  margin-top:10px !important;
-}
-
-@media(max-width:560px){
-  .scheduleEditRowTop{
-    grid-template-columns:minmax(0,3fr) minmax(0,6fr) !important;
-    gap:8px !important;
-  }
-
-  .scheduleEditorActions{
-    grid-template-columns:1fr !important;
-  }
-
-  .scheduleTimeInput,
-  .scheduleTextInput{
-    height:50px !important;
-    min-height:50px !important;
-    font-size:16px !important;
-  }
-}
-
-
-/* ===== SCHEDULE EDITOR FINAL ROW LAYOUT v2026.10.01.5 ===== */
-/* PC / iPhone / iPad 共通：開始時間 1 / 内容 2 の横並び */
+/* ===== SCHEDULE EDITOR FIXED LAYOUT v2026.10.01.6 ===== */
 .scheduleEditRowTop{
   display:grid !important;
   grid-template-columns:minmax(0,1fr) minmax(0,2fr) !important;
   gap:8px !important;
   align-items:end !important;
   width:100% !important;
+  min-width:0 !important;
 }
 
 .scheduleEditRowTop > div{
-  min-width:0 !important;
   width:100% !important;
+  min-width:0 !important;
+  max-width:100% !important;
+  overflow:hidden !important;
+}
+
+.scheduleMiniLabel{
+  display:block !important;
+  margin:0 0 5px 2px !important;
+  line-height:1.2 !important;
 }
 
 .scheduleTimeInput,
 .scheduleTextInput{
   display:block !important;
+  inline-size:100% !important;
   width:100% !important;
+  max-inline-size:100% !important;
   max-width:100% !important;
+  min-inline-size:0 !important;
   min-width:0 !important;
-  box-sizing:border-box !important;
-  margin:0 !important;
-  padding:11px 12px !important;
   height:50px !important;
   min-height:50px !important;
+  margin:0 !important;
+  padding:10px 12px !important;
+  box-sizing:border-box !important;
   border:1px solid #cfcfcf !important;
   border-radius:11px !important;
   background:#fff !important;
@@ -1068,23 +997,21 @@ button {
   font-size:16px !important;
   line-height:1.2 !important;
   box-shadow:none !important;
+  appearance:none !important;
+  -webkit-appearance:none !important;
 }
 
 .scheduleTimeInput{
   text-align:center !important;
-  -webkit-appearance:auto !important;
-  appearance:auto !important;
-}
-
-.scheduleTimeInput::-webkit-date-and-time-value{
-  text-align:center !important;
+  font-variant-numeric:tabular-nums !important;
 }
 
 .scheduleNoteWrap{
+  width:100% !important;
+  min-width:0 !important;
   margin-top:10px !important;
 }
 
-/* スマホでも開始時間と内容は横並びのまま */
 @media(max-width:560px){
   .scheduleEditRowTop{
     grid-template-columns:minmax(0,1fr) minmax(0,2fr) !important;
@@ -1681,7 +1608,7 @@ button {
 /* =========================
    APP VERSION CHECK
 ========================= */
-const APP_VERSION = "2026.10.01.5";
+const APP_VERSION = "2026.10.01.6";
 const APP_VERSION_FILE = "version.json";
 
 (async function checkAppVersion() {
@@ -7510,7 +7437,19 @@ function renderActiveScheduleDay() {
         );
 
       timeInput.type =
-        "time";
+        "text";
+
+      timeInput.inputMode =
+        "numeric";
+
+      timeInput.autocomplete =
+        "off";
+
+      timeInput.maxLength =
+        5;
+
+      timeInput.placeholder =
+        "8:00";
 
       timeInput.className =
         "scheduleTimeInput";
@@ -7522,8 +7461,102 @@ function renderActiveScheduleDay() {
         "input",
         () => {
 
+          let value =
+            timeInput.value
+              .replace(/[^0-9:]/g, "")
+              .slice(0, 5);
+
+          timeInput.value =
+            value;
+
           item.time =
-            timeInput.value;
+            value;
+
+        }
+      );
+
+      timeInput.addEventListener(
+        "blur",
+        () => {
+
+          const raw =
+            String(
+              timeInput.value || ""
+            ).trim();
+
+          let normalized =
+            raw;
+
+          const digits =
+            raw.replace(/\D/g, "");
+
+          if (/^\d{3,4}$/.test(digits)) {
+            const hour =
+              Number(
+                digits.slice(0, -2)
+              );
+
+            const minute =
+              Number(
+                digits.slice(-2)
+              );
+
+            if (
+              hour >= 0 &&
+              hour <= 23 &&
+              minute >= 0 &&
+              minute <= 59
+            ) {
+              normalized =
+                hour +
+                ":" +
+                String(minute).padStart(2, "0");
+            }
+
+          } else if (/^\d{1,2}$/.test(digits)) {
+            const hour =
+              Number(digits);
+
+            if (
+              hour >= 0 &&
+              hour <= 23
+            ) {
+              normalized =
+                hour + ":00";
+            }
+
+          } else {
+            const match =
+              raw.match(
+                /^(\d{1,2}):(\d{2})$/
+              );
+
+            if (match) {
+              const hour =
+                Number(match[1]);
+
+              const minute =
+                Number(match[2]);
+
+              if (
+                hour >= 0 &&
+                hour <= 23 &&
+                minute >= 0 &&
+                minute <= 59
+              ) {
+                normalized =
+                  hour +
+                  ":" +
+                  String(minute).padStart(2, "0");
+              }
+            }
+          }
+
+          timeInput.value =
+            normalized;
+
+          item.time =
+            normalized;
 
         }
       );
