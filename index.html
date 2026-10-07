@@ -1189,6 +1189,115 @@ button {
   }
 }
 
+
+/* ===== PAID VENUE GUIDE MAIL ===== */
+.venueGuidePanel{
+  margin-top:14px;
+}
+.venueGuideTitle{
+  text-align:center;
+  font-size:20px;
+  font-weight:900;
+}
+.venueGuideBadge{
+  display:inline-block;
+  margin-left:6px;
+  padding:3px 7px;
+  border-radius:999px;
+  background:#111;
+  color:#fff;
+  font-size:10px;
+  font-weight:900;
+  vertical-align:middle;
+}
+.venueGuideDescription{
+  margin-top:6px;
+  color:#777;
+  text-align:center;
+  font-size:12px;
+  line-height:1.6;
+}
+.venueGuideLocked{
+  display:none;
+  margin-top:14px;
+  padding:13px;
+  border-radius:13px;
+  background:#f1f1f1;
+  color:#666;
+  text-align:center;
+  font-size:13px;
+  font-weight:800;
+  line-height:1.6;
+}
+.venueGuideForm{
+  margin-top:14px;
+}
+.venueGuideSubjectPreview{
+  margin-top:8px;
+  padding:11px 12px;
+  border-radius:12px;
+  background:#f5f5f5;
+  color:#444;
+  font-size:12px;
+  line-height:1.5;
+  word-break:break-word;
+}
+.venueGuideTarget{
+  margin-top:12px;
+  padding:10px 12px;
+  border-radius:12px;
+  background:#f5f5f5;
+  color:#555;
+  text-align:center;
+  font-size:12px;
+  font-weight:800;
+}
+.venueGuideStatus{
+  display:none;
+  margin-top:12px;
+  padding:12px;
+  border-radius:12px;
+  background:#eef3ff;
+  color:#294f9b;
+  text-align:center;
+  font-size:13px;
+  font-weight:800;
+  line-height:1.6;
+  white-space:pre-wrap;
+}
+.venueGuideStatus.sent{
+  background:#edf7ed;
+  color:#326b32;
+}
+.venueGuideStatus.error{
+  background:#fdecec;
+  color:#a12a2a;
+}
+.venueDatetimeInput{
+  display:block !important;
+  width:100% !important;
+  max-width:100% !important;
+  min-width:0 !important;
+  box-sizing:border-box !important;
+}
+.venueDatetimeInput::-webkit-date-and-time-value{
+  min-width:0 !important;
+}
+.venueGuideActions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-top:14px;
+}
+.venueGuideActions button{
+  margin-top:0 !important;
+}
+@media(max-width:560px){
+  .venueGuideActions{
+    grid-template-columns:1fr;
+  }
+}
+
 </style>
 </head>
 
@@ -1623,6 +1732,100 @@ button {
       </div>
     </div>
 
+
+    <!-- PAID VENUE GUIDE MAIL -->
+    <div id="venueGuidePanel" class="panel venueGuidePanel">
+      <div class="venueGuideTitle">
+        会場案内メール
+        <span class="venueGuideBadge">有料版</span>
+      </div>
+
+      <div class="venueGuideDescription">
+        CSVに登録されているメールアドレスへ、指定した日時に会場案内を自動送信します。<br>
+        テスターアカウントは動作確認のため利用できます。
+      </div>
+
+      <div id="venueGuideLocked" class="venueGuideLocked">
+        この機能は有料プラン限定です。
+      </div>
+
+      <div id="venueGuideForm" class="venueGuideForm">
+
+        <div class="field">
+          <label class="fieldLabel" for="venueMailSubjectTitle">
+            表題名（【〇〇】の部分）
+          </label>
+          <input
+            id="venueMailSubjectTitle"
+            class="input"
+            type="text"
+            placeholder="例：SBCMT 2026 AUTUMN"
+          >
+        </div>
+
+        <div id="venueMailSubjectPreview" class="venueGuideSubjectPreview">
+          件名：—
+        </div>
+
+        <div class="field">
+          <label class="fieldLabel" for="venueMailVenueName">会場名</label>
+          <input
+            id="venueMailVenueName"
+            class="input"
+            type="text"
+            placeholder="例：神石高原ティアガルデン"
+          >
+        </div>
+
+        <div class="field">
+          <label class="fieldLabel" for="venueMailVenueAddress">会場住所</label>
+          <input
+            id="venueMailVenueAddress"
+            class="input"
+            type="text"
+            placeholder="例：広島県神石郡神石高原町..."
+          >
+        </div>
+
+        <div class="field">
+          <label class="fieldLabel" for="venueMailAdmissionStart">
+            入場開始時間（直接入力）
+          </label>
+          <input
+            id="venueMailAdmissionStart"
+            class="input"
+            type="text"
+            placeholder="例：10:00 / 9:30〜"
+          >
+        </div>
+
+        <div class="field">
+          <label class="fieldLabel" for="venueMailScheduledAt">メール送信日時</label>
+          <input
+            id="venueMailScheduledAt"
+            class="input venueDatetimeInput"
+            type="datetime-local"
+          >
+        </div>
+
+        <div id="venueMailTarget" class="venueGuideTarget">
+          送信対象メール 0件
+        </div>
+
+        <div class="venueGuideActions">
+          <button id="saveVenueMailButton" class="primaryButton">
+            送信予約を保存
+          </button>
+
+          <button id="cancelVenueMailButton" class="secondaryButton" style="display:none;">
+            送信予約をキャンセル
+          </button>
+        </div>
+
+        <div id="venueMailStatus" class="venueGuideStatus"></div>
+      </div>
+    </div>
+
     <!-- RESET -->
     <button id="resetAttendanceButton" class="dangerButton">
       読み取り記録をリセット
@@ -1772,7 +1975,7 @@ button {
 /* =========================
    APP VERSION CHECK
 ========================= */
-const APP_VERSION = "2026.10.01.13";
+const APP_VERSION = "2026.10.07.1";
 const APP_VERSION_FILE = "version.json";
 
 (async function checkAppVersion() {
@@ -1899,6 +2102,18 @@ const sendScheduleMailCallable =
     "sendScheduleMail"
   );
 
+const saveVenueGuideMailScheduleCallable =
+  httpsCallable(
+    functions,
+    "saveVenueGuideMailSchedule"
+  );
+
+const cancelVenueGuideMailScheduleCallable =
+  httpsCallable(
+    functions,
+    "cancelVenueGuideMailSchedule"
+  );
+
 
 let currentUser =
   null;
@@ -1919,6 +2134,12 @@ let currentMailStatus =
   {};
 
 let currentScheduleShare =
+  null;
+
+let currentVenueGuideMail =
+  null;
+
+let venueGuideFormEventId =
   null;
 
 let stopEventListListener =
@@ -3745,7 +3966,14 @@ async function openEvent(eventId) {
     currentScheduleShare =
       null;
 
+    currentVenueGuideMail =
+      null;
+
+    venueGuideFormEventId =
+      null;
+
     applyEventToDashboard();
+    renderVenueGuideMailPanel();
 
     startEventDataListener();
 
@@ -3964,8 +4192,12 @@ function startEventDataListener() {
         currentScheduleShare =
           data.scheduleShare || null;
 
+        currentVenueGuideMail =
+          data.venueGuideMail || null;
+
         renderDashboardData();
         renderScheduleShareArea();
+        renderVenueGuideMailPanel();
 
       },
 
@@ -4140,6 +4372,8 @@ function renderDashboardData() {
   renderMailSummary();
 
   renderInlineVisitorList();
+
+  renderVenueGuideMailPanel();
 
 }
 
@@ -6113,6 +6347,663 @@ document
     }
   );
 
+
+
+
+/* =========================
+   PAID VENUE GUIDE MAIL
+========================= */
+
+function canUseVenueGuideFeature() {
+  const type =
+    String(
+      currentAccess?.type || ""
+    ).toLowerCase();
+
+  return (
+    currentAccess?.active === true &&
+    (
+      type === "paid" ||
+      type === "tester"
+    )
+  );
+}
+
+
+function countVenueGuideTargets() {
+  const emails =
+    new Set();
+
+  currentVisitors.forEach(
+    visitor => {
+      const email =
+        String(
+          visitor.email || ""
+        )
+          .trim()
+          .toLowerCase();
+
+      if (
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+          email
+        )
+      ) {
+        emails.add(email);
+      }
+    }
+  );
+
+  return emails.size;
+}
+
+
+function formatVenueGuideDateTime(timestamp) {
+  const value =
+    Number(timestamp) || 0;
+
+  if (!value) {
+    return "";
+  }
+
+  return new Intl.DateTimeFormat(
+    "ja-JP",
+    {
+      year: "numeric",
+      month: "numeric",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    }
+  ).format(
+    new Date(value)
+  );
+}
+
+
+function setVenueGuideStatus(
+  message,
+  kind = ""
+) {
+  const box =
+    document.getElementById(
+      "venueMailStatus"
+    );
+
+  if (!message) {
+    box.style.display =
+      "none";
+
+    box.textContent =
+      "";
+
+    box.className =
+      "venueGuideStatus";
+
+    return;
+  }
+
+  box.textContent =
+    message;
+
+  box.className =
+    "venueGuideStatus" +
+    (
+      kind
+        ? " " + kind
+        : ""
+    );
+
+  box.style.display =
+    "block";
+}
+
+
+function updateVenueMailSubjectPreview() {
+  const value =
+    document
+      .getElementById(
+        "venueMailSubjectTitle"
+      )
+      .value
+      .trim();
+
+  document
+    .getElementById(
+      "venueMailSubjectPreview"
+    )
+    .textContent =
+    value
+      ? "件名：【" +
+        value +
+        "】への会場案内について"
+      : "件名：—";
+}
+
+
+function populateVenueGuideForm() {
+  if (!currentEventId) {
+    return;
+  }
+
+  const config =
+    currentVenueGuideMail || {};
+
+  document
+    .getElementById(
+      "venueMailSubjectTitle"
+    )
+    .value =
+    String(
+      config.subjectTitle ||
+      currentEvent?.name ||
+      ""
+    );
+
+  document
+    .getElementById(
+      "venueMailVenueName"
+    )
+    .value =
+    String(
+      config.venueName || ""
+    );
+
+  document
+    .getElementById(
+      "venueMailVenueAddress"
+    )
+    .value =
+    String(
+      config.venueAddress || ""
+    );
+
+  document
+    .getElementById(
+      "venueMailAdmissionStart"
+    )
+    .value =
+    String(
+      config.admissionStart || ""
+    );
+
+  const scheduledAt =
+    Number(
+      config.scheduledAt
+    ) || 0;
+
+  if (scheduledAt) {
+    const date =
+      new Date(scheduledAt);
+
+    const pad =
+      value =>
+        String(value).padStart(
+          2,
+          "0"
+        );
+
+    const localValue =
+      date.getFullYear() +
+      "-" +
+      pad(
+        date.getMonth() + 1
+      ) +
+      "-" +
+      pad(
+        date.getDate()
+      ) +
+      "T" +
+      pad(
+        date.getHours()
+      ) +
+      ":" +
+      pad(
+        date.getMinutes()
+      );
+
+    document
+      .getElementById(
+        "venueMailScheduledAt"
+      )
+      .value =
+      localValue;
+  } else {
+    document
+      .getElementById(
+        "venueMailScheduledAt"
+      )
+      .value =
+      "";
+  }
+
+  venueGuideFormEventId =
+    currentEventId;
+
+  updateVenueMailSubjectPreview();
+}
+
+
+function renderVenueGuideMailPanel() {
+  const locked =
+    document.getElementById(
+      "venueGuideLocked"
+    );
+
+  const form =
+    document.getElementById(
+      "venueGuideForm"
+    );
+
+  const allowed =
+    canUseVenueGuideFeature();
+
+  locked.style.display =
+    allowed
+      ? "none"
+      : "block";
+
+  form.style.opacity =
+    allowed
+      ? "1"
+      : ".45";
+
+  form.style.pointerEvents =
+    allowed
+      ? "auto"
+      : "none";
+
+  document
+    .getElementById(
+      "venueMailTarget"
+    )
+    .textContent =
+    "送信対象メール " +
+    countVenueGuideTargets() +
+    "件";
+
+  if (
+    venueGuideFormEventId !==
+    currentEventId
+  ) {
+    populateVenueGuideForm();
+  }
+
+  const config =
+    currentVenueGuideMail || {};
+
+  const status =
+    String(
+      config.status || ""
+    );
+
+  const cancelButton =
+    document.getElementById(
+      "cancelVenueMailButton"
+    );
+
+  cancelButton.style.display =
+    (
+      status === "scheduled" ||
+      status === "retrying"
+    )
+      ? "block"
+      : "none";
+
+  const saveButton =
+    document.getElementById(
+      "saveVenueMailButton"
+    );
+
+  saveButton.textContent =
+    (
+      status === "scheduled" ||
+      status === "retrying"
+    )
+      ? "送信予約を更新"
+      : "送信予約を保存";
+
+  if (!status) {
+    setVenueGuideStatus("");
+    return;
+  }
+
+  if (
+    status === "scheduled"
+  ) {
+    setVenueGuideStatus(
+      "送信予約済み\n" +
+      formatVenueGuideDateTime(
+        config.scheduledAt
+      )
+    );
+    return;
+  }
+
+  if (
+    status === "retrying"
+  ) {
+    setVenueGuideStatus(
+      "一部のメール送信に失敗したため再送待ちです。\n" +
+      "送信済みの宛先には重複送信しません。"
+    );
+    return;
+  }
+
+  if (
+    status === "processing"
+  ) {
+    setVenueGuideStatus(
+      "会場案内メールを送信しています…"
+    );
+    return;
+  }
+
+  if (
+    status === "sent"
+  ) {
+    setVenueGuideStatus(
+      "送信済み\n" +
+      formatVenueGuideDateTime(
+        config.sentAt
+      ) +
+      "\n送信 " +
+      (
+        Number(
+          config.sentCount
+        ) || 0
+      ) +
+      "件",
+      "sent"
+    );
+    return;
+  }
+
+  if (
+    status === "cancelled"
+  ) {
+    setVenueGuideStatus(
+      "送信予約はキャンセルされています。"
+    );
+    return;
+  }
+
+  if (
+    status === "blocked"
+  ) {
+    setVenueGuideStatus(
+      "有料版の利用権限を確認できなかったため送信を停止しました。",
+      "error"
+    );
+    return;
+  }
+
+  if (
+    status === "partial_failed" ||
+    status === "failed"
+  ) {
+    setVenueGuideStatus(
+      "一部または全部の送信に失敗しました。\n必要に応じて新しい送信予約を作成してください。",
+      "error"
+    );
+  }
+}
+
+
+document
+  .getElementById(
+    "venueMailSubjectTitle"
+  )
+  .addEventListener(
+    "input",
+    updateVenueMailSubjectPreview
+  );
+
+
+document
+  .getElementById(
+    "saveVenueMailButton"
+  )
+  .addEventListener(
+    "click",
+    async () => {
+      if (
+        !currentUser ||
+        !currentEventId
+      ) {
+        return;
+      }
+
+      if (
+        !canUseVenueGuideFeature()
+      ) {
+        setVenueGuideStatus(
+          "この機能は有料プラン限定です。",
+          "error"
+        );
+        return;
+      }
+
+      const subjectTitle =
+        document
+          .getElementById(
+            "venueMailSubjectTitle"
+          )
+          .value
+          .trim();
+
+      const venueName =
+        document
+          .getElementById(
+            "venueMailVenueName"
+          )
+          .value
+          .trim();
+
+      const venueAddress =
+        document
+          .getElementById(
+            "venueMailVenueAddress"
+          )
+          .value
+          .trim();
+
+      const admissionStart =
+        document
+          .getElementById(
+            "venueMailAdmissionStart"
+          )
+          .value
+          .trim();
+
+      const scheduledText =
+        document
+          .getElementById(
+            "venueMailScheduledAt"
+          )
+          .value;
+
+      const scheduledAt =
+        scheduledText
+          ? new Date(
+              scheduledText
+            ).getTime()
+          : 0;
+
+      if (
+        !subjectTitle ||
+        !venueAddress ||
+        !admissionStart ||
+        !scheduledAt
+      ) {
+        setVenueGuideStatus(
+          "表題名・会場住所・入場開始時間・メール送信日時を入力してください。",
+          "error"
+        );
+        return;
+      }
+
+      if (
+        scheduledAt <=
+        Date.now() + 30000
+      ) {
+        setVenueGuideStatus(
+          "送信日時は現在時刻より後を指定してください。",
+          "error"
+        );
+        return;
+      }
+
+      const targetCount =
+        countVenueGuideTargets();
+
+      if (
+        targetCount === 0
+      ) {
+        setVenueGuideStatus(
+          "CSVに有効なメールアドレスが登録されていません。",
+          "error"
+        );
+        return;
+      }
+
+      const button =
+        document.getElementById(
+          "saveVenueMailButton"
+        );
+
+      button.disabled =
+        true;
+
+      button.textContent =
+        "保存中…";
+
+      setVenueGuideStatus("");
+
+      try {
+        const result =
+          await saveVenueGuideMailScheduleCallable({
+            eventId:
+              currentEventId,
+
+            subjectTitle,
+            venueName,
+            venueAddress,
+            admissionStart,
+            scheduledAt
+          });
+
+        const data =
+          result.data || {};
+
+        currentVenueGuideMail = {
+          ...(currentVenueGuideMail || {}),
+          subjectTitle,
+          venueName,
+          venueAddress,
+          admissionStart,
+          scheduledAt:
+            Number(
+              data.scheduledAt
+            ) ||
+            scheduledAt,
+          status:
+            "scheduled",
+          jobId:
+            data.jobId || ""
+        };
+
+        setVenueGuideStatus(
+          "送信予約を保存しました。\n" +
+          formatVenueGuideDateTime(
+            currentVenueGuideMail
+              .scheduledAt
+          )
+        );
+
+      } catch (error) {
+        console.error(error);
+
+        setVenueGuideStatus(
+          error?.message ||
+          "送信予約を保存できませんでした。",
+          "error"
+        );
+
+      } finally {
+        button.disabled =
+          false;
+
+        renderVenueGuideMailPanel();
+      }
+    }
+  );
+
+
+document
+  .getElementById(
+    "cancelVenueMailButton"
+  )
+  .addEventListener(
+    "click",
+    async () => {
+      if (
+        !currentEventId
+      ) {
+        return;
+      }
+
+      const answer =
+        confirm(
+          "会場案内メールの送信予約をキャンセルしますか？"
+        );
+
+      if (!answer) {
+        return;
+      }
+
+      const button =
+        document.getElementById(
+          "cancelVenueMailButton"
+        );
+
+      button.disabled =
+        true;
+
+      try {
+        await cancelVenueGuideMailScheduleCallable({
+          eventId:
+            currentEventId
+        });
+
+        currentVenueGuideMail = {
+          ...(currentVenueGuideMail || {}),
+          status:
+            "cancelled",
+          cancelledAt:
+            Date.now()
+        };
+
+        setVenueGuideStatus(
+          "送信予約をキャンセルしました。"
+        );
+
+      } catch (error) {
+        console.error(error);
+
+        setVenueGuideStatus(
+          error?.message ||
+          "送信予約をキャンセルできませんでした。",
+          "error"
+        );
+
+      } finally {
+        button.disabled =
+          false;
+
+        renderVenueGuideMailPanel();
+      }
+    }
+  );
 
 
 /* =========================
@@ -8322,6 +9213,12 @@ document
       currentScheduleShare =
         null;
 
+      currentVenueGuideMail =
+        null;
+
+      venueGuideFormEventId =
+        null;
+
       showScreen(
         "eventListScreen"
       );
@@ -8365,6 +9262,18 @@ document
       try {
 
         await stopScanner();
+
+        try {
+          await cancelVenueGuideMailScheduleCallable({
+            eventId:
+              currentEventId
+          });
+        } catch (venueCancelError) {
+          console.warn(
+            "venue guide mail cancel skipped:",
+            venueCancelError
+          );
+        }
 
         const changes =
           {};
@@ -8485,6 +9394,12 @@ onAuthStateChanged(
         {};
 
       currentScheduleShare =
+        null;
+
+      currentVenueGuideMail =
+        null;
+
+      venueGuideFormEventId =
         null;
 
       currentAccess =
