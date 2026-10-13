@@ -1850,6 +1850,68 @@ body.dashboardWorkspace .app{
   }
 }
 
+
+/* ===== OPTIONAL CSV FIELDS v2026.10.13.2 ===== */
+
+.participantExtraSub{
+  display:block;
+  margin-top:4px;
+  color:#58616d;
+  font-size:10px;
+  font-weight:700;
+  line-height:1.35;
+  overflow-wrap:anywhere;
+}
+
+.scanResultExtras{
+  display:none;
+  margin-top:12px;
+  padding:10px 12px;
+  border-radius:12px;
+  background:#fff;
+  text-align:left;
+}
+
+.scanResultExtraRow{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:14px;
+  padding:7px 0;
+  border-top:1px solid #eee;
+  font-size:14px;
+  line-height:1.45;
+}
+
+.scanResultExtraRow:first-child{
+  border-top:0;
+}
+
+.scanResultExtraLabel{
+  flex:0 0 auto;
+  color:#777;
+  font-weight:800;
+}
+
+.scanResultExtraValue{
+  min-width:0;
+  color:#111;
+  font-weight:900;
+  text-align:right;
+  overflow-wrap:anywhere;
+}
+
+.csvOptionalHelp{
+  margin-top:10px;
+  padding:10px 11px;
+  border-radius:12px;
+  background:#fff8df;
+  color:#6f5700;
+  font-size:11px;
+  font-weight:700;
+  line-height:1.6;
+}
+
 </style>
 </head>
 
@@ -2179,6 +2241,19 @@ body.dashboardWorkspace .app{
             <div id="scanResultMessage" class="scanResultMessage"></div>
             <div id="scanResultName" class="scanResultName"></div>
             <div id="scanResultNumber" class="scanResultNumber"></div>
+
+            <div id="scanResultExtras" class="scanResultExtras">
+              <div id="scanResultPeopleRow" class="scanResultExtraRow" style="display:none;">
+                <span class="scanResultExtraLabel">人数</span>
+                <span id="scanResultPeople" class="scanResultExtraValue"></span>
+              </div>
+
+              <div id="scanResultCustomRow" class="scanResultExtraRow" style="display:none;">
+                <span id="scanResultCustomLabel" class="scanResultExtraLabel"></span>
+                <span id="scanResultCustomValue" class="scanResultExtraValue"></span>
+              </div>
+            </div>
+
             <div id="scanResultTime" class="scanResultTime"></div>
           </div>
 
@@ -2230,8 +2305,16 @@ body.dashboardWorkspace .app{
           <div class="csvTitle">データ管理</div>
 
           <div class="csvDescription">
-            id・name は必須、number・email は任意です。<br>
+            id・name は必須です。<br>
+            number・email・人数・自由項目は任意です。<br>
             QRコードには id だけを記録します。
+          </div>
+
+          <div class="csvOptionalHelp">
+            「人数」は固定項目です。<br>
+            最後の自由項目は、CSVの1行目のタイトルを
+            「車種」「区画」「所属」など自由に変更できます（日本語対応）。<br>
+            人数・自由項目とも、参加者ごとの値が空欄なら画面には一切表示しません。
           </div>
 
           <div class="fileActionRow">
@@ -2639,7 +2722,7 @@ body.dashboardWorkspace .app{
 /* =========================
    APP VERSION CHECK
 ========================= */
-const APP_VERSION = "2026.10.13.1";
+const APP_VERSION = "2026.10.13.2";
 const APP_VERSION_FILE = "version.json";
 
 (async function checkAppVersion() {
@@ -2790,6 +2873,9 @@ let currentEvent =
 
 let currentVisitors =
   [];
+
+let currentParticipantCustomLabel =
+  "";
 
 let currentAttendance =
   {};
@@ -4886,6 +4972,11 @@ function startEventDataListener() {
                 (b.order || 0)
             );
 
+        currentParticipantCustomLabel =
+          String(
+            data.participantCustomLabel || ""
+          ).trim();
+
         currentAttendance =
           data.attendance || {};
 
@@ -4972,6 +5063,11 @@ async function maybeCleanupExpiredData(data) {
     changes[
       basePath +
       "/scheduleMailStatus"
+    ] = null;
+
+    changes[
+      basePath +
+      "/participantCustomLabel"
     ] = null;
 
     changes[
@@ -5098,9 +5194,9 @@ function downloadCsvTemplate() {
 
   const content =
     "\uFEFF" +
-    "id,name,number,email\r\n" +
-    "SAMPLE-001,山田 太郎,1,yamada@example.com\r\n" +
-    "SAMPLE-002,佐藤 花子,,\r\n";
+    "id,name,number,email,人数,任意項目\r\n" +
+    "SAMPLE-001,山田 太郎,1,yamada@example.com,2,ハイエース\r\n" +
+    "SAMPLE-002,佐藤 花子,,,,\r\n";
 
   const blob =
     new Blob(
@@ -5224,21 +5320,24 @@ function parseVisitorCsv(text) {
   if (
     rows.length < 2
   ) {
-
     throw new Error(
       "参加者データがありません。"
     );
-
   }
 
-  const headers =
+  const rawHeaders =
     parseCsvLine(
       rows[0]
     ).map(
       value =>
-        value
+        String(value || "")
           .trim()
-          .toLowerCase()
+    );
+
+  const headers =
+    rawHeaders.map(
+      value =>
+        value.toLowerCase()
     );
 
   const idIndex =
@@ -5261,16 +5360,76 @@ function parseVisitorCsv(text) {
       "email"
     );
 
+  let peopleIndex =
+    rawHeaders.indexOf(
+      "人数"
+    );
+
+  if (
+    peopleIndex === -1
+  ) {
+    peopleIndex =
+      headers.indexOf(
+        "people"
+      );
+  }
+
+  const knownIndexes =
+    new Set(
+      [
+        idIndex,
+        nameIndex,
+        numberIndex,
+        emailIndex,
+        peopleIndex
+      ].filter(
+        index =>
+          index >= 0
+      )
+    );
+
+  const customIndexes =
+    rawHeaders
+      .map(
+        (header, index) => ({
+          header,
+          index
+        })
+      )
+      .filter(
+        item =>
+          item.header &&
+          !knownIndexes.has(
+            item.index
+          )
+      );
+
   if (
     idIndex === -1 ||
     nameIndex === -1
   ) {
-
     throw new Error(
-      "CSVの1行目には id,name が必要です。number・email は任意です。"
+      "CSVの1行目には id,name が必要です。number・email・人数・自由項目は任意です。"
     );
-
   }
+
+  if (
+    customIndexes.length > 1
+  ) {
+    throw new Error(
+      "自由項目は1つまでです。CSVの追加列を1つにしてください。"
+    );
+  }
+
+  const customIndex =
+    customIndexes.length
+      ? customIndexes[0].index
+      : -1;
+
+  const customLabel =
+    customIndexes.length
+      ? customIndexes[0].header
+      : "";
 
   const visitors =
     [];
@@ -5317,22 +5476,36 @@ function parseVisitorCsv(text) {
             ] || ""
           ).trim();
 
-    if (!id) {
+    const people =
+      peopleIndex === -1
+        ? ""
+        : String(
+            columns[
+              peopleIndex
+            ] || ""
+          ).trim();
 
+    const custom =
+      customIndex === -1
+        ? ""
+        : String(
+            columns[
+              customIndex
+            ] || ""
+          ).trim();
+
+    if (!id) {
       throw new Error(
         (i + 1) +
         "行目：id が空欄です。"
       );
-
     }
 
     if (!name) {
-
       throw new Error(
         (i + 1) +
         "行目：name が空欄です。"
       );
-
     }
 
     if (
@@ -5341,25 +5514,21 @@ function parseVisitorCsv(text) {
         email
       )
     ) {
-
       throw new Error(
         (i + 1) +
         "行目：email の形式を確認してください。"
       );
-
     }
 
     if (
       ids.has(id)
     ) {
-
       throw new Error(
         (i + 1) +
         "行目：id「" +
         id +
         "」が重複しています。"
       );
-
     }
 
     ids.add(id);
@@ -5369,13 +5538,18 @@ function parseVisitorCsv(text) {
       name,
       number,
       email,
+      people,
+      custom,
       order:
         visitors.length
     });
 
   }
 
-  return visitors;
+  return {
+    visitors,
+    customLabel
+  };
 
 }
 
@@ -5422,10 +5596,16 @@ async function handleCsvUpload(file) {
     const text =
       await file.text();
 
-    const visitors =
+    const parsedCsv =
       parseVisitorCsv(
         text
       );
+
+    const visitors =
+      parsedCsv.visitors;
+
+    const customLabel =
+      parsedCsv.customLabel;
 
     const visitorObject =
       {};
@@ -5458,6 +5638,12 @@ async function handleCsvUpload(file) {
       "/visitors"
     ] =
       visitorObject;
+
+    changes[
+      basePath +
+      "/participantCustomLabel"
+    ] =
+      customLabel || null;
 
     const preservedMailStatus =
       {};
@@ -5521,7 +5707,13 @@ async function handleCsvUpload(file) {
     info.textContent =
       "参加者 " +
       visitors.length +
-      "人を登録しました。";
+      "人を登録しました。" +
+      (
+        customLabel
+          ? "\n自由項目：" +
+            customLabel
+          : ""
+      );
 
     info.style.display =
       "block";
@@ -6685,7 +6877,11 @@ function renderInlineVisitorList() {
           " " +
           visitor.id +
           " " +
-          (visitor.email || "")
+          (visitor.email || "") +
+          " " +
+          (visitor.people || "") +
+          " " +
+          (visitor.custom || "")
         ).toLowerCase();
 
       if (
@@ -6729,6 +6925,57 @@ function renderInlineVisitorList() {
       nameTd.appendChild(
         idSub
       );
+
+      const visitorPeople =
+        String(
+          visitor.people || ""
+        ).trim();
+
+      if (visitorPeople) {
+        const peopleSub =
+          document.createElement(
+            "span"
+          );
+
+        peopleSub.className =
+          "participantExtraSub";
+
+        peopleSub.textContent =
+          "人数：" +
+          visitorPeople;
+
+        nameTd.appendChild(
+          peopleSub
+        );
+      }
+
+      const visitorCustom =
+        String(
+          visitor.custom || ""
+        ).trim();
+
+      if (
+        visitorCustom &&
+        currentParticipantCustomLabel
+      ) {
+        const customSub =
+          document.createElement(
+            "span"
+          );
+
+        customSub.className =
+          "participantExtraSub";
+
+        customSub.textContent =
+          currentParticipantCustomLabel +
+          "：" +
+          visitorCustom;
+
+        nameTd.appendChild(
+          customSub
+        );
+      }
+
 
       if (
         visitor.email
@@ -9163,6 +9410,37 @@ async function processScannedId(
 
   }
 
+
+  const extraBox =
+    document.getElementById(
+      "scanResultExtras"
+    );
+
+  if (extraBox) {
+    extraBox.style.display =
+      "none";
+  }
+
+  const peopleRow =
+    document.getElementById(
+      "scanResultPeopleRow"
+    );
+
+  if (peopleRow) {
+    peopleRow.style.display =
+      "none";
+  }
+
+  const customRow =
+    document.getElementById(
+      "scanResultCustomRow"
+    );
+
+  if (customRow) {
+    customRow.style.display =
+      "none";
+  }
+
 }
 
 
@@ -9221,6 +9499,95 @@ function showScanResult(
     scanResultNumber.style.display =
       "none";
   }
+
+  const peopleValue =
+    String(
+      visitor.people || ""
+    ).trim();
+
+  const peopleRow =
+    document.getElementById(
+      "scanResultPeopleRow"
+    );
+
+  const peopleText =
+    document.getElementById(
+      "scanResultPeople"
+    );
+
+  if (peopleValue) {
+    peopleText.textContent =
+      peopleValue;
+
+    peopleRow.style.display =
+      "flex";
+  } else {
+    peopleText.textContent =
+      "";
+
+    peopleRow.style.display =
+      "none";
+  }
+
+  const customValue =
+    String(
+      visitor.custom || ""
+    ).trim();
+
+  const customRow =
+    document.getElementById(
+      "scanResultCustomRow"
+    );
+
+  const customLabel =
+    document.getElementById(
+      "scanResultCustomLabel"
+    );
+
+  const customText =
+    document.getElementById(
+      "scanResultCustomValue"
+    );
+
+  if (
+    customValue &&
+    currentParticipantCustomLabel
+  ) {
+    customLabel.textContent =
+      currentParticipantCustomLabel;
+
+    customText.textContent =
+      customValue;
+
+    customRow.style.display =
+      "flex";
+  } else {
+    customLabel.textContent =
+      "";
+
+    customText.textContent =
+      "";
+
+    customRow.style.display =
+      "none";
+  }
+
+  document
+    .getElementById(
+      "scanResultExtras"
+    )
+    .style
+    .display =
+    (
+      peopleValue ||
+      (
+        customValue &&
+        currentParticipantCustomLabel
+      )
+    )
+      ? "block"
+      : "none";
+
 
   document
     .getElementById("scanResultTime")
@@ -10778,6 +11145,9 @@ document
       currentVisitors =
         [];
 
+      currentParticipantCustomLabel =
+        "";
+
       currentAttendance =
         {};
 
@@ -10960,6 +11330,9 @@ onAuthStateChanged(
 
       currentVisitors =
         [];
+
+      currentParticipantCustomLabel =
+        "";
 
       currentAttendance =
         {};
