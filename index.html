@@ -1298,6 +1298,558 @@ button {
   }
 }
 
+
+/* =========================================================
+   FINAL TAB DASHBOARD DESIGN v2026.10.13.1
+   受付=青 / 一覧=赤 / データ管理=黄 / 予定=緑 / 会場案内=グレー
+========================================================= */
+
+body.eventWorkspace .brand{
+  display:none;
+}
+
+body.eventWorkspace .app{
+  padding-top:max(12px, env(safe-area-inset-top));
+}
+
+body.dashboardWorkspace .app{
+  padding-bottom:calc(100px + env(safe-area-inset-bottom));
+}
+
+#eventDashboardScreen{
+  max-width:680px;
+  margin:0 auto;
+}
+
+.dashboardTopBar{
+  display:grid;
+  grid-template-columns:40px minmax(0,1fr) 40px;
+  align-items:center;
+  gap:8px;
+  margin:0 0 10px;
+}
+
+.dashboardBackIcon,
+.dashboardSettingsIcon{
+  width:40px;
+  height:40px;
+  border:0;
+  border-radius:12px;
+  background:transparent;
+  color:#111;
+  font-size:28px;
+  line-height:1;
+  padding:0;
+}
+
+.dashboardSettingsIcon{
+  font-size:23px;
+}
+
+.dashboardTitleWrap{
+  min-width:0;
+  text-align:center;
+}
+
+.dashboardEventName{
+  margin:0;
+  font-size:24px;
+  font-weight:900;
+  line-height:1.18;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.dashboardEventDate{
+  margin-top:4px;
+  color:#6d7480;
+  font-size:12px;
+  font-weight:700;
+}
+
+.dashboardMiniStatus{
+  margin:8px 0 0;
+  color:#777;
+  text-align:center;
+  font-size:11px;
+}
+
+.dashboardMiniStatus .syncChip{
+  display:inline-block;
+  margin:0 0 0 6px;
+  padding:5px 8px;
+  border-radius:999px;
+  font-size:10px;
+}
+
+#eventDashboardScreen .dashboardRow{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+  margin:12px 0 14px;
+}
+
+#eventDashboardScreen .dashboardRow.twoColumns{
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+}
+
+#eventDashboardScreen .dashboardBox{
+  min-width:0;
+  padding:12px 4px;
+  border-radius:16px;
+  box-shadow:none;
+}
+
+#eventDashboardScreen .dashboardBox:nth-child(1){
+  background:#eaf4ff;
+  color:#0877ed;
+}
+
+#eventDashboardScreen .dashboardBox:nth-child(2){
+  background:#eaf8ee;
+  color:#0b9b39;
+}
+
+#eventDashboardScreen .dashboardBox:nth-child(3){
+  background:#fff0f0;
+  color:#ed2e2e;
+}
+
+#eventDashboardScreen .dashboardLabel{
+  color:inherit;
+  font-size:11px;
+  font-weight:900;
+}
+
+#eventDashboardScreen .dashboardValue{
+  color:inherit;
+  font-size:28px;
+  font-weight:900;
+}
+
+.dashboardTabViewport{
+  position:relative;
+  width:100%;
+  min-height:260px;
+  touch-action:pan-y;
+}
+
+.dashboardTabPage{
+  display:none;
+  width:100%;
+}
+
+.dashboardTabPage.active{
+  display:block;
+}
+
+.dashboardTabPage.slideFromRight{
+  animation:dashboardSlideFromRight .22s ease-out;
+}
+
+.dashboardTabPage.slideFromLeft{
+  animation:dashboardSlideFromLeft .22s ease-out;
+}
+
+@keyframes dashboardSlideFromRight{
+  from{opacity:.35;transform:translateX(24px)}
+  to{opacity:1;transform:translateX(0)}
+}
+
+@keyframes dashboardSlideFromLeft{
+  from{opacity:.35;transform:translateX(-24px)}
+  to{opacity:1;transform:translateX(0)}
+}
+
+/* 受付 */
+.checkinModeRow{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  gap:8px;
+  margin-bottom:10px;
+}
+
+#eventDashboardScreen .dashboardMenu{
+  display:grid !important;
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  gap:8px !important;
+  margin:0 !important;
+}
+
+#eventDashboardScreen .dashboardMenu.twoColumns{
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+}
+
+#eventDashboardScreen .dashboardMenu button{
+  min-height:45px;
+  border:1px solid #d8dee8;
+  border-radius:12px;
+  background:#eef3f8;
+  color:#53606f;
+  font-weight:900;
+}
+
+#eventDashboardScreen .dashboardMenu button.active{
+  background:#0877ed;
+  border-color:#0877ed;
+  color:#fff;
+}
+
+.manualSearchButton{
+  width:100%;
+  min-height:45px;
+  border:1px solid #d8dee8;
+  border-radius:12px;
+  background:#fff;
+  color:#444;
+  font-weight:800;
+}
+
+#eventDashboardScreen .scanPanel{
+  display:block;
+  margin-top:0;
+  padding:15px;
+  border-radius:18px;
+  box-shadow:none;
+}
+
+#eventDashboardScreen .scanHeading{
+  display:none;
+}
+
+#eventDashboardScreen .scanSub{
+  margin:0 0 10px;
+}
+
+#eventDashboardScreen .readerWrap{
+  margin-top:0;
+  border-radius:16px;
+  min-height:260px;
+  background:#e9edf2;
+}
+
+#eventDashboardScreen .scanButton{
+  background:#0877ed;
+}
+
+#eventDashboardScreen .scanResult{
+  background:#eaf8ee;
+}
+
+/* 一覧 */
+#eventDashboardScreen #listPanel{
+  display:block;
+  margin-top:0;
+}
+
+.listPageCard{
+  padding:14px;
+  border-radius:18px;
+  background:#fff;
+  box-shadow:0 4px 16px rgba(0,0,0,.05);
+}
+
+#eventDashboardScreen .listSearch{
+  border-color:#e1e3e6;
+}
+
+#eventDashboardScreen .listFilterButton{
+  color:#cf2b3b;
+  background:#fff0f2;
+}
+
+#eventDashboardScreen .listFilterButton.active{
+  background:#ff334d;
+  color:#fff;
+}
+
+/* データ管理 */
+.dataManagementPanel{
+  margin-top:0 !important;
+  box-shadow:none !important;
+  border-radius:18px !important;
+}
+
+.dataManagementPanel .csvTitle{
+  color:#a76a00;
+}
+
+.dataManagementPanel .fileActionButton{
+  border-color:#f2d58a;
+  background:#fff9e8;
+}
+
+.dataManagementPanel .primaryButton{
+  background:#e9a900;
+  color:#111;
+}
+
+.dataManagementPanel .mailSectionTitle{
+  color:#8e6200;
+}
+
+/* 予定 */
+.scheduleTabPanel{
+  margin-top:0 !important;
+  box-shadow:none !important;
+  border-radius:18px !important;
+}
+
+.scheduleTabPanel .scheduleAdminTitle{
+  color:#0b9137;
+}
+
+.schedulePreview{
+  margin:14px 0 4px;
+  padding:12px;
+  border-radius:15px;
+  background:#f4fbf6;
+}
+
+.schedulePreviewTabs{
+  display:flex;
+  gap:7px;
+  overflow-x:auto;
+  padding-bottom:4px;
+  scrollbar-width:none;
+}
+
+.schedulePreviewTabs::-webkit-scrollbar{
+  display:none;
+}
+
+.schedulePreviewTab{
+  flex:0 0 auto;
+  min-width:86px;
+  padding:9px 12px;
+  border:1px solid #cae8d3;
+  border-radius:12px;
+  background:#fff;
+  color:#4a6552;
+  font-size:12px;
+  font-weight:900;
+}
+
+.schedulePreviewTab.active{
+  border-color:#0da33f;
+  background:#0da33f;
+  color:#fff;
+}
+
+.schedulePreviewItems{
+  display:grid;
+  gap:7px;
+  margin-top:10px;
+}
+
+.schedulePreviewItem{
+  display:grid;
+  grid-template-columns:58px minmax(0,1fr);
+  gap:8px;
+  padding:10px 8px;
+  border-bottom:1px solid #dfece3;
+  font-size:13px;
+}
+
+.schedulePreviewTime{
+  color:#0d8d38;
+  font-weight:900;
+  font-variant-numeric:tabular-nums;
+}
+
+.schedulePreviewTitle{
+  min-width:0;
+  font-weight:800;
+}
+
+.schedulePreviewNote{
+  display:block;
+  margin-top:2px;
+  color:#888;
+  font-size:11px;
+  font-weight:500;
+}
+
+.schedulePreviewEmpty{
+  padding:18px 8px;
+  color:#888;
+  text-align:center;
+  font-size:12px;
+}
+
+.scheduleTabPanel #openScheduleEditorButton{
+  border-color:#b8dfc5;
+  color:#087d30;
+}
+
+.scheduleTabPanel #publishScheduleButton{
+  background:#0da33f;
+}
+
+.scheduleTabPanel #toggleScheduleQrButton{
+  background:#0da33f;
+  border-color:#0da33f;
+  color:#fff;
+}
+
+/* 会場案内 */
+#eventDashboardScreen .venueGuidePanel{
+  margin-top:0;
+  box-shadow:none;
+  border-radius:18px;
+}
+
+#eventDashboardScreen .venueGuideBadge{
+  background:#666f7d;
+}
+
+#eventDashboardScreen .venueGuideActions .primaryButton{
+  background:#4d596b;
+}
+
+/* 下部固定タブ */
+.dashboardBottomTabs{
+  position:fixed;
+  left:50%;
+  bottom:0;
+  z-index:8000;
+  width:min(680px,100%);
+  transform:translateX(-50%);
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:2px;
+  padding:7px 8px calc(7px + env(safe-area-inset-bottom));
+  border-top:1px solid rgba(0,0,0,.08);
+  background:rgba(255,255,255,.97);
+  box-shadow:0 -5px 18px rgba(0,0,0,.07);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+}
+
+.dashboardTabButton{
+  min-width:0;
+  min-height:58px;
+  padding:6px 2px;
+  border:0;
+  border-radius:13px;
+  background:transparent;
+  color:#68707a;
+  font-size:10px;
+  font-weight:900;
+  line-height:1.15;
+}
+
+.dashboardTabButton .tabIcon{
+  display:block;
+  margin:0 auto 4px;
+  font-size:20px;
+  line-height:1;
+}
+
+.dashboardTabButton.noIcon{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:12px;
+}
+
+.dashboardTabButton.active[data-dashboard-tab="checkin"]{
+  background:#0877ed;
+  color:#fff;
+}
+
+.dashboardTabButton.active[data-dashboard-tab="list"]{
+  background:#ff334d;
+  color:#fff;
+}
+
+.dashboardTabButton.active[data-dashboard-tab="data"]{
+  background:#ffc72c;
+  color:#231900;
+}
+
+.dashboardTabButton.active[data-dashboard-tab="schedule"]{
+  background:#0da33f;
+  color:#fff;
+}
+
+.dashboardTabButton.active[data-dashboard-tab="venue"]{
+  background:#66707f;
+  color:#fff;
+}
+
+/* 設定画面 */
+.settingsCard{
+  background:#fff;
+  border-radius:20px;
+  padding:18px;
+  box-shadow:0 5px 20px rgba(0,0,0,.06);
+}
+
+.settingsSection{
+  margin-top:18px;
+}
+
+.settingsSection:first-child{
+  margin-top:0;
+}
+
+.settingsSectionTitle{
+  margin:0 0 8px 2px;
+  color:#777;
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:.04em;
+}
+
+.settingsInfoRow{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:14px 4px;
+  border-bottom:1px solid #eee;
+  font-size:14px;
+}
+
+.settingsInfoRow strong{
+  text-align:right;
+}
+
+.settingsDangerBox{
+  margin-top:18px;
+  padding-top:4px;
+  border-top:1px solid #eee;
+}
+
+#dashboardSettingsScreen .dangerButton,
+#dashboardSettingsScreen .secondaryButton{
+  margin-top:10px;
+}
+
+@media(max-width:420px){
+  .dashboardEventName{
+    font-size:22px;
+  }
+
+  #eventDashboardScreen .dashboardValue{
+    font-size:25px;
+  }
+
+  .dashboardTabButton{
+    font-size:9px;
+  }
+
+  .dashboardTabButton.noIcon{
+    font-size:11px;
+  }
+
+  .dashboardTabButton .tabIcon{
+    font-size:18px;
+  }
+}
+
 </style>
 </head>
 
@@ -1553,54 +2105,20 @@ button {
   <!-- DASHBOARD -->
   <section id="eventDashboardScreen" class="screen">
 
-    <div class="topBar">
-      <button id="dashboardBackButton" class="backButton" aria-label="戻る">‹</button>
-      <h2 class="topBarTitle">イベント管理</h2>
-      <div class="topBarSpacer"></div>
+    <div class="dashboardTopBar">
+      <button id="dashboardBackButton" class="dashboardBackIcon" aria-label="戻る">‹</button>
+
+      <div class="dashboardTitleWrap">
+        <h2 id="dashboardEventName" class="dashboardEventName">イベント名</h2>
+        <div id="dashboardEventDate" class="dashboardEventDate">日程未設定</div>
+      </div>
+
+      <button id="dashboardSettingsButton" class="dashboardSettingsIcon" aria-label="設定">⚙︎</button>
     </div>
 
-    <div class="eventHeader">
-      <h2 id="dashboardEventName" class="eventNameLarge">イベント名</h2>
-      <div id="eventParticipantStatus" class="eventStatus">
-        参加者データはまだ登録されていません
-      </div>
-      <div class="syncChip">● 同期接続中</div>
-    </div>
-
-
-
-    <!-- QR SCAN -->
-    <div id="scanPanel" class="panel scanPanel">
-
-      <div id="scanHeading" class="scanHeading">入場</div>
-
-      <div class="scanSub">
-        QRコードをカメラにかざしてください
-      </div>
-
-      <div class="readerWrap">
-        <div id="reader"></div>
-      </div>
-
-      <button id="scanButton" class="scanButton" disabled>
-        QRを読み取る
-      </button>
-
-      <div id="scanStatus" class="scanStatus"></div>
-
-      <div id="scanError" class="notice"></div>
-
-      <div id="scanResult" class="scanResult">
-        <div id="scanResultMessage" class="scanResultMessage"></div>
-        <div id="scanResultName" class="scanResultName"></div>
-        <div id="scanResultNumber" class="scanResultNumber"></div>
-        <div id="scanResultTime" class="scanResultTime"></div>
-      </div>
-
-      <button id="nextScanButton" class="secondaryButton" style="display:none;">
-        次のQRを読み取る
-      </button>
-
+    <div class="dashboardMiniStatus">
+      <span id="eventParticipantStatus">参加者データはまだ登録されていません</span>
+      <span class="syncChip">● 同期接続中</span>
     </div>
 
     <div id="dashboardRow" class="dashboardRow">
@@ -1622,295 +2140,441 @@ button {
 
     </div>
 
-    <div id="dashboardMenu" class="dashboardMenu">
+    <div id="dashboardTabViewport" class="dashboardTabViewport">
 
-      <button id="dashboardStatus1Button" class="active">入場</button>
+      <!-- 受付 -->
+      <div class="dashboardTabPage active" data-dashboard-page="checkin">
 
-      <button id="dashboardStatus2Button">受付</button>
+        <div class="checkinModeRow">
+          <div id="dashboardMenu" class="dashboardMenu">
+            <button id="dashboardStatus1Button" class="active">入場</button>
+            <button id="dashboardStatus2Button">受付</button>
+          </div>
 
-      <button id="dashboardListButton">一覧</button>
+          <button id="manualSearchButton" class="manualSearchButton">
+            手動検索
+          </button>
+        </div>
+
+        <div id="scanPanel" class="panel scanPanel">
+
+          <div id="scanHeading" class="scanHeading">入場</div>
+
+          <div class="scanSub">
+            QRコードをカメラにかざしてください
+          </div>
+
+          <div class="readerWrap">
+            <div id="reader"></div>
+          </div>
+
+          <button id="scanButton" class="scanButton" disabled>
+            QRを読み取る
+          </button>
+
+          <div id="scanStatus" class="scanStatus"></div>
+          <div id="scanError" class="notice"></div>
+
+          <div id="scanResult" class="scanResult">
+            <div id="scanResultMessage" class="scanResultMessage"></div>
+            <div id="scanResultName" class="scanResultName"></div>
+            <div id="scanResultNumber" class="scanResultNumber"></div>
+            <div id="scanResultTime" class="scanResultTime"></div>
+          </div>
+
+          <button id="nextScanButton" class="secondaryButton" style="display:none;">
+            次のQRを読み取る
+          </button>
+
+        </div>
+      </div>
+
+      <!-- 一覧：下部タブは文字のみ（アイコンなし） -->
+      <div class="dashboardTabPage" data-dashboard-page="list">
+        <div class="listPageCard">
+
+          <div id="listPanel" class="listPanel active">
+
+            <input
+              id="inlineListSearch"
+              class="listSearch"
+              type="text"
+              placeholder="名前・number・IDで検索"
+            >
+
+            <div id="inlineFilterRow" class="listFilterRow">
+              <button id="filterAllButton" class="listFilterButton active">全員</button>
+              <button id="filterStatus1Button" class="listFilterButton">未処理</button>
+              <button id="filterStatus2Button" class="listFilterButton">未処理</button>
+            </div>
+
+            <div class="listTableWrap">
+              <table class="listTable">
+                <thead id="inlineVisitorListHead"></thead>
+                <tbody id="inlineVisitorListBody"></tbody>
+              </table>
+
+              <div id="inlineListEmpty" class="listEmptyInline">
+                該当する参加者はいません
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- データ管理 -->
+      <div class="dashboardTabPage" data-dashboard-page="data">
+        <div class="panel csvArea dataManagementPanel">
+
+          <div class="csvTitle">データ管理</div>
+
+          <div class="csvDescription">
+            id・name は必須、number・email は任意です。<br>
+            QRコードには id だけを記録します。
+          </div>
+
+          <div class="fileActionRow">
+            <button id="downloadCsvTemplateButton" class="fileActionButton">
+              CSVテンプレート<br>ダウンロード
+            </button>
+
+            <button id="uploadCsvButton" class="fileActionButton">
+              visitor_list.csv<br>アップロード
+            </button>
+          </div>
+
+          <input id="csvFileInput" class="hiddenFileInput" type="file" accept=".csv,text/csv">
+
+          <div id="visitorStatus" class="visitorStatus">
+            参加者データはまだ登録されていません
+          </div>
+
+          <div class="qrActionRow">
+            <button id="downloadQrZipButton" class="primaryButton" disabled>
+              QRコードをまとめて<br>ダウンロード
+            </button>
+
+            <button id="printQrListButton" class="primaryButton" disabled>
+              QRコード一覧を<br>印刷
+            </button>
+          </div>
+
+          <div id="qrProgress" class="infoNotice"></div>
+
+          <div class="mailSectionTitle">QRメール送信</div>
+
+          <div id="mailSummary" class="visitorStatus">
+            メール登録 0人 / 送信済み 0人
+          </div>
+
+          <button id="sendUnsentMailButton" class="primaryButton" disabled>
+            未送信の参加者へQRメール一括送信
+          </button>
+
+          <div class="mailHelp">
+            email が登録されている参加者だけが送信対象です。<br>
+            送信済みの参加者には再送しません。
+          </div>
+
+          <div id="mailProgress" class="infoNotice"></div>
+          <div id="visitorError" class="notice"></div>
+
+          <div class="smallNote">
+            参加者リストはFirebaseに保存され、同じアカウントならPC・iPhone・iPadなどすべての端末で同期されます。
+          </div>
+
+        </div>
+      </div>
+
+      <!-- 予定 -->
+      <div class="dashboardTabPage" data-dashboard-page="schedule">
+        <div class="panel scheduleAdminPanel scheduleTabPanel">
+
+          <div class="scheduleAdminTitle">スケジュール管理</div>
+
+          <div class="scheduleAdminDescription">
+            DAY1〜DAY5のタイムテーブル編集・公開・QR表示
+          </div>
+
+          <div id="dashboardSchedulePreview" class="schedulePreview">
+            <div id="schedulePreviewTabs" class="schedulePreviewTabs"></div>
+            <div id="schedulePreviewItems" class="schedulePreviewItems"></div>
+          </div>
+
+          <button id="openScheduleEditorButton" class="secondaryButton">
+            スケジュールを編集
+          </button>
+
+          <button id="publishScheduleButton" class="primaryButton">
+            スケジュールを公開・更新
+          </button>
+
+          <div id="schedulePublishMessage" class="schedulePublishMessage"></div>
+
+          <div id="scheduleShareArea" class="scheduleShareArea">
+            <div class="scheduleShareLabel">参加者向けスケジュールURL</div>
+            <div id="scheduleShareUrl" class="scheduleShareUrl"></div>
+
+            <div class="scheduleShareButtons">
+              <button id="copyScheduleUrlButton" class="secondaryButton">
+                URLをコピー
+              </button>
+
+              <button id="openScheduleUrlButton" class="secondaryButton">
+                スケジュールを開く
+              </button>
+
+              <button id="toggleScheduleQrButton" class="secondaryButton">
+                QRコードを表示
+              </button>
+            </div>
+
+            <div id="scheduleQrArea" class="scheduleQrArea">
+              <div class="scheduleQrTitle">スケジュールQR</div>
+              <div id="scheduleQrHolder" class="scheduleQrHolder"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- 会場案内 -->
+      <div class="dashboardTabPage" data-dashboard-page="venue">
+
+        <div id="venueGuidePanel" class="panel venueGuidePanel">
+
+          <div class="venueGuideTitle">
+            会場案内
+            <span class="venueGuideBadge">有料版</span>
+          </div>
+
+          <div class="venueGuideDescription">
+            CSVに登録されているメールアドレスへ、指定した日時に会場案内を自動送信します。<br>
+            テスターアカウントは動作確認のため利用できます。
+          </div>
+
+          <div id="venueGuideLocked" class="venueGuideLocked">
+            この機能は有料プラン限定です。
+          </div>
+
+          <div id="venueGuideForm" class="venueGuideForm">
+
+            <div class="field">
+              <label class="fieldLabel" for="venueMailSubjectTitle">
+                表題名（【〇〇】の部分）
+              </label>
+              <input
+                id="venueMailSubjectTitle"
+                class="input"
+                type="text"
+                placeholder="例：SBCMT 2026 AUTUMN"
+              >
+            </div>
+
+            <div id="venueMailSubjectPreview" class="venueGuideSubjectPreview">
+              件名：—
+            </div>
+
+            <div class="field">
+              <label class="fieldLabel" for="venueMailVenueName">会場名</label>
+              <input
+                id="venueMailVenueName"
+                class="input"
+                type="text"
+                placeholder="例：神石高原ティアガルデン"
+              >
+            </div>
+
+            <div class="field">
+              <label class="fieldLabel" for="venueMailVenueAddress">会場住所</label>
+              <input
+                id="venueMailVenueAddress"
+                class="input"
+                type="text"
+                placeholder="例：広島県神石郡神石高原町..."
+              >
+            </div>
+
+            <div class="field">
+              <label class="fieldLabel" for="venueMailAdmissionStart">
+                入場開始時間（直接入力）
+              </label>
+              <input
+                id="venueMailAdmissionStart"
+                class="input"
+                type="text"
+                placeholder="例：10:00 / 9:30〜"
+              >
+            </div>
+
+            <div class="field">
+              <label class="fieldLabel" for="venueMailScheduledAt">メール送信日時</label>
+              <input
+                id="venueMailScheduledAt"
+                class="input venueDatetimeInput"
+                type="datetime-local"
+              >
+            </div>
+
+            <div id="venueMailTarget" class="venueGuideTarget">
+              送信対象メール 0件
+            </div>
+
+            <div class="venueGuideActions">
+              <button id="saveVenueMailButton" class="primaryButton">
+                送信予約を保存
+              </button>
+
+              <button id="cancelVenueMailButton" class="secondaryButton" style="display:none;">
+                送信予約をキャンセル
+              </button>
+            </div>
+
+            <div id="venueMailStatus" class="venueGuideStatus"></div>
+
+          </div>
+        </div>
+      </div>
 
     </div>
 
-    <!-- PARTICIPANT LIST -->
-    <div id="listPanel" class="listPanel">
+    <nav class="dashboardBottomTabs" aria-label="イベント管理タブ">
 
-      <input
-        id="inlineListSearch"
-        class="listSearch"
-        type="text"
-        placeholder="名前・number・IDで検索"
+      <button
+        id="dashboardCheckinTabButton"
+        class="dashboardTabButton active"
+        data-dashboard-tab="checkin"
+        type="button"
       >
-
-      <div id="inlineFilterRow" class="listFilterRow">
-
-        <button
-          id="filterAllButton"
-          class="listFilterButton active"
-        >
-          全員
-        </button>
-
-        <button
-          id="filterStatus1Button"
-          class="listFilterButton"
-        >
-          未処理
-        </button>
-
-        <button
-          id="filterStatus2Button"
-          class="listFilterButton"
-        >
-          未処理
-        </button>
-
-      </div>
-
-      <div class="listTableWrap">
-
-        <table class="listTable">
-
-          <thead id="inlineVisitorListHead"></thead>
-
-          <tbody id="inlineVisitorListBody"></tbody>
-
-        </table>
-
-        <div
-          id="inlineListEmpty"
-          class="listEmptyInline"
-        >
-          該当する参加者はいません
-        </div>
-
-      </div>
-
-    </div>
-
-
-    <!-- SCHEDULE -->
-    <div class="panel scheduleAdminPanel">
-      <div class="scheduleAdminTitle">スケジュール</div>
-      <div class="scheduleAdminDescription">
-        DAY1〜DAY5のタイムテーブルを設定します。<br>
-        1日につき最大20件まで登録できます。
-      </div>
-
-      <button id="openScheduleEditorButton" class="secondaryButton">
-        スケジュールを編集
+        <span class="tabIcon">⌗</span>
+        受付
       </button>
 
-      <button id="publishScheduleButton" class="primaryButton">
-        スケジュールを公開・更新
+      <button
+        id="dashboardListButton"
+        class="dashboardTabButton noIcon"
+        data-dashboard-tab="list"
+        type="button"
+      >
+        一覧
       </button>
 
-      <div id="schedulePublishMessage" class="schedulePublishMessage"></div>
-
-      <div id="scheduleShareArea" class="scheduleShareArea">
-        <div class="scheduleShareLabel">参加者向けスケジュールURL</div>
-        <div id="scheduleShareUrl" class="scheduleShareUrl"></div>
-
-        <div class="scheduleShareButtons">
-          <button id="copyScheduleUrlButton" class="secondaryButton">
-            URLをコピー
-          </button>
-
-          <button id="openScheduleUrlButton" class="secondaryButton">
-            スケジュールを開く
-          </button>
-
-          <button id="toggleScheduleQrButton" class="secondaryButton">
-            QRコードを表示
-          </button>
-        </div>
-
-        <div id="scheduleQrArea" class="scheduleQrArea">
-          <div class="scheduleQrTitle">スケジュールQR</div>
-          <div id="scheduleQrHolder" class="scheduleQrHolder"></div>
-        </div>
-      </div>
-    </div>
-
-
-    <!-- PAID VENUE GUIDE MAIL -->
-    <div id="venueGuidePanel" class="panel venueGuidePanel">
-      <div class="venueGuideTitle">
-        会場案内メール
-        <span class="venueGuideBadge">有料版</span>
-      </div>
-
-      <div class="venueGuideDescription">
-        CSVに登録されているメールアドレスへ、指定した日時に会場案内を自動送信します。<br>
-        テスターアカウントは動作確認のため利用できます。
-      </div>
-
-      <div id="venueGuideLocked" class="venueGuideLocked">
-        この機能は有料プラン限定です。
-      </div>
-
-      <div id="venueGuideForm" class="venueGuideForm">
-
-        <div class="field">
-          <label class="fieldLabel" for="venueMailSubjectTitle">
-            表題名（【〇〇】の部分）
-          </label>
-          <input
-            id="venueMailSubjectTitle"
-            class="input"
-            type="text"
-            placeholder="例：SBCMT 2026 AUTUMN"
-          >
-        </div>
-
-        <div id="venueMailSubjectPreview" class="venueGuideSubjectPreview">
-          件名：—
-        </div>
-
-        <div class="field">
-          <label class="fieldLabel" for="venueMailVenueName">会場名</label>
-          <input
-            id="venueMailVenueName"
-            class="input"
-            type="text"
-            placeholder="例：神石高原ティアガルデン"
-          >
-        </div>
-
-        <div class="field">
-          <label class="fieldLabel" for="venueMailVenueAddress">会場住所</label>
-          <input
-            id="venueMailVenueAddress"
-            class="input"
-            type="text"
-            placeholder="例：広島県神石郡神石高原町..."
-          >
-        </div>
-
-        <div class="field">
-          <label class="fieldLabel" for="venueMailAdmissionStart">
-            入場開始時間（直接入力）
-          </label>
-          <input
-            id="venueMailAdmissionStart"
-            class="input"
-            type="text"
-            placeholder="例：10:00 / 9:30〜"
-          >
-        </div>
-
-        <div class="field">
-          <label class="fieldLabel" for="venueMailScheduledAt">メール送信日時</label>
-          <input
-            id="venueMailScheduledAt"
-            class="input venueDatetimeInput"
-            type="datetime-local"
-          >
-        </div>
-
-        <div id="venueMailTarget" class="venueGuideTarget">
-          送信対象メール 0件
-        </div>
-
-        <div class="venueGuideActions">
-          <button id="saveVenueMailButton" class="primaryButton">
-            送信予約を保存
-          </button>
-
-          <button id="cancelVenueMailButton" class="secondaryButton" style="display:none;">
-            送信予約をキャンセル
-          </button>
-        </div>
-
-        <div id="venueMailStatus" class="venueGuideStatus"></div>
-      </div>
-    </div>
-
-    <!-- RESET -->
-    <button id="resetAttendanceButton" class="dangerButton">
-      読み取り記録をリセット
-    </button>
-
-
-    <!-- CSV -->
-    <div class="panel csvArea">
-
-      <div class="csvTitle">参加者データ</div>
-
-      <div class="csvDescription">
-        id・name は必須、number・email は任意です。<br>
-        QRコードには id だけを記録します。
-      </div>
-
-      <div class="fileActionRow">
-
-        <button id="downloadCsvTemplateButton" class="fileActionButton">
-          CSVテンプレート<br>ダウンロード
-        </button>
-
-        <button id="uploadCsvButton" class="fileActionButton">
-          visitor_list.csv<br>アップロード
-        </button>
-
-      </div>
-
-      <input id="csvFileInput" class="hiddenFileInput" type="file" accept=".csv,text/csv">
-
-      <div id="visitorStatus" class="visitorStatus">
-        参加者データはまだ登録されていません
-      </div>
-
-      <div class="qrActionRow">
-
-        <button id="downloadQrZipButton" class="primaryButton" disabled>
-          QRコードをまとめて<br>ダウンロード
-        </button>
-
-        <button id="printQrListButton" class="primaryButton" disabled>
-          QRコード一覧を<br>印刷
-        </button>
-
-      </div>
-
-      <div id="qrProgress" class="infoNotice"></div>
-
-      <div class="mailSectionTitle">QRメール送信</div>
-
-      <div id="mailSummary" class="visitorStatus">
-        メール登録 0人 / 送信済み 0人
-      </div>
-
-      <button id="sendUnsentMailButton" class="primaryButton" disabled>
-        未送信の参加者へQRメール一括送信
+      <button
+        id="dashboardDataTabButton"
+        class="dashboardTabButton"
+        data-dashboard-tab="data"
+        type="button"
+      >
+        <span class="tabIcon">▣</span>
+        データ管理
       </button>
 
-      <div class="mailHelp">
-        email が登録されている参加者だけが送信対象です。<br>
-        送信済みの参加者には再送しません。
-      </div>
+      <button
+        id="dashboardScheduleTabButton"
+        class="dashboardTabButton"
+        data-dashboard-tab="schedule"
+        type="button"
+      >
+        <span class="tabIcon">▢</span>
+        予定
+      </button>
 
-      <div id="mailProgress" class="infoNotice"></div>
+      <button
+        id="dashboardVenueTabButton"
+        class="dashboardTabButton"
+        data-dashboard-tab="venue"
+        type="button"
+      >
+        <span class="tabIcon">⌖</span>
+        会場案内
+      </button>
 
-      <div id="visitorError" class="notice"></div>
-
-      <div class="smallNote">
-        参加者リストはFirebaseに保存され、同じアカウントならPC・iPhone・iPadなどすべての端末で同期されます。
-      </div>
-
-    </div>
-
-
-    <button id="dashboardLogoutButton" class="secondaryButton">
-      ログアウト
-    </button>
-
-    <button id="deleteEventButton" class="dangerButton">
-      このイベントを削除
-    </button>
-
-    <div id="dashboardError" class="notice"></div>
+    </nav>
 
   </section>
+
+
+  <!-- DASHBOARD SETTINGS -->
+  <section id="dashboardSettingsScreen" class="screen">
+
+    <div class="topBar">
+      <button id="settingsBackButton" class="backButton" aria-label="戻る">‹</button>
+      <h2 class="topBarTitle">設定</h2>
+      <div class="topBarSpacer"></div>
+    </div>
+
+    <div class="settingsCard">
+
+      <div class="settingsSection">
+        <div class="settingsSectionTitle">イベント設定</div>
+
+        <div class="field">
+          <label class="fieldLabel" for="settingsEventName">イベント名</label>
+          <input id="settingsEventName" class="input" type="text">
+        </div>
+
+        <div class="field">
+          <label class="fieldLabel" for="settingsStatus1">項目1（必須）</label>
+          <input id="settingsStatus1" class="input" type="text">
+        </div>
+
+        <div class="field">
+          <label class="fieldLabel" for="settingsStatus2">項目2（任意）</label>
+          <input id="settingsStatus2" class="input" type="text">
+        </div>
+
+        <button id="saveEventSettingsButton" class="primaryButton">
+          イベント設定を保存
+        </button>
+
+        <div id="settingsSaveMessage" class="infoNotice"></div>
+      </div>
+
+      <div class="settingsSection">
+        <div class="settingsSectionTitle">アカウント</div>
+
+        <div class="settingsInfoRow">
+          <span>利用区分</span>
+          <strong id="settingsPlanValue">—</strong>
+        </div>
+
+        <button id="dashboardLogoutButton" class="secondaryButton">
+          ログアウト
+        </button>
+      </div>
+
+      <div class="settingsSection">
+        <div class="settingsSectionTitle">データ管理</div>
+
+        <button id="resetAttendanceButton" class="dangerButton">
+          読み取り記録をリセット
+        </button>
+      </div>
+
+      <div class="settingsSection">
+        <div class="settingsSectionTitle">アプリ情報</div>
+
+        <div class="settingsInfoRow">
+          <span>バージョン</span>
+          <strong id="settingsAppVersion">—</strong>
+        </div>
+      </div>
+
+      <div class="settingsDangerBox">
+        <div class="settingsSectionTitle">危険な操作</div>
+
+        <button id="deleteEventButton" class="dangerButton">
+          このイベントを削除
+        </button>
+      </div>
+
+      <div id="dashboardError" class="notice"></div>
+
+    </div>
+
+  </section>
+
 
   <!-- SCHEDULE EDITOR -->
   <section id="scheduleEditorScreen" class="screen">
@@ -1975,7 +2639,7 @@ button {
 /* =========================
    APP VERSION CHECK
 ========================= */
-const APP_VERSION = "2026.10.07.1";
+const APP_VERSION = "2026.10.13.1";
 const APP_VERSION_FILE = "version.json";
 
 (async function checkAppVersion() {
@@ -2135,6 +2799,15 @@ let currentMailStatus =
 
 let currentScheduleShare =
   null;
+
+let currentScheduleData =
+  null;
+
+let currentDashboardTab =
+  "checkin";
+
+let dashboardScheduleDayIndex =
+  0;
 
 let currentVenueGuideMail =
   null;
@@ -3170,6 +3843,22 @@ function showScreen(id) {
     .getElementById(id)
     .classList.add("active");
 
+  const eventWorkspaceIds = [
+    "eventDashboardScreen",
+    "dashboardSettingsScreen",
+    "scheduleEditorScreen"
+  ];
+
+  document.body.classList.toggle(
+    "eventWorkspace",
+    eventWorkspaceIds.includes(id)
+  );
+
+  document.body.classList.toggle(
+    "dashboardWorkspace",
+    id === "eventDashboardScreen"
+  );
+
   window.scrollTo(0, 0);
 
 }
@@ -3966,6 +4655,9 @@ async function openEvent(eventId) {
     currentScheduleShare =
       null;
 
+    currentScheduleData =
+      null;
+
     currentVenueGuideMail =
       null;
 
@@ -4130,6 +4822,17 @@ function applyEventToDashboard() {
 
   updateListFilterButtons();
 
+  populateDashboardSettings();
+
+  updateDashboardEventDate();
+
+  activateDashboardTab(
+    "checkin",
+    {
+      instant: true
+    }
+  );
+
 }
 
 
@@ -4192,12 +4895,17 @@ function startEventDataListener() {
         currentScheduleShare =
           data.scheduleShare || null;
 
+        currentScheduleData =
+          data.schedule || null;
+
         currentVenueGuideMail =
           data.venueGuideMail || null;
 
         renderDashboardData();
         renderScheduleShareArea();
         renderVenueGuideMailPanel();
+        renderDashboardSchedulePreview();
+        updateDashboardEventDate();
 
       },
 
@@ -4374,6 +5082,10 @@ function renderDashboardData() {
   renderInlineVisitorList();
 
   renderVenueGuideMailPanel();
+
+  updateDashboardEventDate();
+
+  renderDashboardSchedulePreview();
 
 }
 
@@ -6233,38 +6945,9 @@ function renderInlineVisitorList() {
 
 async function showListMode() {
 
-  await stopScanner();
-
-  clearScanResult();
-
-  document
-    .getElementById("scanPanel")
-    .style.display =
-    "none";
-
-  document
-    .getElementById("listPanel")
-    .classList.add(
-      "active"
-    );
-
-  document
-    .querySelectorAll(
-      ".dashboardMenu button"
-    )
-    .forEach(button => {
-      button.classList.remove(
-        "active"
-      );
-    });
-
-  document
-    .getElementById(
-      "dashboardListButton"
-    )
-    .classList.add(
-      "active"
-    );
+  await activateDashboardTab(
+    "list"
+  );
 
   renderInlineVisitorList();
 
@@ -6348,6 +7031,893 @@ document
   );
 
 
+
+
+
+/* =========================
+   FINAL DASHBOARD TABS
+========================= */
+
+const DASHBOARD_TAB_ORDER = [
+  "checkin",
+  "list",
+  "data",
+  "schedule",
+  "venue"
+];
+
+
+function dashboardDateLabel(value) {
+  const raw =
+    String(value || "").trim();
+
+  if (!raw) {
+    return "";
+  }
+
+  const parts =
+    raw.split("-");
+
+  if (parts.length !== 3) {
+    return raw;
+  }
+
+  const year =
+    Number(parts[0]);
+
+  const month =
+    Number(parts[1]);
+
+  const day =
+    Number(parts[2]);
+
+  const date =
+    new Date(
+      year,
+      month - 1,
+      day
+    );
+
+  const week =
+    ["日","月","火","水","木","金","土"][
+      date.getDay()
+    ];
+
+  return (
+    year +
+    "/" +
+    String(month).padStart(2,"0") +
+    "/" +
+    String(day).padStart(2,"0") +
+    "(" +
+    week +
+    ")"
+  );
+}
+
+
+function updateDashboardEventDate() {
+  const target =
+    document.getElementById(
+      "dashboardEventDate"
+    );
+
+  if (!target) {
+    return;
+  }
+
+  const schedule =
+    currentScheduleData &&
+    typeof currentScheduleData === "object"
+      ? currentScheduleData
+      : null;
+
+  const dayCount =
+    Math.max(
+      1,
+      Math.min(
+        5,
+        Number(
+          schedule?.dayCount
+        ) || 1
+      )
+    );
+
+  const dates =
+    Array.from(
+      { length: dayCount },
+      (_, index) =>
+        String(
+          schedule?.days?.[index]?.date ||
+          ""
+        ).trim()
+    ).filter(Boolean);
+
+  if (!dates.length) {
+    target.textContent =
+      "日程未設定";
+    return;
+  }
+
+  if (dates.length === 1) {
+    target.textContent =
+      dashboardDateLabel(
+        dates[0]
+      );
+    return;
+  }
+
+  target.textContent =
+    dashboardDateLabel(
+      dates[0]
+    ) +
+    " 〜 " +
+    dashboardDateLabel(
+      dates[dates.length - 1]
+    );
+}
+
+
+function renderDashboardSchedulePreview() {
+  const tabs =
+    document.getElementById(
+      "schedulePreviewTabs"
+    );
+
+  const items =
+    document.getElementById(
+      "schedulePreviewItems"
+    );
+
+  if (!tabs || !items) {
+    return;
+  }
+
+  tabs.innerHTML =
+    "";
+
+  items.innerHTML =
+    "";
+
+  const schedule =
+    currentScheduleData &&
+    typeof currentScheduleData === "object"
+      ? currentScheduleData
+      : null;
+
+  const dayCount =
+    Math.max(
+      1,
+      Math.min(
+        5,
+        Number(
+          schedule?.dayCount
+        ) || 1
+      )
+    );
+
+  if (
+    dashboardScheduleDayIndex >=
+    dayCount
+  ) {
+    dashboardScheduleDayIndex =
+      0;
+  }
+
+  for (
+    let index = 0;
+    index < dayCount;
+    index++
+  ) {
+    const day =
+      schedule?.days?.[index] || {};
+
+    const button =
+      document.createElement(
+        "button"
+      );
+
+    button.type =
+      "button";
+
+    button.className =
+      "schedulePreviewTab" +
+      (
+        index ===
+        dashboardScheduleDayIndex
+          ? " active"
+          : ""
+      );
+
+    const date =
+      String(
+        day.date || ""
+      ).trim();
+
+    button.textContent =
+      "DAY" +
+      (index + 1) +
+      (
+        date
+          ? " " +
+            dashboardDateLabel(date)
+              .replace(/^\d{4}\//, "")
+          : ""
+      );
+
+    button.addEventListener(
+      "click",
+      () => {
+        dashboardScheduleDayIndex =
+          index;
+
+        renderDashboardSchedulePreview();
+      }
+    );
+
+    tabs.appendChild(
+      button
+    );
+  }
+
+  const activeDay =
+    schedule?.days?.[
+      dashboardScheduleDayIndex
+    ] || {};
+
+  const activeItems =
+    Array.isArray(
+      activeDay.items
+    )
+      ? activeDay.items
+          .filter(
+            item =>
+              String(
+                item?.title || ""
+              ).trim()
+          )
+          .slice(0,20)
+      : [];
+
+  if (!activeItems.length) {
+    const empty =
+      document.createElement(
+        "div"
+      );
+
+    empty.className =
+      "schedulePreviewEmpty";
+
+    empty.textContent =
+      "スケジュールはまだ登録されていません。";
+
+    items.appendChild(
+      empty
+    );
+
+    return;
+  }
+
+  activeItems.forEach(
+    item => {
+      const row =
+        document.createElement(
+          "div"
+        );
+
+      row.className =
+        "schedulePreviewItem";
+
+      const time =
+        document.createElement(
+          "div"
+        );
+
+      time.className =
+        "schedulePreviewTime";
+
+      time.textContent =
+        String(
+          item.time || ""
+        ).trim() || "—";
+
+      const title =
+        document.createElement(
+          "div"
+        );
+
+      title.className =
+        "schedulePreviewTitle";
+
+      title.textContent =
+        String(
+          item.title || ""
+        ).trim();
+
+      const note =
+        String(
+          item.note || ""
+        ).trim();
+
+      if (note) {
+        const small =
+          document.createElement(
+            "span"
+          );
+
+        small.className =
+          "schedulePreviewNote";
+
+        small.textContent =
+          note;
+
+        title.appendChild(
+          small
+        );
+      }
+
+      row.appendChild(
+        time
+      );
+
+      row.appendChild(
+        title
+      );
+
+      items.appendChild(
+        row
+      );
+    }
+  );
+}
+
+
+function getDashboardTabIndex(
+  tabName
+) {
+  return DASHBOARD_TAB_ORDER
+    .indexOf(tabName);
+}
+
+
+async function activateDashboardTab(
+  tabName,
+  options = {}
+) {
+  if (
+    !DASHBOARD_TAB_ORDER.includes(
+      tabName
+    )
+  ) {
+    return;
+  }
+
+  const oldTab =
+    currentDashboardTab;
+
+  const oldIndex =
+    getDashboardTabIndex(
+      oldTab
+    );
+
+  const nextIndex =
+    getDashboardTabIndex(
+      tabName
+    );
+
+  if (
+    tabName !== "checkin"
+  ) {
+    await stopScanner();
+    clearScanResult();
+  }
+
+  currentDashboardTab =
+    tabName;
+
+  document
+    .querySelectorAll(
+      "[data-dashboard-page]"
+    )
+    .forEach(page => {
+      page.classList.remove(
+        "active",
+        "slideFromLeft",
+        "slideFromRight"
+      );
+    });
+
+  const nextPage =
+    document.querySelector(
+      '[data-dashboard-page="' +
+      tabName +
+      '"]'
+    );
+
+  if (nextPage) {
+    nextPage.classList.add(
+      "active"
+    );
+
+    if (
+      !options.instant &&
+      oldTab !== tabName
+    ) {
+      nextPage.classList.add(
+        nextIndex > oldIndex
+          ? "slideFromRight"
+          : "slideFromLeft"
+      );
+    }
+  }
+
+  document
+    .querySelectorAll(
+      "[data-dashboard-tab]"
+    )
+    .forEach(button => {
+      button.classList.toggle(
+        "active",
+        button.dataset.dashboardTab ===
+          tabName
+      );
+    });
+
+  if (
+    tabName === "checkin"
+  ) {
+    updateModeButtons();
+  }
+
+  if (
+    tabName === "list"
+  ) {
+    renderInlineVisitorList();
+  }
+
+  if (
+    tabName === "schedule"
+  ) {
+    renderDashboardSchedulePreview();
+    renderScheduleShareArea();
+  }
+
+  if (
+    tabName === "venue"
+  ) {
+    renderVenueGuideMailPanel();
+  }
+
+  window.scrollTo({
+    top: 0,
+    behavior:
+      options.instant
+        ? "auto"
+        : "smooth"
+  });
+}
+
+
+document
+  .getElementById(
+    "dashboardCheckinTabButton"
+  )
+  .addEventListener(
+    "click",
+    () =>
+      activateDashboardTab(
+        "checkin"
+      )
+  );
+
+
+document
+  .getElementById(
+    "dashboardDataTabButton"
+  )
+  .addEventListener(
+    "click",
+    () =>
+      activateDashboardTab(
+        "data"
+      )
+  );
+
+
+document
+  .getElementById(
+    "dashboardScheduleTabButton"
+  )
+  .addEventListener(
+    "click",
+    () =>
+      activateDashboardTab(
+        "schedule"
+      )
+  );
+
+
+document
+  .getElementById(
+    "dashboardVenueTabButton"
+  )
+  .addEventListener(
+    "click",
+    () =>
+      activateDashboardTab(
+        "venue"
+      )
+  );
+
+
+document
+  .getElementById(
+    "manualSearchButton"
+  )
+  .addEventListener(
+    "click",
+    async () => {
+      await activateDashboardTab(
+        "list"
+      );
+
+      setTimeout(
+        () => {
+          document
+            .getElementById(
+              "inlineListSearch"
+            )
+            .focus();
+        },
+        50
+      );
+    }
+  );
+
+
+/* 左右スワイプ */
+let dashboardSwipeStartX =
+  null;
+
+let dashboardSwipeStartY =
+  null;
+
+const dashboardTabViewport =
+  document.getElementById(
+    "dashboardTabViewport"
+  );
+
+dashboardTabViewport.addEventListener(
+  "touchstart",
+  event => {
+    const target =
+      event.target;
+
+    if (
+      target.closest(
+        "#reader,button,input,select,textarea,a"
+      )
+    ) {
+      dashboardSwipeStartX =
+        null;
+
+      dashboardSwipeStartY =
+        null;
+
+      return;
+    }
+
+    const touch =
+      event.touches?.[0];
+
+    if (!touch) {
+      return;
+    }
+
+    dashboardSwipeStartX =
+      touch.clientX;
+
+    dashboardSwipeStartY =
+      touch.clientY;
+  },
+  {
+    passive: true
+  }
+);
+
+dashboardTabViewport.addEventListener(
+  "touchend",
+  event => {
+    if (
+      dashboardSwipeStartX === null ||
+      dashboardSwipeStartY === null
+    ) {
+      return;
+    }
+
+    const touch =
+      event.changedTouches?.[0];
+
+    if (!touch) {
+      return;
+    }
+
+    const dx =
+      touch.clientX -
+      dashboardSwipeStartX;
+
+    const dy =
+      touch.clientY -
+      dashboardSwipeStartY;
+
+    dashboardSwipeStartX =
+      null;
+
+    dashboardSwipeStartY =
+      null;
+
+    if (
+      Math.abs(dx) < 55 ||
+      Math.abs(dx) <=
+        Math.abs(dy) * 1.15
+    ) {
+      return;
+    }
+
+    const currentIndex =
+      getDashboardTabIndex(
+        currentDashboardTab
+      );
+
+    const nextIndex =
+      dx < 0
+        ? Math.min(
+            DASHBOARD_TAB_ORDER.length - 1,
+            currentIndex + 1
+          )
+        : Math.max(
+            0,
+            currentIndex - 1
+          );
+
+    if (
+      nextIndex ===
+      currentIndex
+    ) {
+      return;
+    }
+
+    activateDashboardTab(
+      DASHBOARD_TAB_ORDER[
+        nextIndex
+      ]
+    );
+  },
+  {
+    passive: true
+  }
+);
+
+
+/* =========================
+   SETTINGS SCREEN
+========================= */
+
+function currentPlanLabel() {
+  const type =
+    String(
+      currentAccess?.type || ""
+    ).toLowerCase();
+
+  if (type === "tester") {
+    return "テスター";
+  }
+
+  if (type === "paid") {
+    return "有料プラン";
+  }
+
+  if (type === "user") {
+    return "利用中";
+  }
+
+  return "—";
+}
+
+
+function populateDashboardSettings() {
+  if (!currentEvent) {
+    return;
+  }
+
+  const name =
+    document.getElementById(
+      "settingsEventName"
+    );
+
+  if (!name) {
+    return;
+  }
+
+  name.value =
+    currentEvent.name || "";
+
+  document
+    .getElementById(
+      "settingsStatus1"
+    )
+    .value =
+    currentEvent.status1 || "";
+
+  document
+    .getElementById(
+      "settingsStatus2"
+    )
+    .value =
+    currentEvent.status2 || "";
+
+  document
+    .getElementById(
+      "settingsPlanValue"
+    )
+    .textContent =
+    currentPlanLabel();
+
+  document
+    .getElementById(
+      "settingsAppVersion"
+    )
+    .textContent =
+    APP_VERSION;
+}
+
+
+document
+  .getElementById(
+    "dashboardSettingsButton"
+  )
+  .addEventListener(
+    "click",
+    async () => {
+      await stopScanner();
+      clearScanResult();
+      populateDashboardSettings();
+
+      showScreen(
+        "dashboardSettingsScreen"
+      );
+    }
+  );
+
+
+document
+  .getElementById(
+    "settingsBackButton"
+  )
+  .addEventListener(
+    "click",
+    () => {
+      showScreen(
+        "eventDashboardScreen"
+      );
+
+      activateDashboardTab(
+        currentDashboardTab,
+        {
+          instant: true
+        }
+      );
+    }
+  );
+
+
+document
+  .getElementById(
+    "saveEventSettingsButton"
+  )
+  .addEventListener(
+    "click",
+    async () => {
+      if (
+        !currentUser ||
+        !currentEventId ||
+        !currentEvent
+      ) {
+        return;
+      }
+
+      const name =
+        document
+          .getElementById(
+            "settingsEventName"
+          )
+          .value
+          .trim();
+
+      const status1 =
+        document
+          .getElementById(
+            "settingsStatus1"
+          )
+          .value
+          .trim();
+
+      const status2 =
+        document
+          .getElementById(
+            "settingsStatus2"
+          )
+          .value
+          .trim();
+
+      if (!name || !status1) {
+        showBoxMessage(
+          "settingsSaveMessage",
+          "イベント名と項目1は必須です。"
+        );
+        return;
+      }
+
+      const button =
+        document.getElementById(
+          "saveEventSettingsButton"
+        );
+
+      button.disabled =
+        true;
+
+      button.textContent =
+        "保存中…";
+
+      clearMessage(
+        "settingsSaveMessage"
+      );
+
+      try {
+        await update(
+          ref(
+            database,
+            "users/" +
+              currentUser.uid +
+              "/events/" +
+              currentEventId
+          ),
+          {
+            name,
+            status1,
+            status2
+          }
+        );
+
+        currentEvent = {
+          ...currentEvent,
+          name,
+          status1,
+          status2
+        };
+
+        applyEventToDashboard();
+
+        showBoxMessage(
+          "settingsSaveMessage",
+          "イベント設定を保存しました。"
+        );
+
+      } catch (error) {
+        showFirebaseError(
+          "settingsSaveMessage",
+          error
+        );
+
+      } finally {
+        button.disabled =
+          false;
+
+        button.textContent =
+          "イベント設定を保存";
+      }
+    }
+  );
 
 
 /* =========================
@@ -7083,12 +8653,6 @@ function updateModeButtons() {
     .getElementById("scanPanel")
     .style.display =
     "block";
-
-  document
-    .getElementById("listPanel")
-    .classList.remove(
-      "active"
-    );
 
   const button1 =
     document.getElementById(
@@ -9154,6 +10718,13 @@ function backFromScheduleEditor() {
   showScreen(
     "eventDashboardScreen"
   );
+
+  activateDashboardTab(
+    "schedule",
+    {
+      instant: true
+    }
+  );
 }
 
 document
@@ -9211,6 +10782,9 @@ document
         {};
 
       currentScheduleShare =
+        null;
+
+      currentScheduleData =
         null;
 
       currentVenueGuideMail =
@@ -9394,6 +10968,9 @@ onAuthStateChanged(
         {};
 
       currentScheduleShare =
+        null;
+
+      currentScheduleData =
         null;
 
       currentVenueGuideMail =
