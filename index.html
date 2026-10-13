@@ -2243,6 +2243,11 @@ body.dashboardWorkspace .app{
             <div id="scanResultNumber" class="scanResultNumber"></div>
 
             <div id="scanResultExtras" class="scanResultExtras">
+              <div id="scanResultSiteRow" class="scanResultExtraRow" style="display:none;">
+                <span class="scanResultExtraLabel">区画</span>
+                <span id="scanResultSite" class="scanResultExtraValue"></span>
+              </div>
+
               <div id="scanResultPeopleRow" class="scanResultExtraRow" style="display:none;">
                 <span class="scanResultExtraLabel">人数</span>
                 <span id="scanResultPeople" class="scanResultExtraValue"></span>
@@ -2307,6 +2312,7 @@ body.dashboardWorkspace .app{
           <div class="csvDescription">
             id・name は必須です。<br>
             number・email・人数・自由項目は任意です。<br>
+            number は受付時に「区画」として表示します。<br>
             QRコードには id だけを記録します。
           </div>
 
@@ -2722,7 +2728,7 @@ body.dashboardWorkspace .app{
 /* =========================
    APP VERSION CHECK
 ========================= */
-const APP_VERSION = "2026.10.13.2";
+const APP_VERSION = "2026.10.13.3";
 const APP_VERSION_FILE = "version.json";
 
 (async function checkAppVersion() {
@@ -2955,7 +2961,7 @@ const VISITOR_RETENTION_MS =
   60 * 24 * 60 * 60 * 1000;
 
 const MAX_ACTIVE_DEVICES =
-  2;
+  3;
 
 const DEVICE_HEARTBEAT_MS =
   30 * 1000;
@@ -6926,57 +6932,6 @@ function renderInlineVisitorList() {
         idSub
       );
 
-      const visitorPeople =
-        String(
-          visitor.people || ""
-        ).trim();
-
-      if (visitorPeople) {
-        const peopleSub =
-          document.createElement(
-            "span"
-          );
-
-        peopleSub.className =
-          "participantExtraSub";
-
-        peopleSub.textContent =
-          "人数：" +
-          visitorPeople;
-
-        nameTd.appendChild(
-          peopleSub
-        );
-      }
-
-      const visitorCustom =
-        String(
-          visitor.custom || ""
-        ).trim();
-
-      if (
-        visitorCustom &&
-        currentParticipantCustomLabel
-      ) {
-        const customSub =
-          document.createElement(
-            "span"
-          );
-
-        customSub.className =
-          "participantExtraSub";
-
-        customSub.textContent =
-          currentParticipantCustomLabel +
-          "：" +
-          visitorCustom;
-
-        nameTd.appendChild(
-          customSub
-        );
-      }
-
-
       if (
         visitor.email
       ) {
@@ -9421,6 +9376,16 @@ async function processScannedId(
       "none";
   }
 
+  const siteRow =
+    document.getElementById(
+      "scanResultSiteRow"
+    );
+
+  if (siteRow) {
+    siteRow.style.display =
+      "none";
+  }
+
   const peopleRow =
     document.getElementById(
       "scanResultPeopleRow"
@@ -9486,7 +9451,15 @@ function showScanResult(
       visitor.number || ""
     ).trim();
 
-  if (visitorNumber) {
+  /*
+    項目1（入場）では従来どおり number を大きく表示。
+    項目2（受付）では number は下の「区画」欄へ表示するため、
+    ここでは非表示にする。
+  */
+  if (
+    currentScanMode === "status1" &&
+    visitorNumber
+  ) {
     scanResultNumber.textContent =
       visitorNumber;
 
@@ -9497,6 +9470,42 @@ function showScanResult(
       "";
 
     scanResultNumber.style.display =
+      "none";
+  }
+
+  const isReception =
+    currentScanMode ===
+    "status2";
+
+  const siteValue =
+    String(
+      visitor.number || ""
+    ).trim();
+
+  const siteRow =
+    document.getElementById(
+      "scanResultSiteRow"
+    );
+
+  const siteText =
+    document.getElementById(
+      "scanResultSite"
+    );
+
+  if (
+    isReception &&
+    siteValue
+  ) {
+    siteText.textContent =
+      siteValue;
+
+    siteRow.style.display =
+      "flex";
+  } else {
+    siteText.textContent =
+      "";
+
+    siteRow.style.display =
       "none";
   }
 
@@ -9515,7 +9524,10 @@ function showScanResult(
       "scanResultPeople"
     );
 
-  if (peopleValue) {
+  if (
+    isReception &&
+    peopleValue
+  ) {
     peopleText.textContent =
       peopleValue;
 
@@ -9550,6 +9562,7 @@ function showScanResult(
     );
 
   if (
+    isReception &&
     customValue &&
     currentParticipantCustomLabel
   ) {
@@ -9579,10 +9592,14 @@ function showScanResult(
     .style
     .display =
     (
-      peopleValue ||
+      isReception &&
       (
-        customValue &&
-        currentParticipantCustomLabel
+        siteValue ||
+        peopleValue ||
+        (
+          customValue &&
+          currentParticipantCustomLabel
+        )
       )
     )
       ? "block"
