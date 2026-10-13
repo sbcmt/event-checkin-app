@@ -2728,7 +2728,7 @@ body.dashboardWorkspace .app{
 /* =========================
    APP VERSION CHECK
 ========================= */
-const APP_VERSION = "2.3.0";
+const APP_VERSION = "2.3.1";
 const APP_VERSION_FILE = "version.json";
 
 (async function checkAppVersion() {
@@ -9458,6 +9458,46 @@ function clearScanResult() {
     .textContent =
     "";
 
+  const extraBox =
+    document.getElementById(
+      "scanResultExtras"
+    );
+
+  if (extraBox) {
+    extraBox.style.display =
+      "none";
+  }
+
+  const siteRow =
+    document.getElementById(
+      "scanResultSiteRow"
+    );
+
+  if (siteRow) {
+    siteRow.style.display =
+      "none";
+  }
+
+  const peopleRow =
+    document.getElementById(
+      "scanResultPeopleRow"
+    );
+
+  if (peopleRow) {
+    peopleRow.style.display =
+      "none";
+  }
+
+  const customRow =
+    document.getElementById(
+      "scanResultCustomRow"
+    );
+
+  if (customRow) {
+    customRow.style.display =
+      "none";
+  }
+
 }
 
 
@@ -9852,46 +9892,6 @@ async function processScannedId(
 
   }
 
-
-  const extraBox =
-    document.getElementById(
-      "scanResultExtras"
-    );
-
-  if (extraBox) {
-    extraBox.style.display =
-      "none";
-  }
-
-  const siteRow =
-    document.getElementById(
-      "scanResultSiteRow"
-    );
-
-  if (siteRow) {
-    siteRow.style.display =
-      "none";
-  }
-
-  const peopleRow =
-    document.getElementById(
-      "scanResultPeopleRow"
-    );
-
-  if (peopleRow) {
-    peopleRow.style.display =
-      "none";
-  }
-
-  const customRow =
-    document.getElementById(
-      "scanResultCustomRow"
-    );
-
-  if (customRow) {
-    customRow.style.display =
-      "none";
-  }
 
 }
 
