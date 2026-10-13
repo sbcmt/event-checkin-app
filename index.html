@@ -2345,7 +2345,7 @@ body.dashboardWorkspace .app{
             </button>
 
             <button id="printQrListButton" class="primaryButton" disabled>
-              QRコード一覧を<br>印刷
+              QRコード一覧<br>印刷・PDF
             </button>
           </div>
 
@@ -2728,7 +2728,7 @@ body.dashboardWorkspace .app{
 /* =========================
    APP VERSION CHECK
 ========================= */
-const APP_VERSION = "2.2.0";
+const APP_VERSION = "2.3.0";
 const APP_VERSION_FILE = "version.json";
 
 (async function checkAppVersion() {
@@ -6336,37 +6336,523 @@ async function printQrList() {
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>${escapePrintHtml(currentEvent?.name || "イベント")}_QRコード一覧</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"><\/script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"><\/script>
+
 <style>
   * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; background: #fff; color: #111; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP", "Yu Gothic", sans-serif; }
-  .screen-note { padding: 12px; text-align: center; font-size: 14px; color: #555; background: #f5f5f5; }
-  .print-page { width: 194mm; height: 275mm; margin: 0 auto; page-break-after: always; break-after: page; overflow: hidden; }
-  .print-page:last-child { page-break-after: auto; break-after: auto; }
-  .page-head { height: 8mm; display: flex; align-items: center; justify-content: space-between; padding: 0 2mm; font-size: 9.5pt; font-weight: 700; border-bottom: 0.25mm solid #bbb; }
-  .qr-grid { height: 267mm; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(5, 1fr); gap: 0; }
-  .qr-card { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 0; min-height: 0; padding: 1mm 4mm; border-right: 0.2mm solid #ddd; border-bottom: 0.2mm solid #ddd; break-inside: avoid; page-break-inside: avoid; overflow: hidden; }
-  .qr-card:nth-child(2n) { border-right: none; }
-  .qr-card:nth-last-child(-n+2) { border-bottom: none; }
-  .qr-card img { display: block; width: 36mm; height: 36mm; flex: 0 0 36mm; object-fit: contain; image-rendering: pixelated; }
-  .person-name { margin-top: 1mm; width: 100%; max-height: 10mm; text-align: center; font-size: 11pt; font-weight: 800; line-height: 1.15; overflow-wrap: anywhere; overflow: hidden; }
-  @page { size: A4 portrait; margin: 8mm; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #eef1f5;
+    color: #111;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP", "Yu Gothic", sans-serif;
+  }
+
+  body {
+    padding:
+      calc(82px + env(safe-area-inset-top))
+      8px
+      calc(24px + env(safe-area-inset-bottom));
+  }
+
+  .action-bar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 9999;
+    width: 100%;
+    padding:
+      calc(8px + env(safe-area-inset-top))
+      10px
+      8px;
+    background: rgba(255,255,255,.97);
+    border-bottom: 1px solid #ddd;
+    box-shadow: 0 3px 14px rgba(0,0,0,.08);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .action-title {
+    margin-bottom: 7px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 800;
+    color: #555;
+  }
+
+  .action-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 88px;
+    gap: 7px;
+    max-width: 620px;
+    margin: 0 auto;
+  }
+
+  .action-button {
+    min-height: 44px;
+    border: 0;
+    border-radius: 11px;
+    padding: 8px 6px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 900;
+    cursor: pointer;
+  }
+
+  .print-button {
+    background: #111;
+    color: #fff;
+  }
+
+  .pdf-button {
+    background: #0877ed;
+    color: #fff;
+  }
+
+  .close-button {
+    background: #e8ebef;
+    color: #333;
+  }
+
+  .action-button:disabled {
+    opacity: .55;
+    cursor: default;
+  }
+
+  #pdfStatus {
+    display: none;
+    max-width: 620px;
+    margin: 7px auto 0;
+    color: #555;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .screen-note {
+    max-width: 620px;
+    margin: 0 auto 10px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    text-align: center;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #555;
+    background: #fff;
+  }
+
+  .pages-wrap {
+    display: grid;
+    gap: 14px;
+    justify-content: center;
+  }
+
+  .print-page {
+    width: min(194mm, calc(100vw - 16px));
+    min-height: 275mm;
+    margin: 0 auto;
+    page-break-after: always;
+    break-after: page;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 4px 18px rgba(0,0,0,.10);
+  }
+
+  .print-page:last-child {
+    page-break-after: auto;
+    break-after: auto;
+  }
+
+  .page-head {
+    height: 8mm;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 2mm;
+    font-size: 9.5pt;
+    font-weight: 700;
+    border-bottom: 0.25mm solid #bbb;
+  }
+
+  .qr-grid {
+    min-height: 267mm;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: repeat(5, minmax(0, 1fr));
+    gap: 0;
+  }
+
+  .qr-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    min-height: 0;
+    padding: 1mm 4mm;
+    border-right: 0.2mm solid #ddd;
+    border-bottom: 0.2mm solid #ddd;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    overflow: hidden;
+  }
+
+  .qr-card:nth-child(2n) {
+    border-right: none;
+  }
+
+  .qr-card:nth-last-child(-n+2) {
+    border-bottom: none;
+  }
+
+  .qr-card img {
+    display: block;
+    width: 36mm;
+    height: 36mm;
+    flex: 0 0 36mm;
+    object-fit: contain;
+    image-rendering: pixelated;
+  }
+
+  .person-name {
+    margin-top: 1mm;
+    width: 100%;
+    max-height: 10mm;
+    text-align: center;
+    font-size: 11pt;
+    font-weight: 800;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+    overflow: hidden;
+  }
+
+  /* PDF生成時だけA4印刷寸法に固定する */
+  body.pdf-mode .print-page {
+    width: 194mm !important;
+    height: 275mm !important;
+    min-height: 275mm !important;
+    box-shadow: none !important;
+  }
+
+  body.pdf-mode .qr-grid {
+    height: 267mm !important;
+    min-height: 267mm !important;
+  }
+
+  @page {
+    size: A4 portrait;
+    margin: 8mm;
+  }
+
   @media print {
-    html, body { width: 194mm; }
-    .screen-note { display: none; }
-    .print-page { width: 194mm; height: 275mm; margin: 0; }
+    html, body {
+      width: 194mm;
+      background: #fff;
+    }
+
+    body {
+      padding: 0;
+    }
+
+    .action-bar,
+    .screen-note {
+      display: none !important;
+    }
+
+    .pages-wrap {
+      display: block;
+    }
+
+    .print-page {
+      width: 194mm !important;
+      height: 275mm !important;
+      min-height: 275mm !important;
+      margin: 0;
+      box-shadow: none;
+    }
+
+    .qr-grid {
+      height: 267mm !important;
+      min-height: 267mm !important;
+    }
+  }
+
+  @media (max-width: 520px) {
+    body {
+      padding-top:
+        calc(96px + env(safe-area-inset-top));
+    }
+
+    .action-row {
+      grid-template-columns: 1fr 1fr 74px;
+      gap: 5px;
+    }
+
+    .action-button {
+      font-size: 12px;
+    }
+
+    .page-head {
+      font-size: 8.5pt;
+    }
+
+    .qr-card img {
+      width: min(36mm, 31vw);
+      height: min(36mm, 31vw);
+      flex-basis: min(36mm, 31vw);
+    }
+
+    .person-name {
+      font-size: 10pt;
+    }
   }
 </style>
 </head>
+
 <body>
-<div class="screen-note">印刷画面が開かない場合は、この画面の共有・印刷メニューから印刷してください。</div>
-${pages.join("")}
+
+<div class="action-bar">
+  <div class="action-title">QRコード一覧</div>
+
+  <div class="action-row">
+    <button id="doPrintButton" class="action-button print-button" type="button">
+      印刷
+    </button>
+
+    <button id="downloadPdfButton" class="action-button pdf-button" type="button">
+      PDFダウンロード
+    </button>
+
+    <button id="closePrintButton" class="action-button close-button" type="button">
+      閉じる
+    </button>
+  </div>
+
+  <div id="pdfStatus"></div>
+</div>
+
+<div class="screen-note">
+  スマートフォンでは「印刷」または「PDFダウンロード」を選べます。
+</div>
+
+<div id="pagesWrap" class="pages-wrap">
+  ${pages.join("")}
+</div>
+
 <script>
-  window.addEventListener("load", () => {
-    setTimeout(() => window.print(), 350);
-  });
+(function () {
+
+  const printButton =
+    document.getElementById(
+      "doPrintButton"
+    );
+
+  const pdfButton =
+    document.getElementById(
+      "downloadPdfButton"
+    );
+
+  const closeButton =
+    document.getElementById(
+      "closePrintButton"
+    );
+
+  const pdfStatus =
+    document.getElementById(
+      "pdfStatus"
+    );
+
+  const safeFileName =
+    ${JSON.stringify(
+      String(
+        currentEvent?.name ||
+        "イベント"
+      )
+        .replace(/[\\\\/:*?"<>|]/g, "_")
+        .trim() ||
+      "イベント"
+    )};
+
+  printButton.addEventListener(
+    "click",
+    () => {
+      window.print();
+    }
+  );
+
+  closeButton.addEventListener(
+    "click",
+    () => {
+      window.close();
+
+      /*
+        通常は window.open() で開いているため閉じられる。
+        万一ブラウザ仕様で閉じられない場合は前ページへ戻す。
+      */
+      setTimeout(
+        () => {
+          if (!window.closed) {
+            history.back();
+          }
+        },
+        150
+      );
+    }
+  );
+
+  pdfButton.addEventListener(
+    "click",
+    async () => {
+      if (
+        typeof html2canvas ===
+          "undefined" ||
+        !window.jspdf?.jsPDF
+      ) {
+        pdfStatus.style.display =
+          "block";
+
+        pdfStatus.textContent =
+          "PDF機能を読み込めませんでした。通信状態を確認して、もう一度お試しください。";
+
+        return;
+      }
+
+      pdfButton.disabled =
+        true;
+
+      printButton.disabled =
+        true;
+
+      pdfStatus.style.display =
+        "block";
+
+      pdfStatus.textContent =
+        "PDFを作成しています…";
+
+      document.body.classList.add(
+        "pdf-mode"
+      );
+
+      try {
+        const {
+          jsPDF
+        } =
+          window.jspdf;
+
+        const pdf =
+          new jsPDF({
+            orientation:
+              "portrait",
+            unit:
+              "mm",
+            format:
+              "a4",
+            compress:
+              true
+          });
+
+        const pageElements =
+          Array.from(
+            document.querySelectorAll(
+              ".print-page"
+            )
+          );
+
+        for (
+          let i = 0;
+          i < pageElements.length;
+          i++
+        ) {
+          pdfStatus.textContent =
+            "PDFを作成しています… " +
+            (i + 1) +
+            " / " +
+            pageElements.length;
+
+          const canvas =
+            await html2canvas(
+              pageElements[i],
+              {
+                scale:
+                  2,
+                backgroundColor:
+                  "#ffffff",
+                useCORS:
+                  true,
+                logging:
+                  false
+              }
+            );
+
+          const imageData =
+            canvas.toDataURL(
+              "image/jpeg",
+              0.94
+            );
+
+          if (i > 0) {
+            pdf.addPage(
+              "a4",
+              "portrait"
+            );
+          }
+
+          pdf.addImage(
+            imageData,
+            "JPEG",
+            8,
+            8,
+            194,
+            275,
+            undefined,
+            "FAST"
+          );
+        }
+
+        pdfStatus.textContent =
+          "PDFをダウンロードします。";
+
+        pdf.save(
+          safeFileName +
+          "_QRコード一覧.pdf"
+        );
+
+        setTimeout(
+          () => {
+            pdfStatus.style.display =
+              "none";
+          },
+          1800
+        );
+
+      } catch (error) {
+        console.error(error);
+
+        pdfStatus.textContent =
+          "PDFの作成に失敗しました。印刷ボタンからPDF保存も利用できます。";
+
+      } finally {
+        document.body.classList.remove(
+          "pdf-mode"
+        );
+
+        pdfButton.disabled =
+          false;
+
+        printButton.disabled =
+          false;
+      }
+    }
+  );
+
+})();
 <\/script>
+
 </body>
 </html>`;
 
@@ -6379,7 +6865,7 @@ ${pages.join("")}
     printWindow.document.close();
 
     progress.textContent =
-      "QRコード一覧の印刷画面を開きました。";
+      "QRコード一覧を開きました。印刷またはPDFダウンロードを選択できます。";
 
   } catch (error) {
 
