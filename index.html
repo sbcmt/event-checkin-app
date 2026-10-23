@@ -1126,6 +1126,26 @@ button {
   appearance:auto !important;
 }
 
+/* Desktop: expose the actual time input so Chrome/Edge can type and select HH:MM. */
+@media (hover: hover) and (pointer: fine){
+  .scheduleTimePickerShell .scheduleNativePickerDisplay{display:none !important;}
+  .scheduleTimePickerShell .scheduleNativePickerInput{
+    position:static !important;
+    inset:auto !important;
+    opacity:1 !important;
+    width:100% !important;
+    height:100% !important;
+    padding:0 4px !important;
+    background:transparent !important;
+    color:#111 !important;
+    font-size:16px !important;
+    text-align:center !important;
+    cursor:text !important;
+    color-scheme:light;
+  }
+  .scheduleTimePickerShell:focus-within{border-color:#111;}
+}
+
 /* Time/content stay 3:6 on PC, iPhone and iPad. */
 .scheduleEditRowTop{
   display:grid !important;
@@ -11155,9 +11175,7 @@ function renderActiveScheduleDay() {
       timeInput.value =
         item.time || "";
 
-      timeInput.addEventListener(
-        "change",
-        () => {
+      const syncScheduleTime = () => {
 
           item.time =
             timeInput.value || "";
@@ -11170,8 +11188,9 @@ function renderActiveScheduleDay() {
             !item.time
           );
 
-        }
-      );
+        };
+      timeInput.addEventListener("input", syncScheduleTime);
+      timeInput.addEventListener("change", syncScheduleTime);
 
       timeShell.appendChild(
         timeDisplay
@@ -11503,7 +11522,7 @@ document
 
           const inputs =
             document.querySelectorAll(
-              "#scheduleRows .scheduleTimeInput"
+              "#scheduleRows .scheduleTimePickerShell .scheduleNativePickerInput"
             );
 
           if (inputs.length) {
