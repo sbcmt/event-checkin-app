@@ -9,8 +9,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="CHECK-IN">
-<link rel="apple-touch-icon" href="event_app.png">
-<link rel="icon" type="image/png" href="event_app.png">
+<link rel="apple-touch-icon" href="event_app.png?v=235">
+<link rel="icon" type="image/png" href="event_app.png?v=235">
 
 <title>イベント受付管理</title>
 
@@ -1932,11 +1932,58 @@ body.dashboardWorkspace .app{
   line-height:1.6;
 }
 
-/* Copyright always sits at the bottom, centered on every screen. */
+/* Keep copyright visible at the bottom, including fixed-tab screens. */
 html, body { min-height: 100%; }
 body { min-height: 100vh; display: flex; flex-direction: column; }
-.app { flex: 1 0 auto; }
-.appCopyright { flex-shrink: 0; width: 100%; padding: 10px 16px calc(16px + env(safe-area-inset-bottom)); text-align: center; font-size: 11px; color: #909090; }
+.app { flex: 1 0 auto; padding-bottom: calc(54px + env(safe-area-inset-bottom)); }
+.appCopyright {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 8100;
+  width: 100%;
+  min-height: 27px;
+  padding: 6px 12px calc(6px + env(safe-area-inset-bottom));
+  background: #f3f3f3;
+  color: #747474;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 15px;
+  text-align: center;
+  pointer-events: none;
+}
+/* Dashboard tabs stop above the copyright, never covering it. */
+body.dashboardWorkspace .dashboardBottomTabs {
+  bottom: calc(27px + env(safe-area-inset-bottom));
+}
+body.dashboardWorkspace .app {
+  padding-bottom: calc(137px + env(safe-area-inset-bottom));
+}
+/* Scheduled-mail fields are locked until Edit is selected. */
+.venueGuideReservationSummary {
+  margin-top: 13px;
+  padding: 12px 13px;
+  border-radius: 13px;
+  background: #f3f5f8;
+  color: #435066;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.85;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+.venueGuideEditHint {
+  margin-top: 9px;
+  color: #6c6571;
+  font-size: 12px;
+  text-align: center;
+  line-height: 1.6;
+}
+#venueGuideForm input:disabled { opacity: .7; background: #f2f2f2; cursor: not-allowed; }
+.venueGuideActions .venueEditButton { grid-column: 1 / -1; }
+@media(max-width:560px) { .venueGuideActions .venueEditButton { grid-column: auto; } }
+
 </style>
 </head>
 
@@ -2548,12 +2595,19 @@ body { min-height: 100vh; display: flex; flex-direction: column; }
               送信対象メール 0件
             </div>
 
+            <div id="venueMailReservationSummary" class="venueGuideReservationSummary" style="display:none;" aria-live="polite"></div>
+            <div id="venueMailEditHint" class="venueGuideEditHint" style="display:none;">予約内容を変更するには「送信予約を編集」を押してください。</div>
             <div class="venueGuideActions">
-              <button id="saveVenueMailButton" class="primaryButton">
+              <button id="editVenueMailButton" class="secondaryButton venueEditButton" type="button" style="display:none;">
+                送信予約を編集
+              </button>
+              <button id="saveVenueMailButton" class="primaryButton" type="button">
                 送信予約を保存
               </button>
-
-              <button id="cancelVenueMailButton" class="secondaryButton" style="display:none;">
+              <button id="abortVenueMailEditButton" class="secondaryButton" type="button" style="display:none;">
+                変更を破棄
+              </button>
+              <button id="cancelVenueMailButton" class="secondaryButton" type="button" style="display:none;">
                 送信予約をキャンセル
               </button>
             </div>
@@ -2761,13 +2815,13 @@ body { min-height: 100vh; display: flex; flex-direction: column; }
   </section>
 
 </div>
-<footer class="appCopyright">© 2026 Dobhar-chú. All rights reserved.</footer>
+<footer class="appCopyright">© 2021–2026 dobhar-chu</footer>
 
 <script>
 /* =========================
    APP VERSION CHECK
 ========================= */
-const APP_VERSION = "2.3.4";
+const APP_VERSION = "2.3.5";
 const APP_VERSION_FILE = "version.json";
 
 (async function checkAppVersion() {
@@ -2942,6 +2996,9 @@ let dashboardScheduleDayIndex =
 
 let currentVenueGuideMail =
   null;
+
+// Explicit edit mode keeps scheduled content read-only until requested.
+let venueGuideEditMode = false;
 
 let venueGuideFormEventId =
   null;
@@ -8854,6 +8911,10 @@ function populateVenueGuideForm() {
   if (!currentEventId) {
     return;
   }
+  // Opening another event must never keep an unfinished edit.
+  if (venueGuideFormEventId !== currentEventId) {
+    venueGuideEditMode = false;
+  }
 
   const config =
     currentVenueGuideMail || {};
@@ -9006,45 +9067,59 @@ function renderVenueGuideMailPanel() {
       config.status || ""
     );
 
-  const cancelButton =
-    document.getElementById(
-      "cancelVenueMailButton"
-    );
+  const isScheduled = status === "scheduled";
+  // Retry/processing may already have sent mail; never edit that job.
+  if (!isScheduled) venueGuideEditMode = false;
 
-  cancelButton.style.display =
-    (
-      status === "scheduled" ||
-      status === "retrying"
-    )
-      ? "block"
-      : "none";
+  const cancelButton = document.getElementById("cancelVenueMailButton");
+  const saveButton = document.getElementById("saveVenueMailButton");
+  const editButton = document.getElementById("editVenueMailButton");
+  const abortButton = document.getElementById("abortVenueMailEditButton");
+  const editHint = document.getElementById("venueMailEditHint");
+  const summary = document.getElementById("venueMailReservationSummary");
 
-  const saveButton =
-    document.getElementById(
-      "saveVenueMailButton"
-    );
+  const canEdit = isScheduled && venueGuideEditMode;
+  const isReadOnly = isScheduled && !canEdit;
+  const cannotChange = status === "processing" || status === "retrying";
+  const fieldIds = [
+    "venueMailSubjectTitle", "venueMailVenueName", "venueMailVenueAddress",
+    "venueMailAdmissionStart", "venueMailScheduledAt"
+  ];
+  fieldIds.forEach(id => {
+    document.getElementById(id).disabled = isReadOnly || cannotChange;
+  });
+  editButton.style.display = isReadOnly ? "block" : "none";
+  abortButton.style.display = canEdit ? "block" : "none";
+  editHint.style.display = isReadOnly ? "block" : "none";
+  saveButton.style.display = (isReadOnly || cannotChange) ? "none" : "block";
+  saveButton.textContent = isScheduled ? "変更を保存" : "送信予約を保存";
+  cancelButton.style.display = (isScheduled || status === "retrying")
+    ? "block" : "none";
 
-  saveButton.textContent =
-    (
-      status === "scheduled" ||
-      status === "retrying"
-    )
-      ? "送信予約を更新"
-      : "送信予約を保存";
+  if (isScheduled) {
+    summary.style.display = "block";
+    summary.textContent =
+      "【現在の送信予約】\n" +
+      "件名：【" + String(config.subjectTitle || "") + "】への会場案内について\n" +
+      "会場名：" + String(config.venueName || "—") + "\n" +
+      "会場住所：" + String(config.venueAddress || "—") + "\n" +
+      "入場開始：" + String(config.admissionStart || "—") + "\n" +
+      "送信予定：" + formatVenueGuideDateTime(config.scheduledAt);
+  } else {
+    summary.style.display = "none";
+    summary.textContent = "";
+  }
 
   if (!status) {
     setVenueGuideStatus("");
     return;
   }
 
-  if (
-    status === "scheduled"
-  ) {
+  if (status === "scheduled") {
     setVenueGuideStatus(
-      "送信予約済み\n" +
-      formatVenueGuideDateTime(
-        config.scheduledAt
-      )
+      venueGuideEditMode
+        ? "予約内容を編集中です。変更内容は『変更を保存』するまで反映されません。"
+        : "送信予約済み\n" + formatVenueGuideDateTime(config.scheduledAt)
     );
     return;
   }
@@ -9119,6 +9194,24 @@ function renderVenueGuideMailPanel() {
 }
 
 
+document.getElementById("editVenueMailButton").addEventListener("click", () => {
+  if (String(currentVenueGuideMail?.status || "") !== "scheduled") return;
+  if (Number(currentVenueGuideMail?.scheduledAt || 0) <= Date.now() + 30000) {
+    setVenueGuideStatus("送信時刻が近いため編集できません。", "error");
+    return;
+  }
+  populateVenueGuideForm();
+  venueGuideEditMode = true;
+  renderVenueGuideMailPanel();
+  document.getElementById("venueMailSubjectTitle").focus();
+});
+
+document.getElementById("abortVenueMailEditButton").addEventListener("click", () => {
+  venueGuideEditMode = false;
+  populateVenueGuideForm();
+  renderVenueGuideMailPanel();
+});
+
 document
   .getElementById(
     "venueMailSubjectTitle"
@@ -9150,6 +9243,11 @@ document
           "この機能は有料プラン限定です。",
           "error"
         );
+        return;
+      }
+
+      if (String(currentVenueGuideMail?.status || "") === "scheduled" && !venueGuideEditMode) {
+        setVenueGuideStatus("変更するときは先に『送信予約を編集』を押してください。", "error");
         return;
       }
 
@@ -9236,6 +9334,19 @@ document
         return;
       }
 
+      const updatingReservation =
+        String(currentVenueGuideMail?.status || "") === "scheduled";
+      if (updatingReservation && !confirm(
+        "送信予約の内容を変更して保存しますか？\n" +
+        "件名：【" + subjectTitle + "】への会場案内について\n" +
+        "会場：" + (venueName || "（未設定）") + "\n" +
+        "住所：" + venueAddress + "\n" +
+        "入場開始：" + admissionStart + "\n" +
+        "送信日時：" + formatVenueGuideDateTime(scheduledAt)
+      )) {
+        return;
+      }
+
       const button =
         document.getElementById(
           "saveVenueMailButton"
@@ -9282,12 +9393,11 @@ document
             data.jobId || ""
         };
 
+        venueGuideEditMode = false;
         setVenueGuideStatus(
-          "送信予約を保存しました。\n" +
-          formatVenueGuideDateTime(
-            currentVenueGuideMail
-              .scheduledAt
-          )
+          updatingReservation
+            ? "送信予約を更新しました。\n" + formatVenueGuideDateTime(currentVenueGuideMail.scheduledAt)
+            : "送信予約を保存しました。\n" + formatVenueGuideDateTime(currentVenueGuideMail.scheduledAt)
         );
 
       } catch (error) {
@@ -9345,6 +9455,7 @@ document
             currentEventId
         });
 
+        venueGuideEditMode = false;
         currentVenueGuideMail = {
           ...(currentVenueGuideMail || {}),
           status:
