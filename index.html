@@ -2348,6 +2348,18 @@ body { min-height: 100vh; display: flex; flex-direction: column; }
             人数・自由項目とも、参加者ごとの値が空欄なら画面には一切表示しません。
           </div>
 
+          <div class="field" style="margin-top:16px; margin-bottom:12px;">
+            <label class="fieldLabel" for="csvImportMode">CSV取込方法</label>
+            <select id="csvImportMode" class="input">
+              <option value="merge" selected>追加・更新（既存参加者を残す）</option>
+              <option value="replace">全件置換（従来の取込方法）</option>
+            </select>
+            <div class="smallNote" style="margin-top:7px;">
+              追加・更新では、同じIDの参加者は更新し、新しいIDは追加します。<br>
+              新しく登録されたメールアドレスはQRメールの一括送信対象へ自動反映します。
+            </div>
+          </div>
+
           <div class="fileActionRow">
             <button id="downloadCsvTemplateButton" class="fileActionButton">
               CSVテンプレート<br>ダウンロード
@@ -2465,6 +2477,7 @@ body { min-height: 100vh; display: flex; flex-direction: column; }
 
           <div class="venueGuideDescription">
             CSVに登録されているメールアドレスへ、指定した日時に会場案内を自動送信します。<br>
+            送信予約後にCSVでメールアドレスを追加した場合も、予約を自動更新します。<br>
             テスターアカウントは動作確認のため利用できます。
           </div>
 
@@ -2754,7 +2767,7 @@ body { min-height: 100vh; display: flex; flex-direction: column; }
 /* =========================
    APP VERSION CHECK
 ========================= */
-const APP_VERSION = "2.3.2";
+const APP_VERSION = "2.3.4";
 const APP_VERSION_FILE = "version.json";
 
 (async function checkAppVersion() {
@@ -5586,182 +5599,254 @@ function parseVisitorCsv(text) {
 }
 
 
-async function handleCsvUpload(file) {
+/*
+ * 追加CSVは既存参加者を残してID単位にマージする。
+ * メールアドレス変更時は旧アドレスへの「送信済み」を引き継がない。
+ */
+function normalizeRecipientEmail(email) {
+  return String(email || "").trim().toLowerCase();
+}
 
-  clearMessage(
-    "visitorError"
-  );
+function getRegisteredEmailSet(visitorObject) {
+  const recipients = new Set();
 
-  if (!file) return;
+  Object.values(visitorObject || {}).forEach(visitor => {
+    const email = normalizeRecipientEmail(visitor?.email);
+    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      recipients.add(email);
+    }
+  });
 
-  if (
-    !currentUser ||
-    !currentEventId
-  ) {
+  return recipients;
+}
 
-    showBoxMessage(
-      "visitorError",
-      "イベントを確認できませんでした。"
-    );
+function mergeImportedVisitors(existingObject, imported, mergeMode) {
+  const previous = existingObject || {};
+  const merged = mergeMode ? { ...previous } : {};
+  const existingKeys = new Set(Object.keys(previous));
 
-    return;
+  let nextOrder = Object.values(previous).reduce((maximum, visitor) => {
+    const value = Number(visitor?.order);
+    return Number.isFinite(value) ? Math.max(maximum, value + 1) : maximum;
+  }, Object.keys(previous).length);
 
+  let added = 0;
+  let updated = 0;
+
+  imported.forEach(visitor => {
+    const key = idToKey(visitor.id);
+    const old = mergeMode ? previous[key] : null;
+
+    if (existingKeys.has(key)) {
+      updated++;
+    } else {
+      added++;
+    }
+
+    if (old) {
+      merged[key] = {
+        ...old,
+        ...visitor,
+        // 追加CSVのメール空欄では、登録済みの宛先を消さない。
+        email: visitor.email || String(old.email || ""),
+        // 追加CSVに自由項目列がなければ以前の値を残す。
+        custom: visitor.__customColumnPresent
+          ? visitor.custom
+          : old.custom || "",
+        order: Number.isFinite(Number(old.order))
+          ? Number(old.order)
+          : nextOrder++
+      };
+    } else {
+      merged[key] = {
+        ...visitor,
+        order: mergeMode ? nextOrder++ : visitor.order
+      };
+    }
+
+    delete merged[key].__customColumnPresent;
+  });
+
+  return { visitors: merged, added, updated };
+}
+
+function preserveMatchingQrMailStatus(visitorObject, oldStatus) {
+  const result = {};
+
+  Object.entries(visitorObject).forEach(([key, visitor]) => {
+    const sent = oldStatus?.[key];
+    if (
+      sent?.sent === true &&
+      normalizeRecipientEmail(visitor.email) &&
+      normalizeRecipientEmail(sent.email) ===
+        normalizeRecipientEmail(visitor.email)
+    ) {
+      result[key] = sent;
+    }
+  });
+
+  return result;
+}
+
+async function syncVenueMailAfterCsvUpload(eventId, config, newEmailCount) {
+  if (newEmailCount === 0 || !config) {
+    return "";
+  }
+
+  const status = String(config.status || "");
+  if (status === "sent" || status === "cancelled" || status === "") {
+    return "";
   }
 
   if (
-    !file.name
-      .toLowerCase()
-      .endsWith(".csv")
+    status !== "scheduled" ||
+    Number(config.scheduledAt) <= Date.now() + 30000 ||
+    !canUseVenueGuideFeature()
   ) {
-
-    showBoxMessage(
-      "visitorError",
-      "CSVファイルを選択してください。"
-    );
-
-    return;
-
+    return "【注意】会場案内メールの送信中または送信直前のため、追加宛先への予約反映は確認できません。";
   }
 
   try {
-
-    const text =
-      await file.text();
-
-    const parsedCsv =
-      parseVisitorCsv(
-        text
-      );
-
-    const visitors =
-      parsedCsv.visitors;
-
-    const customLabel =
-      parsedCsv.customLabel;
-
-    const visitorObject =
-      {};
-
-    visitors.forEach(
-      visitor => {
-
-        const key =
-          idToKey(
-            visitor.id
-          );
-
-        visitorObject[key] =
-          visitor;
-
-      }
-    );
-
-    const basePath =
-      "users/" +
-      currentUser.uid +
-      "/eventData/" +
-      currentEventId;
-
-    const changes =
-      {};
-
-    changes[
-      basePath +
-      "/visitors"
-    ] =
-      visitorObject;
-
-    changes[
-      basePath +
-      "/participantCustomLabel"
-    ] =
-      customLabel || null;
-
-    const preservedMailStatus =
-      {};
-
-    visitors.forEach(
-      visitor => {
-
-        const key =
-          idToKey(
-            visitor.id
-          );
-
-        const oldStatus =
-          currentMailStatus[
-            key
-          ];
-
-        if (
-          oldStatus?.sent === true &&
-          visitor.email &&
-          String(oldStatus.email || "").toLowerCase() ===
-            visitor.email.toLowerCase()
-        ) {
-
-          preservedMailStatus[
-            key
-          ] =
-            oldStatus;
-
-        }
-
-      }
-    );
-
-    changes[
-      basePath +
-      "/mailStatus"
-    ] =
-      Object.keys(
-        preservedMailStatus
-      ).length
-        ? preservedMailStatus
-        : null;
-
-    changes[
-      basePath +
-      "/uploadedAt"
-    ] =
-      Date.now();
-
-    await update(
-      ref(database),
-      changes
-    );
-
-    const info =
-      document.getElementById(
-        "qrProgress"
-      );
-
-    info.textContent =
-      "参加者 " +
-      visitors.length +
-      "人を登録しました。" +
-      (
-        customLabel
-          ? "\n自由項目：" +
-            customLabel
-          : ""
-      );
-
-    info.style.display =
-      "block";
-
+    await saveVenueGuideMailScheduleCallable({
+      eventId,
+      subjectTitle: String(config.subjectTitle || ""),
+      venueName: String(config.venueName || ""),
+      venueAddress: String(config.venueAddress || ""),
+      admissionStart: String(config.admissionStart || ""),
+      scheduledAt: Number(config.scheduledAt)
+    });
+    return "会場案内メールの送信予約にも新しい宛先を反映しました。";
   } catch (error) {
+    console.error("Venue guide recipient refresh failed:", error);
+    return "【注意】会場案内メールの予約更新に失敗しました。会場案内タブで送信予約を保存し直してください。";
+  }
+}
 
-    console.error(error);
+let csvUploadInProgress = false;
 
-    showBoxMessage(
-      "visitorError",
-      error.message ||
-      "CSVの読み込みに失敗しました。"
-    );
+async function handleCsvUpload(file) {
+  clearMessage("visitorError");
+  if (!file || csvUploadInProgress) return;
 
+  if (!currentUser || !currentEventId) {
+    showBoxMessage("visitorError", "イベントを確認できませんでした。");
+    return;
   }
 
+  if (!file.name.toLowerCase().endsWith(".csv")) {
+    showBoxMessage("visitorError", "CSVファイルを選択してください。");
+    return;
+  }
+
+  const targetEventId = currentEventId;
+  const targetUid = currentUser.uid;
+  const uploadButton = document.getElementById("uploadCsvButton");
+  const mergeMode = document.getElementById("csvImportMode").value !== "replace";
+  csvUploadInProgress = true;
+  uploadButton.disabled = true;
+
+  try {
+    const text = await file.text();
+    const parsedCsv = parseVisitorCsv(text);
+    const imported = parsedCsv.visitors.map(visitor => ({
+      ...visitor,
+      __customColumnPresent: Boolean(parsedCsv.customLabel)
+    }));
+    const basePath =
+      "users/" + targetUid + "/eventData/" + targetEventId;
+
+    // 実際の最新データを取得。画面表示の古いキャッシュは使用しない。
+    const snapshot = await get(ref(database, basePath));
+    const savedData = snapshot.val() || {};
+    const previousVisitors = savedData.visitors || {};
+    const oldCustomLabel = String(savedData.participantCustomLabel || "").trim();
+
+    if (
+      mergeMode &&
+      oldCustomLabel &&
+      parsedCsv.customLabel &&
+      oldCustomLabel !== parsedCsv.customLabel &&
+      Object.keys(previousVisitors).length
+    ) {
+      throw new Error(
+        "既存の自由項目「" + oldCustomLabel +
+        "」と今回の「" + parsedCsv.customLabel +
+        "」が異なります。CSVの列名を合わせるか、全件置換を選択してください。"
+      );
+    }
+
+    if (
+      !mergeMode &&
+      Object.keys(previousVisitors).length &&
+      !confirm(
+        "CSVの全件置換を実行しますか？\n既存の参加者のうち、今回のCSVにないIDは一覧から削除されます。"
+      )
+    ) {
+      return;
+    }
+
+    const { visitors, added, updated } =
+      mergeImportedVisitors(previousVisitors, imported, mergeMode);
+    const oldAddresses = getRegisteredEmailSet(previousVisitors);
+    const allAddresses = getRegisteredEmailSet(visitors);
+    const newEmailCount = [...allAddresses].filter(
+      email => !oldAddresses.has(email)
+    ).length;
+    const preservedMailStatus = preserveMatchingQrMailStatus(
+      visitors,
+      savedData.mailStatus || {}
+    );
+
+    const customLabel = mergeMode
+      ? parsedCsv.customLabel || oldCustomLabel
+      : parsedCsv.customLabel;
+
+    const changes = {};
+    changes[basePath + "/visitors"] = visitors;
+    changes[basePath + "/participantCustomLabel"] = customLabel || null;
+    changes[basePath + "/mailStatus"] =
+      Object.keys(preservedMailStatus).length ? preservedMailStatus : null;
+    changes[basePath + "/uploadedAt"] = Date.now();
+
+    await update(ref(database), changes);
+
+    // Firebaseの通知を待たずに一括送信対象件数を更新する。
+    if (currentEventId === targetEventId && currentUser?.uid === targetUid) {
+      currentVisitors = Object.entries(visitors)
+        .map(([key, visitor]) => ({ key, ...visitor }))
+        .sort((a, b) => (a.order || 0) - (b.order || 0));
+      currentMailStatus = preservedMailStatus;
+      currentParticipantCustomLabel = customLabel;
+      renderDashboardData();
+    }
+
+    // 予約後に追加されたアドレスも自動で予約を更新する。
+    const venueSyncMessage = await syncVenueMailAfterCsvUpload(
+      targetEventId,
+      savedData.venueGuideMail,
+      newEmailCount
+    );
+
+    const info = document.getElementById("qrProgress");
+    info.textContent =
+      (mergeMode ? "CSVの追加・更新が完了しました。" : "CSVの全件置換が完了しました。") +
+      "\n新規 " + added + "人 / 既存ID " + updated + "人" +
+      " / 合計 " + Object.keys(visitors).length + "人" +
+      "\n一括メールの登録宛先 " + allAddresses.size + "件" +
+      "（新しい宛先 +" + newEmailCount + "件）" +
+      (customLabel ? "\n自由項目：" + customLabel : "") +
+      (venueSyncMessage ? "\n" + venueSyncMessage : "");
+    info.style.display = "block";
+  } catch (error) {
+    console.error(error);
+    showBoxMessage(
+      "visitorError",
+      error.message || "CSVの読み込みに失敗しました。"
+    );
+  } finally {
+    csvUploadInProgress = false;
+    uploadButton.disabled = false;
+  }
 }
 
 
