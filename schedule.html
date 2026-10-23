@@ -332,6 +332,9 @@ button{font:inherit}
     font-size:13px;
   }
 }
+body { min-height: 100vh; display: flex; flex-direction: column; }
+.page { flex: 1 0 auto; }
+.publicCopyright { flex-shrink: 0; width: 100%; padding: 10px 16px calc(16px + env(safe-area-inset-bottom)); text-align: center; font-size: 11px; color: #a0a0a0; }
 </style>
 </head>
 
@@ -383,6 +386,7 @@ button{font:inherit}
   </div>
 
 </div>
+<footer class="publicCopyright">© 2026 Dobhar-chú. All rights reserved.</footer>
 
 <script>
 /* =========================
@@ -463,6 +467,17 @@ function formatDisplayDate(value) {
 }
 
 
+function sortScheduleItemsByTime(items) {
+  return items.slice().sort((a, b) => {
+    const aTime = String(a?.time || "").trim();
+    const bTime = String(b?.time || "").trim();
+    if (!aTime && !bTime) return 0;
+    if (!aTime) return 1;
+    if (!bTime) return -1;
+    return aTime.localeCompare(bTime);
+  });
+}
+
 function normalizeSchedule(value) {
 
   if (
@@ -513,7 +528,7 @@ function normalizeSchedule(value) {
               : "",
 
           items:
-            sourceItems
+            sortScheduleItemsByTime(sourceItems
               .slice(0,20)
               .map(item => ({
                 time:
@@ -530,7 +545,7 @@ function normalizeSchedule(value) {
                   typeof item?.note === "string"
                     ? item.note
                     : ""
-              }))
+              })))
         };
       }
     );
@@ -670,7 +685,7 @@ function renderSchedule() {
 
   const items =
     Array.isArray(day.items)
-      ? day.items
+      ? sortScheduleItemsByTime(day.items)
       : [];
 
   if (!items.length) {

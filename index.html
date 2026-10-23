@@ -1912,6 +1912,11 @@ body.dashboardWorkspace .app{
   line-height:1.6;
 }
 
+/* Copyright always sits at the bottom, centered on every screen. */
+html, body { min-height: 100%; }
+body { min-height: 100vh; display: flex; flex-direction: column; }
+.app { flex: 1 0 auto; }
+.appCopyright { flex-shrink: 0; width: 100%; padding: 10px 16px calc(16px + env(safe-area-inset-bottom)); text-align: center; font-size: 11px; color: #909090; }
 </style>
 </head>
 
@@ -2708,6 +2713,7 @@ body.dashboardWorkspace .app{
       </div>
 
       <div class="scheduleEditorNote">
+        保存時に開始時間の早い順へ自動で並び替えます。後から追加した予定も時刻順に表示されます。<br>
         保存した内容は、このイベント専用のスケジュールとしてFirebaseに保存されます。<br>
         開催日数を減らしても、非表示になったDAYの登録内容は残ります。
       </div>
@@ -2722,13 +2728,13 @@ body.dashboardWorkspace .app{
   </section>
 
 </div>
-
+<footer class="appCopyright">© 2026 Dobhar-chú. All rights reserved.</footer>
 
 <script>
 /* =========================
    APP VERSION CHECK
 ========================= */
-const APP_VERSION = "2.3.1";
+const APP_VERSION = "2.3.2";
 const APP_VERSION_FILE = "version.json";
 
 (async function checkAppVersion() {
@@ -10616,6 +10622,17 @@ function cloneScheduleDraft(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
+function sortScheduleItemsByTime(items) {
+  return items.slice().sort((a, b) => {
+    const aTime = String(a?.time || "").trim();
+    const bTime = String(b?.time || "").trim();
+    if (!aTime && !bTime) return 0;
+    if (!aTime) return 1;
+    if (!bTime) return -1;
+    return aTime.localeCompare(bTime);
+  });
+}
+
 function normalizeScheduleDraft(value) {
   const result = createEmptyScheduleDraft();
 
@@ -10660,7 +10677,7 @@ function normalizeScheduleDraft(value) {
             : "",
 
         items:
-          sourceItems
+          sortScheduleItemsByTime(sourceItems
             .slice(0, 20)
             .map(item => ({
               time:
@@ -10677,7 +10694,7 @@ function normalizeScheduleDraft(value) {
                 typeof item?.note === "string"
                   ? item.note
                   : ""
-            }))
+            })))
       };
     }
   );
@@ -11558,6 +11575,8 @@ document
           cloneScheduleDraft(
             cleanDraft
           );
+
+        renderActiveScheduleDay();
 
         setScheduleMessage(
           "スケジュールを保存しました。"
