@@ -1984,19 +1984,6 @@ body.dashboardWorkspace .app {
 .venueGuideActions .venueEditButton { grid-column: 1 / -1; }
 @media(max-width:560px) { .venueGuideActions .venueEditButton { grid-column: auto; } }
 
-
-/* Participant manual entry and editing */
-.participantActionBar{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
-.participantActionBar button{flex:1;min-width:135px}
-.participantEditor{display:none;margin:12px 0 16px;padding:16px;border:1px solid #cad2d9;border-radius:12px;background:var(--card-bg,#fff)}
-.participantEditor.is-open{display:block}
-.participantEditorGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-.participantEditorGrid label{font-size:13px;font-weight:600;display:block}
-.participantEditorGrid input{width:100%;box-sizing:border-box;margin-top:5px}
-.participantEditorButtons{display:flex;flex-wrap:wrap;gap:8px;margin-top:15px}
-.participantListActions{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
-.participantListActions button{font-size:12px;padding:5px 9px;border:1px solid #b5c3ce;border-radius:7px;background:transparent;color:inherit;cursor:pointer}
-@media(max-width:520px){.participantEditorGrid{grid-template-columns:1fr}}
 </style>
 </head>
 
@@ -2359,26 +2346,6 @@ body.dashboardWorkspace .app {
         <div class="listPageCard">
 
           <div id="listPanel" class="listPanel active">
-<div class="participantActionBar"><button id="addParticipantFromList" type="button" class="primaryButton">＋ 参加者を手動追加</button></div>
-<div id="participantEditor" class="participantEditor" aria-label="参加者登録・編集">
-  <div id="participantEditorTitle" class="csvTitle">参加者を追加</div>
-  <div class="participantEditorGrid">
-    <label>参加者ID（新規は自動発番）<input class="input" id="participantEditId" type="text" maxlength="100" placeholder="自動発番"></label>
-    <label>名前（必須）<input class="input" id="participantEditName" type="text" maxlength="200"></label>
-    <label>number / 区画<input class="input" id="participantEditNumber" type="text" maxlength="200"></label>
-    <label>メールアドレス<input class="input" id="participantEditEmail" type="email" maxlength="320"></label>
-    <label>人数<input class="input" id="participantEditPeople" type="text" maxlength="100"></label>
-    <label id="participantCustomFieldLabel">自由項目<input class="input" id="participantEditCustom" type="text" maxlength="200"></label>
-  </div>
-  <div class="smallNote" id="participantEditHint">保存するとQRが自動的に発行され、一覧と一括ダウンロードに反映されます。</div>
-  <div class="participantEditorButtons">
-    <button type="button" class="primaryButton" id="participantSaveButton">保存する</button>
-    <button type="button" class="secondaryButton" id="participantCancelButton">キャンセル</button>
-    <button type="button" class="secondaryButton" id="participantDeleteButton" style="display:none">この参加者を削除</button>
-  </div>
-  <div id="participantEditorMessage" class="notice" aria-live="polite"></div>
-</div>
-
 
             <input
               id="inlineListSearch"
@@ -2413,7 +2380,6 @@ body.dashboardWorkspace .app {
         <div class="panel csvArea dataManagementPanel">
 
           <div class="csvTitle">データ管理</div>
-<div class="participantActionBar"><button type="button" class="primaryButton" id="addParticipantFromData">＋ 参加者を手動追加</button></div>
 
           <div class="csvDescription">
             id・name は必須です。<br>
@@ -7779,16 +7745,6 @@ function renderInlineVisitorList() {
           ? "○"
           : "－";
 
-      const actionRow=document.createElement('div');
-      actionRow.className='participantListActions';
-      const editButton=document.createElement('button');
-      editButton.type='button';editButton.textContent='編集';
-      editButton.addEventListener('click',event=>{event.stopPropagation();openParticipantEditor(visitor.key);});
-      const qrButton=document.createElement('button');
-      qrButton.type='button';qrButton.textContent='QR保存';
-      qrButton.addEventListener('click',async event=>{event.stopPropagation();qrButton.disabled=true;try{await downloadIndividualParticipantQr(visitor);}finally{qrButton.disabled=false;}});
-      actionRow.append(editButton,qrButton);
-      nameTd.appendChild(actionRow);
       tr.appendChild(
         nameTd
       );
@@ -12162,118 +12118,6 @@ onAuthStateChanged(
 
   }
 );
-
-
-/* 手動登録・既存リスト編集（IDを固定して受付履歴/QRを維持） */
-let participantEditingKey = null;
-let participantSaving = false;
-function participantEditorMessage(message){
-  document.getElementById('participantEditorMessage').textContent = message || '';
-}
-function openParticipantEditor(key=null){
-  const visitor=key===null?null:currentVisitors.find(v=>v.key===key);
-  if(key!==null&&!visitor)return;
-  participantEditingKey=visitor?key:null;
-  document.getElementById('participantEditor').classList.add('is-open');
-  document.getElementById('participantEditorTitle').textContent=visitor?'参加者を編集':'参加者を追加';
-  const idInput=document.getElementById('participantEditId');
-  idInput.value=visitor?.id||'';
-  idInput.readOnly=Boolean(visitor);
-  document.getElementById('participantEditName').value=visitor?.name||'';
-  document.getElementById('participantEditNumber').value=visitor?.number||'';
-  document.getElementById('participantEditEmail').value=visitor?.email||'';
-  document.getElementById('participantEditPeople').value=visitor?.people||'';
-  document.getElementById('participantEditCustom').value=visitor?.custom||'';
-  document.getElementById('participantCustomFieldLabel').firstChild.textContent=currentParticipantCustomLabel||'自由項目';
-  document.getElementById('participantEditHint').textContent=visitor?'IDは変更できません。QRと受付・入場履歴を維持して情報を更新します。':'IDを空欄にすると重複しない番号を自動発行します。保存後は個別QRを保存できます。';
-  document.getElementById('participantDeleteButton').style.display=visitor?'':'none';
-  participantEditorMessage('');
-  document.getElementById('participantEditor').scrollIntoView({behavior:'smooth',block:'nearest'});
-}
-function closeParticipantEditor(){
-  document.getElementById('participantEditor').classList.remove('is-open');
-  participantEditingKey=null;
-}
-function newParticipantId(visitors){
-  const ids=new Set(Object.values(visitors).map(v=>String(v.id)));
-  let i=1;
-  while(ids.has(String(i)) || visitors[idToKey(String(i))])i++;
-  return String(i);
-}
-async function saveParticipantChanges(){
-  if(participantSaving||!currentUser||!currentEventId)return;
-  const name=document.getElementById('participantEditName').value.trim();
-  const email=document.getElementById('participantEditEmail').value.trim();
-  const requestedId=document.getElementById('participantEditId').value.trim();
-  if(!name){participantEditorMessage('名前を入力してください。');return;}
-  if(email&&!hasValidEmail(email)){participantEditorMessage('メールアドレスの形式を確認してください。');return;}
-  const keyBefore=participantEditingKey;
-  const eventId=currentEventId,uid=currentUser.uid;
-  const base='users/'+uid+'/eventData/'+eventId;
-  const button=document.getElementById('participantSaveButton');
-  participantSaving=true;button.disabled=true;
-  try{
-    const snap=await get(ref(database,base));
-    const data=snap.val()||{},previous=data.visitors||{};
-    let id,key,old;
-    if(keyBefore!==null){
-      old=previous[keyBefore];
-      if(!old)throw new Error('編集対象が見つかりません。もう一度一覧から選択してください。');
-      id=String(old.id);key=keyBefore;
-    }else{
-      id=requestedId||newParticipantId(previous);key=idToKey(id);
-      if(Object.values(previous).some(v=>String(v.id)===id)||previous[key])throw new Error('この参加者IDはすでに登録されています。');
-    }
-    const maxOrder=Object.values(previous).reduce((max,v)=>Math.max(max,Number(v.order)||0),-1);
-    const visitor={...(old||{}),id,name,number:document.getElementById('participantEditNumber').value.trim(),email,people:document.getElementById('participantEditPeople').value.trim(),custom:document.getElementById('participantEditCustom').value.trim(),order:old?.order??(maxOrder+1)};
-    const transaction=await runTransaction(ref(database,base+'/visitors/'+key),current=>{
-      if(keyBefore===null&&current!==null)return;
-      if(keyBefore!==null&&current===null)return;
-      return {...(current||{}),...visitor};
-    },{applyLocally:false});
-    if(!transaction.committed)throw new Error('別の端末で参加者情報が更新されました。再度確認してください。');
-    const changedEmail=normalizeRecipientEmail(old?.email)!==normalizeRecipientEmail(email);
-    if(changedEmail&&data.mailStatus?.[key]){
-      await remove(ref(database,base+'/mailStatus/'+key));
-    }
-    const newEmailCount=email&&!getRegisteredEmailSet(previous).has(normalizeRecipientEmail(email))?1:0;
-    const venueMsg=await syncVenueMailAfterCsvUpload(eventId,data.venueGuideMail,newEmailCount);
-    closeParticipantEditor();
-    document.getElementById('qrProgress').textContent=(old?'参加者情報を更新しました。':'参加者を登録し、QRを発行しました。')+(venueMsg?'\n'+venueMsg:'');
-    document.getElementById('qrProgress').style.display='block';
-    if(!old){await downloadIndividualParticipantQr(visitor);}
-  }catch(error){console.error(error);participantEditorMessage(error.message||'保存に失敗しました。');}
-  finally{participantSaving=false;button.disabled=false;}
-}
-
-async function downloadIndividualParticipantQr(visitor){
-  try{
-    if(typeof QRCode==='undefined')throw new Error('QRライブラリを読み込めませんでした。');
-    const canvas=await makeQrCanvas(visitor.id);
-    const blob=await canvasToJpegBlob(canvas);
-    const url=URL.createObjectURL(blob);
-    const link=document.createElement('a');link.href=url;
-    link.download=safeFileName(visitor.name)+'_'+safeFileName(visitor.id)+'.jpg';
-    document.body.appendChild(link);link.click();link.remove();
-    setTimeout(()=>URL.revokeObjectURL(url),5000);
-  }catch(error){console.error(error);alert(error.message||'QR保存に失敗しました。');}
-}
-async function deleteParticipant(){
-  const key=participantEditingKey;
-  if(key===null||!currentUser||!currentEventId)return;
-  const visitor=currentVisitors.find(v=>v.key===key);
-  if(!visitor||!confirm('「'+visitor.name+'」を削除しますか？\n受付・入場履歴とメール送信記録も削除されます。'))return;
-  const base='users/'+currentUser.uid+'/eventData/'+currentEventId;
-  try{
-    await update(ref(database),{[base+'/visitors/'+key]:null,[base+'/attendance/'+key]:null,[base+'/mailStatus/'+key]:null});
-    closeParticipantEditor();
-  }catch(error){participantEditorMessage(error.message||'削除できませんでした。');}
-}
-document.getElementById('addParticipantFromList').addEventListener('click',()=>openParticipantEditor());
-document.getElementById('addParticipantFromData').addEventListener('click',async()=>{await activateDashboardTab('list');openParticipantEditor();});
-document.getElementById('participantSaveButton').addEventListener('click',saveParticipantChanges);
-document.getElementById('participantCancelButton').addEventListener('click',closeParticipantEditor);
-document.getElementById('participantDeleteButton').addEventListener('click',deleteParticipant);
 
 </script>
 
