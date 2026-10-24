@@ -9,8 +9,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="CHECK-IN">
-<link rel="apple-touch-icon" href="event_app.png?v=237">
-<link rel="icon" type="image/png" href="event_app.png?v=237">
+<link rel="apple-touch-icon" href="event_app.png?v=2310">
+<link rel="icon" type="image/png" href="event_app.png?v=2310">
 
 <title>イベント受付管理</title>
 
@@ -1985,6 +1985,37 @@ body.dashboardWorkspace .app {
 @media(max-width:560px) { .venueGuideActions .venueEditButton { grid-column: auto; } }
 
 
+/* 常時見える参加者登録・編集ショートカット */
+.participantQuickActions{
+  display:grid;
+  grid-template-columns:1.2fr 1fr;
+  gap:8px;
+  margin:0 0 12px;
+}
+.participantQuickActions button{
+  min-height:44px;
+  padding:10px 8px;
+  border-radius:12px;
+  font-size:14px;
+  font-weight:800;
+  line-height:1.3;
+  cursor:pointer;
+}
+.participantQuickAdd{
+  border:1px solid #111;
+  background:#111;
+  color:#fff;
+}
+.participantQuickManage{
+  border:1px solid #b9c2cf;
+  background:#fff;
+  color:#172537;
+}
+@media(max-width:360px){
+  .participantQuickActions{gap:6px;}
+  .participantQuickActions button{font-size:12px;padding:9px 5px;}
+}
+
 /* Participant manual entry and editing */
 .participantActionBar{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
 .participantActionBar button{flex:1;min-width:135px}
@@ -2287,6 +2318,12 @@ body.dashboardWorkspace .app {
 
     </div>
 
+    <!-- 参加者操作：管理画面を開いた直後から登録・編集を見つけられる配置 -->
+    <div class="participantQuickActions" aria-label="参加者管理">
+      <button id="quickAddParticipant" type="button" class="participantQuickAdd">＋ 参加者を登録</button>
+      <button id="quickManageParticipants" type="button" class="participantQuickManage">参加者一覧・編集</button>
+    </div>
+
     <div id="dashboardTabViewport" class="dashboardTabViewport">
 
       <!-- 受付 -->
@@ -2370,7 +2407,7 @@ body.dashboardWorkspace .app {
     <label>人数<input class="input" id="participantEditPeople" type="text" maxlength="100"></label>
     <label id="participantCustomFieldLabel">自由項目<input class="input" id="participantEditCustom" type="text" maxlength="200"></label>
   </div>
-  <div class="smallNote" id="participantEditHint">保存するとQRが自動的に発行され、一覧と一括ダウンロードに反映されます。</div>
+  <div class="smallNote" id="participantEditHint">保存するとQRが利用可能になります。自動ダウンロードは行いません。必要な場合は参加者一覧の「QR保存」を押してください。</div>
   <div class="participantEditorButtons">
     <button type="button" class="primaryButton" id="participantSaveButton">保存する</button>
     <button type="button" class="secondaryButton" id="participantCancelButton">キャンセル</button>
@@ -2427,18 +2464,6 @@ body.dashboardWorkspace .app {
             最後の自由項目は、CSVの1行目のタイトルを
             「車種」「区画」「所属」など自由に変更できます（日本語対応）。<br>
             人数・自由項目とも、参加者ごとの値が空欄なら画面には一切表示しません。
-          </div>
-
-          <div class="field" style="margin-top:16px; margin-bottom:12px;">
-            <label class="fieldLabel" for="csvImportMode">CSV取込方法</label>
-            <select id="csvImportMode" class="input">
-              <option value="merge" selected>追加・更新（既存参加者を残す）</option>
-              <option value="replace">全件置換（従来の取込方法）</option>
-            </select>
-            <div class="smallNote" style="margin-top:7px;">
-              追加・更新では、同じIDの参加者は更新し、新しいIDは追加します。<br>
-              新しく登録されたメールアドレスはQRメールの一括送信対象へ自動反映します。
-            </div>
           </div>
 
           <div class="fileActionRow">
@@ -2849,13 +2874,13 @@ body.dashboardWorkspace .app {
   </section>
 
 </div>
-<footer class="appCopyright">© 2021–2026 dobhar-chu</footer>
+<footer class="appCopyright">© 2021–2026 dobhar-chu <span style="font-size:10px;opacity:.6">v2.3.10</span></footer>
 
 <script>
 /* =========================
    APP VERSION CHECK
 ========================= */
-const APP_VERSION = "2.3.7";
+const APP_VERSION = "2.3.10";
 const APP_VERSION_FILE = "version.json";
 
 (async function checkAppVersion() {
@@ -5720,10 +5745,20 @@ function getRegisteredEmailSet(visitorObject) {
   return recipients;
 }
 
+// CSVの全入力項目が既存データと同一なら、DBの該当参加者へ書き込まない。
+// 受付・入場情報やメール送信状況など運用記録は比較/変更対象に含めない。
+function sameVisitorCsvFields(existing, incoming) {
+  const fields = ["id", "name", "number", "email", "people", "custom"];
+  return fields.every(field =>
+    String(existing?.[field] ?? "").trim() ===
+    String(incoming?.[field] ?? "").trim()
+  );
+}
+
 function mergeImportedVisitors(existingObject, imported, mergeMode) {
   const previous = existingObject || {};
   const merged = mergeMode ? { ...previous } : {};
-  const existingKeys = new Set(Object.keys(previous));
+  const changedVisitors = {};
 
   let nextOrder = Object.values(previous).reduce((maximum, visitor) => {
     const value = Number(visitor?.order);
@@ -5732,42 +5767,48 @@ function mergeImportedVisitors(existingObject, imported, mergeMode) {
 
   let added = 0;
   let updated = 0;
+  let skipped = 0;
 
   imported.forEach(visitor => {
     const key = idToKey(visitor.id);
     const old = mergeMode ? previous[key] : null;
-
-    if (existingKeys.has(key)) {
-      updated++;
-    } else {
-      added++;
-    }
+    let incoming;
 
     if (old) {
-      merged[key] = {
+      incoming = {
         ...old,
         ...visitor,
-        // 追加CSVのメール空欄では、登録済みの宛先を消さない。
+        // 空欄のメールアドレスは既存の宛先を維持（従来仕様）。
         email: visitor.email || String(old.email || ""),
-        // 追加CSVに自由項目列がなければ以前の値を残す。
+        // 自由項目列がないCSVでは既存の自由項目を維持。
         custom: visitor.__customColumnPresent
           ? visitor.custom
-          : old.custom || "",
+          : String(old.custom || ""),
         order: Number.isFinite(Number(old.order))
           ? Number(old.order)
           : nextOrder++
       };
+      delete incoming.__customColumnPresent;
+
+      if (sameVisitorCsvFields(old, incoming)) {
+        skipped++;
+        return; // 完全一致は書き込まない。元データ/履歴をそのまま残す。
+      }
+      updated++;
     } else {
-      merged[key] = {
+      incoming = {
         ...visitor,
         order: mergeMode ? nextOrder++ : visitor.order
       };
+      delete incoming.__customColumnPresent;
+      added++;
     }
 
-    delete merged[key].__customColumnPresent;
+    merged[key] = incoming;
+    changedVisitors[key] = incoming;
   });
 
-  return { visitors: merged, added, updated };
+  return { visitors: merged, changedVisitors, added, updated, skipped };
 }
 
 function preserveMatchingQrMailStatus(visitorObject, oldStatus) {
@@ -5841,7 +5882,7 @@ async function handleCsvUpload(file) {
   const targetEventId = currentEventId;
   const targetUid = currentUser.uid;
   const uploadButton = document.getElementById("uploadCsvButton");
-  const mergeMode = document.getElementById("csvImportMode").value !== "replace";
+  const mergeMode = true; // 追加・更新のみ（既存参加者を保持）
   csvUploadInProgress = true;
   uploadButton.disabled = true;
 
@@ -5871,53 +5912,55 @@ async function handleCsvUpload(file) {
       throw new Error(
         "既存の自由項目「" + oldCustomLabel +
         "」と今回の「" + parsedCsv.customLabel +
-        "」が異なります。CSVの列名を合わせるか、全件置換を選択してください。"
+        "」が異なります。CSVの自由項目列名を揃えて再度アップロードしてください。"
       );
     }
 
-    if (
-      !mergeMode &&
-      Object.keys(previousVisitors).length &&
-      !confirm(
-        "CSVの全件置換を実行しますか？\n既存の参加者のうち、今回のCSVにないIDは一覧から削除されます。"
-      )
-    ) {
-      return;
-    }
-
-    const { visitors, added, updated } =
+    const { visitors, changedVisitors, added, updated, skipped } =
       mergeImportedVisitors(previousVisitors, imported, mergeMode);
     const oldAddresses = getRegisteredEmailSet(previousVisitors);
     const allAddresses = getRegisteredEmailSet(visitors);
     const newEmailCount = [...allAddresses].filter(
       email => !oldAddresses.has(email)
     ).length;
-    const preservedMailStatus = preserveMatchingQrMailStatus(
-      visitors,
-      savedData.mailStatus || {}
-    );
 
     const customLabel = mergeMode
       ? parsedCsv.customLabel || oldCustomLabel
       : parsedCsv.customLabel;
 
+    // 更新する参加者だけをFirebaseに書く。スキップ対象のレコードは触らない。
     const changes = {};
-    changes[basePath + "/visitors"] = visitors;
-    changes[basePath + "/participantCustomLabel"] = customLabel || null;
-    changes[basePath + "/mailStatus"] =
-      Object.keys(preservedMailStatus).length ? preservedMailStatus : null;
-    changes[basePath + "/uploadedAt"] = Date.now();
+    const nextMailStatus = { ...(savedData.mailStatus || {}) };
+    Object.entries(changedVisitors).forEach(([key, visitor]) => {
+      changes[basePath + "/visitors/" + key] = visitor;
+      const old = previousVisitors[key];
+      if (
+        old &&
+        normalizeRecipientEmail(old.email) !== normalizeRecipientEmail(visitor.email) &&
+        Object.prototype.hasOwnProperty.call(nextMailStatus, key)
+      ) {
+        // 宛先が変わった人だけ、旧宛先に対する送信済み記録を削除。
+        changes[basePath + "/mailStatus/" + key] = null;
+        delete nextMailStatus[key];
+      }
+    });
+    if (customLabel !== oldCustomLabel) {
+      changes[basePath + "/participantCustomLabel"] = customLabel || null;
+    }
 
-    await update(ref(database), changes);
+    if (Object.keys(changes).length) {
+      changes[basePath + "/uploadedAt"] = Date.now();
+      await update(ref(database), changes);
 
-    // Firebaseの通知を待たずに一括送信対象件数を更新する。
-    if (currentEventId === targetEventId && currentUser?.uid === targetUid) {
-      currentVisitors = Object.entries(visitors)
-        .map(([key, visitor]) => ({ key, ...visitor }))
-        .sort((a, b) => (a.order || 0) - (b.order || 0));
-      currentMailStatus = preservedMailStatus;
-      currentParticipantCustomLabel = customLabel;
-      renderDashboardData();
+      // Firebaseの通知を待たずに画面上の最新値へ反映。
+      if (currentEventId === targetEventId && currentUser?.uid === targetUid) {
+        currentVisitors = Object.entries(visitors)
+          .map(([key, visitor]) => ({ key, ...visitor }))
+          .sort((a, b) => (a.order || 0) - (b.order || 0));
+        currentMailStatus = nextMailStatus;
+        currentParticipantCustomLabel = customLabel;
+        renderDashboardData();
+      }
     }
 
     // 予約後に追加されたアドレスも自動で予約を更新する。
@@ -5929,8 +5972,11 @@ async function handleCsvUpload(file) {
 
     const info = document.getElementById("qrProgress");
     info.textContent =
-      (mergeMode ? "CSVの追加・更新が完了しました。" : "CSVの全件置換が完了しました。") +
-      "\n新規 " + added + "人 / 既存ID " + updated + "人" +
+      (added || updated
+        ? "CSVの追加・更新が完了しました。"
+        : "CSVを確認しました。変更はありませんでした。") +
+      "\n新規 " + added + "人 / 更新 " + updated + "人" +
+      " / 一致のためスキップ " + skipped + "人" +
       " / 合計 " + Object.keys(visitors).length + "人" +
       "\n一括メールの登録宛先 " + allAddresses.size + "件" +
       "（新しい宛先 +" + newEmailCount + "件）" +
@@ -12194,7 +12240,7 @@ function openParticipantEditor(key=null){
   document.getElementById('participantEditPeople').value=visitor?.people||'';
   document.getElementById('participantEditCustom').value=visitor?.custom||'';
   document.getElementById('participantCustomFieldLabel').firstChild.textContent=currentParticipantCustomLabel||'自由項目';
-  document.getElementById('participantEditHint').textContent=visitor?'IDは変更できません。QRと受付・入場履歴を維持して情報を更新します。':'IDを空欄にすると重複しない番号を自動発行します。保存後は個別QRを保存できます。';
+  document.getElementById('participantEditHint').textContent=visitor?'IDは変更できません。QRと受付・入場履歴を維持して情報を更新します。':'IDを空欄にすると重複しない番号を自動発行します。保存だけではQR画像をダウンロードしません。必要な場合は一覧の「QR保存」を押してください。';
   document.getElementById('participantDeleteButton').style.display=visitor?'':'none';
   participantEditorMessage('');
   document.getElementById('participantEditor').scrollIntoView({behavior:'smooth',block:'nearest'});
@@ -12250,7 +12296,6 @@ async function saveParticipantChanges(){
     closeParticipantEditor();
     document.getElementById('qrProgress').textContent=(old?'参加者情報を更新しました。':'参加者を登録し、QRを発行しました。')+(venueMsg?'\n'+venueMsg:'');
     document.getElementById('qrProgress').style.display='block';
-    if(!old){await downloadIndividualParticipantQr(visitor);}
   }catch(error){console.error(error);participantEditorMessage(error.message||'保存に失敗しました。');}
   finally{participantSaving=false;button.disabled=false;}
 }
@@ -12278,6 +12323,15 @@ async function deleteParticipant(){
     closeParticipantEditor();
   }catch(error){participantEditorMessage(error.message||'削除できませんでした。');}
 }
+document.getElementById('quickAddParticipant').addEventListener('click',async()=>{
+  await activateDashboardTab('list');
+  openParticipantEditor();
+});
+document.getElementById('quickManageParticipants').addEventListener('click',async()=>{
+  await activateDashboardTab('list');
+  closeParticipantEditor();
+  document.getElementById('inlineListSearch').focus({preventScroll:true});
+});
 document.getElementById('addParticipantFromList').addEventListener('click',()=>openParticipantEditor());
 document.getElementById('addParticipantFromData').addEventListener('click',async()=>{await activateDashboardTab('list');openParticipantEditor();});
 document.getElementById('participantSaveButton').addEventListener('click',saveParticipantChanges);
