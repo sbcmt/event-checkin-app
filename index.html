@@ -2043,7 +2043,7 @@ body.dashboardWorkspace .app {
 <div class="app">
 
   <div class="brand">
-    <h1 class="brandTitle">CHECK-IN</h1>
+    <h1 class="brandTitle"><img src="CHECK-IN_text_logo.png" alt="CHECK-IN" style="display:block;height:38px;width:auto;max-width:100%;margin:0 auto;object-fit:contain"></h1>
     <div class="brandSub">イベント受付管理</div>
   </div>
 
@@ -2475,6 +2475,8 @@ body.dashboardWorkspace .app {
               visitor_list.csv<br>アップロード
             </button>
           </div>
+
+          <button id="exportParticipantsCsvButton" type="button" class="fileActionButton" style="width:100%;margin-top:8px" disabled>現在の参加者リストをCSV出力</button>
 
           <input id="csvFileInput" class="hiddenFileInput" type="file" accept=".csv,text/csv">
 
@@ -5328,6 +5330,8 @@ function renderDashboardData() {
     .textContent =
     statusText;
 
+  document.getElementById("exportParticipantsCsvButton").disabled = total === 0;
+
   document
     .getElementById("downloadQrZipButton")
     .disabled =
@@ -5359,6 +5363,34 @@ function renderDashboardData() {
 /* =========================
    CSV
 ========================= */
+
+// Firebaseで同期された現在のイベントの参加者リストを読み取り専用で出力する。
+function exportParticipantsCsv() {
+  if (!currentEventId || currentVisitors.length === 0) return;
+  const escapeCell = value => {
+    const str = String(value ?? "");
+    // Excelでの数式実行を防ぎつつ、CSVの引用符・改行も正しく保持する。
+    const safe = /^[\t\r\n ]*[=+@]/.test(str) || /^[\t\r\n ]*-(?!\d+(?:\.\d+)?$)/.test(str)
+      ? "'" + str : str;
+    return '"' + safe.replace(/"/g, '""') + '"';
+  };
+  const customLabel = currentParticipantCustomLabel || "任意項目";
+  const rows = [
+    ["id", "name", "number", "email", "人数", customLabel],
+    ...currentVisitors.map(v => [v.id, v.name, v.number, v.email, v.people, v.custom])
+  ];
+  const content = "\uFEFF" + rows.map(row => row.map(escapeCell).join(",")).join("\r\n") + "\r\n";
+  const url = URL.createObjectURL(new Blob([content], {type:"text/csv;charset=utf-8"}));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "visitor_list_export.csv";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+document.getElementById("exportParticipantsCsvButton").addEventListener("click", exportParticipantsCsv);
 
 function downloadCsvTemplate() {
 
