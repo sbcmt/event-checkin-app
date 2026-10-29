@@ -3151,6 +3151,43 @@ function showFreePlanLimit(message){
   document.body.append(overlay);close.focus();
 }
 
+/* FREE feature presentation gate. Existing buttons/layout remain unchanged. */
+const FREE_PAID_BUTTONS = Object.freeze({
+  downloadCsvTemplateButton: 'CSV一括登録',
+  uploadCsvButton: 'CSV一括登録',
+  exportParticipantsCsvButton: '参加者CSV出力',
+  downloadQrZipButton: 'QRコード一括保存',
+  printQrListButton: 'QR一覧印刷・PDF',
+  sendUnsentMailButton: 'QRメール一括送信',
+  openScheduleEditorButton: 'スケジュール編集',
+  publishScheduleButton: 'スケジュール公開',
+  copyScheduleUrlButton: 'スケジュール共有',
+  openScheduleUrlButton: 'スケジュール共有',
+  toggleScheduleQrButton: 'スケジュールQR表示',
+  editVenueMailButton: '会場案内メール',
+  saveVenueMailButton: '会場案内メール',
+  abortVenueMailEditButton: '会場案内メール',
+  cancelVenueMailButton: '会場案内メール',
+  scheduleAddRowButton: 'スケジュール編集',
+  scheduleDraftSaveButton: 'スケジュール編集'
+});
+function requireCheckInPaid(feature) {
+  if (!isFreeCheckInAccount()) return true;
+  showFreePlanLimit('「' + feature + '」は有料版の機能です。\n有料版へのアップグレードでご利用いただけます。');
+  return false;
+}
+// Capture phase is needed because existing click handlers are kept unchanged.
+document.addEventListener('click', event => {
+  if (!isFreeCheckInAccount()) return;
+  const el = event.target.closest && event.target.closest('button');
+  if (!el) return;
+  const feature = FREE_PAID_BUTTONS[el.id];
+  if (!feature) return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  requireCheckInPaid(feature);
+}, true);
+
 /* Schedule editor */
 let scheduleWorkingDraft =
   null;
@@ -5397,6 +5434,7 @@ function renderDashboardData() {
 
 // Firebaseで同期された現在のイベントの参加者リストを読み取り専用で出力する。
 function exportParticipantsCsv() {
+  if (!requireCheckInPaid("参加者CSV出力")) return;
   if (!currentEventId || currentVisitors.length === 0) return;
   const escapeCell = value => {
     const str = String(value ?? "");
@@ -5929,6 +5967,7 @@ async function syncVenueMailAfterCsvUpload(eventId, config, newEmailCount) {
 let csvUploadInProgress = false;
 
 async function handleCsvUpload(file) {
+  if (!requireCheckInPaid("CSV一括登録")) return;
   clearMessage("visitorError");
   if (!file || csvUploadInProgress) return;
 
@@ -6499,6 +6538,7 @@ function escapePrintHtml(value) {
 
 
 async function printQrList() {
+  if (!requireCheckInPaid("QR一覧印刷・PDF")) return;
 
   clearMessage(
     "visitorError"
@@ -7285,6 +7325,7 @@ async function sendQrMailToVisitor(
   visitor,
   showConfirm = true
 ) {
+  if (!requireCheckInPaid("QRメール送信")) return;
 
   clearMessage(
     "visitorError"
@@ -11184,6 +11225,7 @@ async function loadScheduleFromFirebase() {
 }
 
 async function openScheduleEditor() {
+  if (!requireCheckInPaid("スケジュール編集")) return;
   if (!currentEventId || !currentEvent) {
     return;
   }
