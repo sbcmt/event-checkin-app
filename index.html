@@ -2028,6 +2028,13 @@ body.dashboardWorkspace .app {
 .participantListActions{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
 .participantListActions button{font-size:12px;padding:5px 9px;border:1px solid #b5c3ce;border-radius:7px;background:transparent;color:inherit;cursor:pointer}
 @media(max-width:520px){.participantEditorGrid{grid-template-columns:1fr}}
+
+/* Current account plan label only. Other layout and existing controls are untouched. */
+.planBadge{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;color:#fff;font-weight:800;line-height:1.15;font-size:12px;letter-spacing:.04em;padding:4px 12px;border-radius:5px;white-space:nowrap}
+.planBadge[hidden]{display:none!important}
+.planBadgeFree{background:#C73535}
+.planBadgePro{background:#168C94}
+.planBadgeHeader{margin:7px auto 0}
 </style>
 </head>
 
@@ -2044,6 +2051,7 @@ body.dashboardWorkspace .app {
 
   <div class="brand">
     <h1 class="brandTitle"><img src="CHECK-IN_text_logo.png" alt="CHECK-IN" style="display:block;height:38px;width:auto;max-width:100%;margin:0 auto;object-fit:contain"></h1>
+    <div id="headerPlanBadge" class="planBadge planBadgeHeader" hidden aria-label="現在のプラン"></div>
     <div class="brandSub">イベント受付管理</div>
   </div>
 
@@ -2580,7 +2588,7 @@ body.dashboardWorkspace .app {
 
           <div class="venueGuideTitle">
             会場案内
-            <span class="venueGuideBadge">有料版</span>
+            <span class="venueGuideBadge">Pro.</span>
           </div>
 
           <div class="venueGuideDescription">
@@ -2590,7 +2598,7 @@ body.dashboardWorkspace .app {
           </div>
 
           <div id="venueGuideLocked" class="venueGuideLocked">
-            この機能は有料プラン限定です。
+            この機能はPro.プラン限定です。
           </div>
 
           <div id="venueGuideForm" class="venueGuideForm">
@@ -2882,7 +2890,7 @@ body.dashboardWorkspace .app {
 /* =========================
    APP VERSION CHECK
 ========================= */
-const APP_VERSION = "2.3.18";
+const APP_VERSION = "2.3.19";
 const APP_VERSION_FILE = "version.json";
 
 (async function checkAppVersion() {
@@ -3129,18 +3137,18 @@ function showFreePlanLimit(message){
   const overlay = document.createElement('div');
   overlay.setAttribute('role','dialog');
   overlay.setAttribute('aria-modal','true');
-  overlay.setAttribute('aria-label','有料プランのご案内');
+  overlay.setAttribute('aria-label','Pro.プランのご案内');
   overlay.style.cssText='position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.52)';
   const card=document.createElement('div');
   card.style.cssText='width:100%;max-width:420px;padding:24px;border-radius:16px;background:#fff;color:#222;box-shadow:0 16px 48px rgba(0,0,0,.22);font:inherit;text-align:center';
   const heading=document.createElement('h2');
-  heading.textContent='有料プランのご案内';
+  heading.textContent='Pro.プランのご案内';
   heading.style.cssText='font-size:19px;margin:0 0 12px';
   const desc=document.createElement('p');
   desc.textContent=message;
   desc.style.cssText='line-height:1.8;margin:0 0 12px;white-space:pre-line';
   const cost=document.createElement('p');
-  cost.textContent='有料版：月額700円';
+  cost.textContent='Pro.：月額700円';
   cost.style.cssText='font-weight:bold;margin:0 0 16px';
   const note=document.createElement('p');
   note.textContent='決済機能は現在準備中です。';
@@ -3177,7 +3185,7 @@ const FREE_PAID_BUTTONS = Object.freeze({
 });
 function requireCheckInPaid(feature) {
   if (!isFreeCheckInAccount()) return true;
-  showFreePlanLimit('「' + feature + '」は有料版の機能です。\n有料版へのアップグレードでご利用いただけます。');
+  showFreePlanLimit('「' + feature + '」はPro.プランの機能です。\nPro.へのアップグレードでご利用いただけます。');
   return false;
 }
 // Capture phase is needed because existing click handlers are kept unchanged.
@@ -4228,6 +4236,7 @@ document
 ========================= */
 
 function showScreen(id) {
+  updateCurrentPlanBadges();
 
   document
     .querySelectorAll(".screen")
@@ -4811,7 +4820,7 @@ document
       try {
         const snap=await get(ref(database,'users/'+currentUser.uid+'/events'));
         if (Object.keys(snap.val()||{}).length >= FREE_MAX_EVENTS) {
-          showFreePlanLimit('無料版で同時に管理できるイベントは1件までです。\n複数イベントの管理には有料版をご利用ください。');
+          showFreePlanLimit('Freeでは同時に管理できるイベントは1件までです。\n複数イベントの管理にはPro.をご利用ください。');
           return;
         }
       } catch(error) {
@@ -4996,7 +5005,7 @@ document
           return {...value, [newEventRef.key]:newEventData};
         }, {applyLocally:false});
         if (!result.committed) {
-          showFreePlanLimit('無料版で同時に管理できるイベントは1件までです。\n複数イベントの管理には有料版をご利用ください。');
+          showFreePlanLimit('Freeでは同時に管理できるイベントは1件までです。\n複数イベントの管理にはPro.をご利用ください。');
           return;
         }
       } else {
@@ -8847,30 +8856,28 @@ dashboardTabViewport.addEventListener(
 ========================= */
 
 function currentPlanLabel() {
-  const type =
-    String(
-      currentAccess?.type || ""
-    ).toLowerCase();
-
-  if (type === "tester") {
-    return "テスター";
-  }
-
-  if (type === "paid") {
-    return "有料プラン";
-  }
-
-  if (type === "free") {
-    return "無料プラン";
-  }
-
-  if (type === "user") {
-    return "利用中";
-  }
-
-  return "—";
+  const type = String(currentAccess?.type || '').toLowerCase();
+  if (type === 'free') return 'FREE';
+  if (type === 'paid' || type === 'tester') return 'Pro.';
+  return '';
 }
 
+function updateCurrentPlanBadges() {
+  const label = currentPlanLabel();
+  const type = String(currentAccess?.type || '').toLowerCase();
+  const badgeClass = type === 'free' ? 'planBadgeFree' : 'planBadgePro';
+  const header = document.getElementById('headerPlanBadge');
+  if (header) {
+    header.textContent = label;
+    header.className = 'planBadge planBadgeHeader ' + (label ? badgeClass : '');
+    header.hidden = !label || !currentUser;
+  }
+  const settings = document.getElementById('settingsPlanValue');
+  if (settings) {
+    settings.textContent = label || '—';
+    settings.className = label ? 'planBadge ' + badgeClass : '';
+  }
+}
 
 function populateDashboardSettings() {
   if (!currentEvent) {
@@ -8903,12 +8910,7 @@ function populateDashboardSettings() {
     .value =
     currentEvent.status2 || "";
 
-  document
-    .getElementById(
-      "settingsPlanValue"
-    )
-    .textContent =
-    currentPlanLabel();
+  updateCurrentPlanBadges();
 
   document
     .getElementById(
@@ -9466,7 +9468,7 @@ function renderVenueGuideMailPanel() {
     status === "blocked"
   ) {
     setVenueGuideStatus(
-      "有料版の利用権限を確認できなかったため送信を停止しました。",
+      "Pro.の利用権限を確認できなかったため送信を停止しました。",
       "error"
     );
     return;
@@ -9530,7 +9532,7 @@ document
         !canUseVenueGuideFeature()
       ) {
         setVenueGuideStatus(
-          "この機能は有料プラン限定です。",
+          "この機能はPro.プラン限定です。",
           "error"
         );
         return;
@@ -12425,7 +12427,7 @@ async function openParticipantEditor(key=null){
     try {
       const snap=await get(ref(database,'users/'+currentUser.uid+'/eventData/'+currentEventId+'/visitors'));
       if(Object.keys(snap.val()||{}).length >= FREE_MAX_PARTICIPANTS){
-        showFreePlanLimit('無料版で登録できる参加者は1イベントにつき20名までです。\n21名以上の登録には有料版をご利用ください。');
+        showFreePlanLimit('Freeで登録できる参加者は1イベントにつき20名までです。\n21名以上の登録にはPro.をご利用ください。');
         return;
       }
     }catch(error){
@@ -12489,7 +12491,7 @@ async function saveParticipantChanges(){
     }
     if(keyBefore===null && isFreeCheckInAccount() && Object.keys(previous).length>=FREE_MAX_PARTICIPANTS){
       closeParticipantEditor();
-      showFreePlanLimit('無料版で登録できる参加者は1イベントにつき20名までです。\n21名以上の登録には有料版をご利用ください。');
+      showFreePlanLimit('Freeで登録できる参加者は1イベントにつき20名までです。\n21名以上の登録にはPro.をご利用ください。');
       return;
     }
     const maxOrder=Object.values(previous).reduce((max,v)=>Math.max(max,Number(v.order)||0),-1);
@@ -12507,7 +12509,7 @@ async function saveParticipantChanges(){
         },{applyLocally:false});
     if(!transaction.committed && isFreeCheckInAccount() && keyBefore===null){
       closeParticipantEditor();
-      showFreePlanLimit('無料版で登録できる参加者は1イベントにつき20名までです。\n21名以上の登録には有料版をご利用ください。');
+      showFreePlanLimit('Freeで登録できる参加者は1イベントにつき20名までです。\n21名以上の登録にはPro.をご利用ください。');
       return;
     }
     if(!transaction.committed)throw new Error('別の端末で参加者情報が更新されました。再度確認してください。');
@@ -12553,7 +12555,7 @@ async function isFreeParticipantAddAtLimit(){
   try{
     const snap=await get(ref(database,'users/'+currentUser.uid+'/eventData/'+currentEventId+'/visitors'));
     if(Object.keys(snap.val()||{}).length < FREE_MAX_PARTICIPANTS)return false;
-    showFreePlanLimit('無料版で登録できる参加者は1イベントにつき20名までです。\n21名以上の登録には有料版をご利用ください。');
+    showFreePlanLimit('Freeで登録できる参加者は1イベントにつき20名までです。\n21名以上の登録にはPro.をご利用ください。');
   }catch(error){
     console.error(error);
     alert('参加者数を確認できませんでした。通信状態をご確認ください。');
