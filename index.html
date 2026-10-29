@@ -2890,7 +2890,7 @@ body.dashboardWorkspace .app {
 /* =========================
    APP VERSION CHECK
 ========================= */
-const APP_VERSION = "2.3.19";
+const APP_VERSION = "2.3.20";
 const APP_VERSION_FILE = "version.json";
 
 (async function checkAppVersion() {
@@ -3133,6 +3133,39 @@ const FREE_MAX_PARTICIPANTS = 20;
 function isFreeCheckInAccount(){
   return String(currentAccess?.type || '').toLowerCase() === 'free';
 }
+const CHECKIN_CHECKOUT_API = 'https://dobharchu-checkin-api.komori-bd9.workers.dev/create-checkout-session';
+let checkInCheckoutPending = false;
+async function startCheckInCheckout(button, statusNode){
+  if(checkInCheckoutPending) return;
+  const user = getAuth().currentUser;
+  if(!user || !isFreeCheckInAccount()){
+    statusNode.textContent = 'Freeアカウントでログインしてください。';
+    return;
+  }
+  checkInCheckoutPending = true;
+  button.disabled = true;
+  statusNode.textContent = 'Stripeのテスト決済画面を準備しています…';
+  try {
+    const token = await user.getIdToken();
+    const response = await fetch(CHECKIN_CHECKOUT_API, {
+      method:'POST',
+      headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},
+      body:'{}',
+      cache:'no-store'
+    });
+    const result = await response.json().catch(()=>({}));
+    if(!response.ok || !result.url || !result.url.startsWith('https://checkout.stripe.com/')){
+      throw new Error(response.status === 401 ? '再ログインしてお試しください。' :
+        response.status === 403 ? 'このアカウントでは決済を開始できません。' :
+        '決済画面を準備できませんでした。設定をご確認ください。');
+    }
+    window.location.assign(result.url);
+  } catch(err){
+    statusNode.textContent = err instanceof TypeError ? '接続できませんでした。通信状態をご確認ください。' : (err.message || '決済画面を開けませんでした。');
+    button.disabled = false;
+    checkInCheckoutPending = false;
+  }
+}
 function showFreePlanLimit(message){
   const overlay = document.createElement('div');
   overlay.setAttribute('role','dialog');
@@ -3151,15 +3184,22 @@ function showFreePlanLimit(message){
   cost.textContent='Pro.：月額700円';
   cost.style.cssText='font-weight:bold;margin:0 0 16px';
   const note=document.createElement('p');
-  note.textContent='決済機能は現在準備中です。';
+  note.textContent='現在はStripeのテスト環境です。実際の請求は発生しません。決済後のPro.権限付与はまだ行いません。';
   note.style.cssText='font-size:12px;margin:0 0 16px';
+  const checkout=document.createElement('button');
+  checkout.type='button';checkout.textContent='テスト決済へ進む';
+  checkout.style.cssText='cursor:pointer;padding:10px 24px;border-radius:8px;border:0;background:#168c94;color:#fff;font:inherit;margin:0 8px 10px 0';
+  const status=document.createElement('p');
+  status.style.cssText='font-size:12px;line-height:1.6;margin:2px 0 12px;color:#a33';
+  status.setAttribute('role','status');
+  checkout.addEventListener('click',()=>startCheckInCheckout(checkout,status));
   const close=document.createElement('button');
   close.type='button';close.textContent='閉じる';
   close.style.cssText='cursor:pointer;padding:10px 32px;border-radius:8px;border:1px solid #888;background:#fff;color:#222;font:inherit';
   const dismiss=()=>overlay.remove();
   close.addEventListener('click',dismiss);
   overlay.addEventListener('click',e=>{if(e.target===overlay)dismiss();});
-  card.append(heading,desc,cost,note,close);overlay.append(card);
+  card.append(heading,desc,cost,note,checkout,close,status);overlay.append(card);
   document.body.append(overlay);close.focus();
 }
 
