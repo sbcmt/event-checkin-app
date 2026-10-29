@@ -2882,7 +2882,7 @@ body.dashboardWorkspace .app {
 /* =========================
    APP VERSION CHECK
 ========================= */
-const APP_VERSION = "2.3.14";
+const APP_VERSION = "2.3.17";
 const APP_VERSION_FILE = "version.json";
 
 (async function checkAppVersion() {
@@ -3108,6 +3108,8 @@ let deviceDisconnectHandle =
 
 let deviceSessionCheckRunning =
   false;
+
+let stopDeviceSessionListener = null;
 
 let accessCheckRunning =
   false;
@@ -3651,18 +3653,18 @@ function startDeviceHeartbeat(user) {
 
         try {
 
-          await update(
-            ref(
-              database,
-              getMySessionPath(
-                user.uid
-              )
-            ),
-            {
-              lastSeen:
-                Date.now()
-            }
+          const heartbeat = await runTransaction(
+            ref(database, getMySessionPath(user.uid)),
+            existing => {
+              if (!existing) return;
+              return { ...existing, lastSeen: Date.now() };
+            },
+            { applyLocally: false }
           );
+          if (!heartbeat.committed && isFreeCheckInAccount()) {
+            deviceSessionClaimed = false;
+            await showDeviceLimitBlocked(true);
+          }
 
         } catch (error) {
 
@@ -3734,6 +3736,12 @@ async function acquireDeviceSession(user) {
             sessions[DEVICE_ID]
           ) {
 
+            if (isFreeCheckInAccount()) {
+              Object.keys(sessions).forEach(id => {
+                if (id !== DEVICE_ID) delete sessions[id];
+              });
+            }
+
             sessions[DEVICE_ID] = {
               ...sessions[DEVICE_ID],
 
@@ -3748,13 +3756,12 @@ async function acquireDeviceSession(user) {
 
           }
 
-          if (
-            Object.keys(sessions).length >=
-            MAX_ACTIVE_DEVICES
-          ) {
-
-            return;
-
+          // FREE: newest device takes the single active slot.
+          // Paid/tester accounts have no device-count limit.
+          if (isFreeCheckInAccount()) {
+            Object.keys(sessions).forEach(id => {
+              if (id !== DEVICE_ID) delete sessions[id];
+            });
           }
 
           sessions[DEVICE_ID] = {
@@ -3814,6 +3821,8 @@ async function acquireDeviceSession(user) {
       user
     );
 
+    watchFreeDeviceSession(user);
+
     return true;
 
   } catch (error) {
@@ -3830,8 +3839,37 @@ async function acquireDeviceSession(user) {
 }
 
 
+function stopFreeDeviceSessionWatcher() {
+  if (stopDeviceSessionListener) {
+    stopDeviceSessionListener();
+    stopDeviceSessionListener = null;
+  }
+}
+
+function watchFreeDeviceSession(user) {
+  stopFreeDeviceSessionWatcher();
+  if (!isFreeCheckInAccount()) return;
+
+  // Realtime listener detects when a later login takes the FREE slot.
+  // No automatic deletion or sign-out: unsaved form contents remain in the browser.
+  stopDeviceSessionListener = onValue(
+    ref(database, getMySessionPath(user.uid)),
+    snapshot => {
+      if (!currentUser || currentUser.uid !== user.uid || !deviceSessionClaimed) return;
+      if (!snapshot.exists()) {
+        stopFreeDeviceSessionWatcher();
+        stopDeviceHeartbeat();
+        deviceSessionClaimed = false;
+        showDeviceLimitBlocked(true);
+      }
+    },
+    error => console.warn("device session listener error:", error)
+  );
+}
+
 async function releaseDeviceSession() {
 
+  stopFreeDeviceSessionWatcher();
   stopDeviceHeartbeat();
 
   const user =
@@ -3908,8 +3946,9 @@ function stopAppDataListeners() {
 }
 
 
-async function showDeviceLimitBlocked() {
+async function showDeviceLimitBlocked(replacedByAnotherDevice = false) {
 
+  stopFreeDeviceSessionWatcher();
   await stopScanner();
 
   stopAppDataListeners();
@@ -3924,14 +3963,16 @@ async function showDeviceLimitBlocked() {
       "deviceLimitTitle"
     )
     .textContent =
-    "同時使用は2台までです";
+    "同時利用は1台までです";
 
   document
     .getElementById(
       "deviceLimitMessage"
     )
     .textContent =
-    "このアカウントは現在、ほかの2台の端末で使用中です。\nどちらかの端末を終了またはログアウトしてから、もう一度確認してください。";
+    replacedByAnotherDevice
+      ? "別の端末でログインしたため、この端末での操作を停止しました。\n入力途中の内容は保存されていません。こちらで再利用する場合は「再確認」を押してください。"
+      : "無料プランでは同時に操作できる端末は1台です。\n「再確認」を押すと、この端末に利用を切り替えます。";
 
   document
     .getElementById(
@@ -12267,6 +12308,7 @@ onAuthStateChanged(
 
     } else {
 
+      stopFreeDeviceSessionWatcher();
       stopDeviceHeartbeat();
 
       deviceSessionClaimed =
