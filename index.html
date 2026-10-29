@@ -2882,7 +2882,7 @@ body.dashboardWorkspace .app {
 /* =========================
    APP VERSION CHECK
 ========================= */
-const APP_VERSION = "2.3.13";
+const APP_VERSION = "2.3.14";
 const APP_VERSION_FILE = "version.json";
 
 (async function checkAppVersion() {
@@ -3114,6 +3114,42 @@ let accessCheckRunning =
 
 let currentAccess =
   null;
+
+/* FREE plan limits (UI flow; server enforcement is a separate requirement). */
+const FREE_MAX_EVENTS = 1;
+const FREE_MAX_PARTICIPANTS = 20;
+function isFreeCheckInAccount(){
+  return String(currentAccess?.type || '').toLowerCase() === 'free';
+}
+function showFreePlanLimit(message){
+  const overlay = document.createElement('div');
+  overlay.setAttribute('role','dialog');
+  overlay.setAttribute('aria-modal','true');
+  overlay.setAttribute('aria-label','有料プランのご案内');
+  overlay.style.cssText='position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.52)';
+  const card=document.createElement('div');
+  card.style.cssText='width:100%;max-width:420px;padding:24px;border-radius:16px;background:#fff;color:#222;box-shadow:0 16px 48px rgba(0,0,0,.22);font:inherit;text-align:center';
+  const heading=document.createElement('h2');
+  heading.textContent='有料プランのご案内';
+  heading.style.cssText='font-size:19px;margin:0 0 12px';
+  const desc=document.createElement('p');
+  desc.textContent=message;
+  desc.style.cssText='line-height:1.8;margin:0 0 12px;white-space:pre-line';
+  const cost=document.createElement('p');
+  cost.textContent='有料版：月額700円';
+  cost.style.cssText='font-weight:bold;margin:0 0 16px';
+  const note=document.createElement('p');
+  note.textContent='決済機能は現在準備中です。';
+  note.style.cssText='font-size:12px;margin:0 0 16px';
+  const close=document.createElement('button');
+  close.type='button';close.textContent='閉じる';
+  close.style.cssText='cursor:pointer;padding:10px 32px;border-radius:8px;border:1px solid #888;background:#fff;color:#222;font:inherit';
+  const dismiss=()=>overlay.remove();
+  close.addEventListener('click',dismiss);
+  overlay.addEventListener('click',e=>{if(e.target===overlay)dismiss();});
+  card.append(heading,desc,cost,note,close);overlay.append(card);
+  document.body.append(overlay);close.focus();
+}
 
 /* Schedule editor */
 let scheduleWorkingDraft =
@@ -4829,30 +4865,24 @@ document
     try {
 
       const eventsRef =
-        ref(
-          database,
-          "users/" +
-            currentUser.uid +
-            "/events"
-        );
-
-      const newEventRef =
-        push(eventsRef);
-
-      await set(
-        newEventRef,
-        {
-          name,
-          status1,
-          status2,
-          createdAt:
-            Date.now()
+        ref(database, "users/" + currentUser.uid + "/events");
+      const newEventRef = push(eventsRef);
+      const newEventData = {name, status1, status2, createdAt:Date.now()};
+      if (isFreeCheckInAccount()) {
+        // Transaction prevents two simultaneous UI requests exceeding one event.
+        const result = await runTransaction(eventsRef, existing => {
+          const value = existing || {};
+          if (Object.keys(value).length >= FREE_MAX_EVENTS) return;
+          return {...value, [newEventRef.key]:newEventData};
+        }, {applyLocally:false});
+        if (!result.committed) {
+          showFreePlanLimit('無料版で同時に管理できるイベントは1件までです。\n複数イベントの管理には有料版をご利用ください。');
+          return;
         }
-      );
-
-      await openEvent(
-        newEventRef.key
-      );
+      } else {
+        await set(newEventRef, newEventData);
+      }
+      await openEvent(newEventRef.key);
 
     } catch (error) {
 
@@ -12316,13 +12346,29 @@ async function saveParticipantChanges(){
       id=requestedId||newParticipantId(previous);key=idToKey(id);
       if(Object.values(previous).some(v=>String(v.id)===id)||previous[key])throw new Error('この参加者IDはすでに登録されています。');
     }
+    if(keyBefore===null && isFreeCheckInAccount() && Object.keys(previous).length>=FREE_MAX_PARTICIPANTS){
+      closeParticipantEditor();
+      showFreePlanLimit('無料版で登録できる参加者は1イベントにつき20名までです。\n21名以上の登録には有料版をご利用ください。');
+      return;
+    }
     const maxOrder=Object.values(previous).reduce((max,v)=>Math.max(max,Number(v.order)||0),-1);
     const visitor={...(old||{}),id,name,number:document.getElementById('participantEditNumber').value.trim(),email,people:document.getElementById('participantEditPeople').value.trim(),custom:document.getElementById('participantEditCustom').value.trim(),order:old?.order??(maxOrder+1)};
-    const transaction=await runTransaction(ref(database,base+'/visitors/'+key),current=>{
-      if(keyBefore===null&&current!==null)return;
-      if(keyBefore!==null&&current===null)return;
-      return {...(current||{}),...visitor};
-    },{applyLocally:false});
+    const transaction=(isFreeCheckInAccount() && keyBefore===null)
+      ? await runTransaction(ref(database,base+'/visitors'),current=>{
+          const all=current||{};
+          if(Object.keys(all).length>=FREE_MAX_PARTICIPANTS || all[key])return;
+          return {...all,[key]:visitor};
+        },{applyLocally:false})
+      : await runTransaction(ref(database,base+'/visitors/'+key),current=>{
+          if(keyBefore===null&&current!==null)return;
+          if(keyBefore!==null&&current===null)return;
+          return {...(current||{}),...visitor};
+        },{applyLocally:false});
+    if(!transaction.committed && isFreeCheckInAccount() && keyBefore===null){
+      closeParticipantEditor();
+      showFreePlanLimit('無料版で登録できる参加者は1イベントにつき20名までです。\n21名以上の登録には有料版をご利用ください。');
+      return;
+    }
     if(!transaction.committed)throw new Error('別の端末で参加者情報が更新されました。再度確認してください。');
     const changedEmail=normalizeRecipientEmail(old?.email)!==normalizeRecipientEmail(email);
     if(changedEmail&&data.mailStatus?.[key]){
