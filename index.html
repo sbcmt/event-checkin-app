@@ -4736,7 +4736,26 @@ function renderEventList(eventsObject) {
 
 document
   .getElementById("newEventButton")
-  .addEventListener("click", () => {
+  .addEventListener("click", async () => {
+
+    // Check before showing the input form so free users never fill an unusable form.
+    if (isFreeCheckInAccount()) {
+      if (!currentUser) return;
+      const button=document.getElementById('newEventButton');
+      if(button.disabled) return;
+      button.disabled=true;
+      try {
+        const snap=await get(ref(database,'users/'+currentUser.uid+'/events'));
+        if (Object.keys(snap.val()||{}).length >= FREE_MAX_EVENTS) {
+          showFreePlanLimit('無料版で同時に管理できるイベントは1件までです。\n複数イベントの管理には有料版をご利用ください。');
+          return;
+        }
+      } catch(error) {
+        console.error(error);
+        showFirebaseError('eventListError',error);
+        return;
+      } finally {button.disabled=false;}
+    }
 
     clearMessage(
       "eventCreateError"
@@ -12334,7 +12353,22 @@ let participantSaving = false;
 function participantEditorMessage(message){
   document.getElementById('participantEditorMessage').textContent = message || '';
 }
-function openParticipantEditor(key=null){
+async function openParticipantEditor(key=null){
+  // Preserve edit access; only additions are capped for free users.
+  if(key===null && isFreeCheckInAccount()) {
+    if(!currentUser || !currentEventId) return;
+    try {
+      const snap=await get(ref(database,'users/'+currentUser.uid+'/eventData/'+currentEventId+'/visitors'));
+      if(Object.keys(snap.val()||{}).length >= FREE_MAX_PARTICIPANTS){
+        showFreePlanLimit('無料版で登録できる参加者は1イベントにつき20名までです。\n21名以上の登録には有料版をご利用ください。');
+        return;
+      }
+    }catch(error){
+      console.error(error);
+      participantEditorMessage(error.message||'参加者数を確認できませんでした。');
+      return;
+    }
+  }
   const visitor=key===null?null:currentVisitors.find(v=>v.key===key);
   if(key!==null&&!visitor)return;
   participantEditingKey=visitor?key:null;
@@ -12448,9 +12482,23 @@ async function deleteParticipant(){
     closeParticipantEditor();
   }catch(error){participantEditorMessage(error.message||'削除できませんでした。');}
 }
+async function isFreeParticipantAddAtLimit(){
+  if(!isFreeCheckInAccount())return false;
+  if(!currentUser||!currentEventId)return true;
+  try{
+    const snap=await get(ref(database,'users/'+currentUser.uid+'/eventData/'+currentEventId+'/visitors'));
+    if(Object.keys(snap.val()||{}).length < FREE_MAX_PARTICIPANTS)return false;
+    showFreePlanLimit('無料版で登録できる参加者は1イベントにつき20名までです。\n21名以上の登録には有料版をご利用ください。');
+  }catch(error){
+    console.error(error);
+    alert('参加者数を確認できませんでした。通信状態をご確認ください。');
+  }
+  return true;
+}
 document.getElementById('quickAddParticipant').addEventListener('click',async()=>{
+  if(await isFreeParticipantAddAtLimit()) return;
   await activateDashboardTab('list');
-  openParticipantEditor();
+  await openParticipantEditor();
 });
 document.getElementById('quickManageParticipants').addEventListener('click',async()=>{
   await activateDashboardTab('list');
@@ -12458,7 +12506,7 @@ document.getElementById('quickManageParticipants').addEventListener('click',asyn
   document.getElementById('inlineListSearch').focus({preventScroll:true});
 });
 document.getElementById('addParticipantFromList').addEventListener('click',()=>openParticipantEditor());
-document.getElementById('addParticipantFromData').addEventListener('click',async()=>{await activateDashboardTab('list');openParticipantEditor();});
+document.getElementById('addParticipantFromData').addEventListener('click',async()=>{if(await isFreeParticipantAddAtLimit())return;await activateDashboardTab('list');await openParticipantEditor();});
 document.getElementById('participantSaveButton').addEventListener('click',saveParticipantChanges);
 document.getElementById('participantCancelButton').addEventListener('click',closeParticipantEditor);
 document.getElementById('participantDeleteButton').addEventListener('click',deleteParticipant);
