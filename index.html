@@ -2882,7 +2882,7 @@ body.dashboardWorkspace .app {
 /* =========================
    APP VERSION CHECK
 ========================= */
-const APP_VERSION = "2.3.17";
+const APP_VERSION = "2.3.18";
 const APP_VERSION_FILE = "version.json";
 
 (async function checkAppVersion() {
@@ -2911,7 +2911,9 @@ const APP_VERSION_FILE = "version.json";
     // 更新画面を出さず、ログインなど通常の操作を継続させる。
     const currentUrl = new URL(window.location.href);
     if (currentUrl.searchParams.get("_appv") === latestVersion) {
-      console.warn("Version refresh already attempted; preventing update loop:", latestVersion);
+      console.warn("Cached HTML still has version", APP_VERSION, "while deployed version is", latestVersion);
+      const versionNode = document.getElementById("settingsAppVersion");
+      if (versionNode) versionNode.textContent = APP_VERSION + "（更新未反映）";
       return;
     }
 
@@ -3697,6 +3699,27 @@ async function acquireDeviceSession(user) {
 
   try {
 
+    // FREE: confirm on the NEW device before terminating another active device.
+    // Never show this prompt to tester/paid accounts.
+    if (isFreeCheckInAccount()) {
+      const initialSnapshot = await get(sessionsRef);
+      const existingSessions = initialSnapshot.val() || {};
+      const activeOthers = Object.entries(existingSessions).filter(
+        ([id, session]) => id !== DEVICE_ID &&
+          Number(session?.lastSeen || 0) > 0 &&
+          now - Number(session.lastSeen) <= DEVICE_STALE_MS
+      );
+      if (activeOthers.length) {
+        const confirmed = window.confirm(
+          "別端末をログアウトしますか？\n\n現在、ほかの端末でCheck-Inを利用しています。\n「OK」を押すと、別端末の操作を停止し、この端末で利用を開始します。\n※別端末で未保存の入力内容は失われる場合があります。"
+        );
+        if (!confirmed) {
+          deviceSessionClaimed = false;
+          return false;
+        }
+      }
+    }
+
     const result =
       await runTransaction(
         sessionsRef,
@@ -3972,7 +3995,7 @@ async function showDeviceLimitBlocked(replacedByAnotherDevice = false) {
     .textContent =
     replacedByAnotherDevice
       ? "別の端末でログインしたため、この端末での操作を停止しました。\n入力途中の内容は保存されていません。こちらで再利用する場合は「再確認」を押してください。"
-      : "無料プランでは同時に操作できる端末は1台です。\n「再確認」を押すと、この端末に利用を切り替えます。";
+      : "Freeプランでは同時に操作できる端末は1台です。\n利用する端末を変更する場合は「もう一度確認」を押し、切り替えを選択してください。";
 
   document
     .getElementById(
@@ -4168,16 +4191,16 @@ async function verifyDeviceSessionOnResume() {
 
     }
 
-    const allowed =
-      await acquireDeviceSession(
-        currentUser
-      );
-
-    if (!allowed) {
-
-      await showDeviceLimitBlocked();
-
+    // A revoked FREE device must not take the slot automatically on tab resume.
+    // The user may explicitly request the slot again from the blocked screen.
+    if (isFreeCheckInAccount()) {
+      await showDeviceLimitBlocked(true);
+      return;
     }
+
+    const allowed =
+      await acquireDeviceSession(currentUser);
+    if (!allowed) await showDeviceLimitBlocked();
 
   } catch (error) {
 
