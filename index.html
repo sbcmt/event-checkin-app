@@ -2882,7 +2882,7 @@ body.dashboardWorkspace .app {
 /* =========================
    APP VERSION CHECK
 ========================= */
-const APP_VERSION = "2.3.12";
+const APP_VERSION = "2.3.13";
 const APP_VERSION_FILE = "version.json";
 
 (async function checkAppVersion() {
@@ -3217,9 +3217,9 @@ async function checkAccess(user) {
 
   if (!snapshot.exists()) {
 
-    const testerAccess = {
+    const freeAccess = {
       type:
-        "tester",
+        "free",
 
       active:
         true,
@@ -3230,11 +3230,11 @@ async function checkAccess(user) {
 
     await set(
       accessRef,
-      testerAccess
+      freeAccess
     );
 
     currentAccess =
-      testerAccess;
+      freeAccess;
 
     return true;
 
@@ -3251,6 +3251,7 @@ async function checkAccess(user) {
   const allowedType =
     type === "tester" ||
     type === "paid" ||
+    type === "free" ||
     type === "user";
 
   const allowed =
@@ -8703,6 +8704,10 @@ function currentPlanLabel() {
 
   if (type === "paid") {
     return "有料プラン";
+  }
+
+  if (type === "free") {
+    return "無料プラン";
   }
 
   if (type === "user") {
