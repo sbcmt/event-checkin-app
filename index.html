@@ -2083,6 +2083,11 @@ body.dashboardWorkspace .app {
       </button>
 
       <div id="loginError" class="notice"></div>
+      <div id="emailVerifyNotice" class="infoNotice" style="display:none;margin-top:12px;white-space:pre-line" role="status" aria-live="polite">
+        メールアドレスの認証が必要です。届いた確認メール内のリンクを開いてください。
+        <button id="resendVerifyEmailButton" class="secondaryButton" type="button" style="margin-top:10px">認証メールを再送信</button>
+        <button id="retryVerifyEmailButton" class="secondaryButton" type="button" style="margin-top:8px">認証完了を確認</button>
+      </div>
 
     </div>
   </section>
@@ -2922,7 +2927,7 @@ body.dashboardWorkspace .app {
 /* =========================
    APP VERSION CHECK
 ========================= */
-const APP_VERSION = "2.3.22";
+const APP_VERSION = "2.3.24";
 const APP_VERSION_FILE = "version.json";
 
 (async function checkAppVersion() {
@@ -2998,7 +3003,9 @@ import {
   EmailAuthProvider,
   reauthenticateWithCredential,
   verifyBeforeUpdateEmail,
-  updatePassword
+  updatePassword,
+  sendEmailVerification,
+  reload
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
 import {
@@ -3036,6 +3043,7 @@ const app =
 
 const auth =
   getAuth(app);
+auth.languageCode = "ja";
 
 const database =
   getDatabase(app);
@@ -3441,6 +3449,19 @@ async function enterAfterAccessCheck(user) {
   showAccessChecking();
 
   try {
+
+    // UI gate: server-enforced verification also requires Firebase database rules.
+    await reload(user);
+    if (!user.emailVerified) {
+      currentAccess = null;
+      showScreen("loginScreen");
+      const notice = document.getElementById("emailVerifyNotice");
+      if (notice) notice.style.display = "block";
+      showBoxMessage("loginError", "メールアドレスの認証が必要です。確認メールのリンクを開いてください。");
+      return;
+    }
+    const notice = document.getElementById("emailVerifyNotice");
+    if (notice) notice.style.display = "none";
 
     const allowed =
       await checkAccess(
@@ -4570,11 +4591,16 @@ document
 
     try {
 
-      await createUserWithEmailAndPassword(
+      const created = await createUserWithEmailAndPassword(
         auth,
         email,
         password
       );
+      await sendEmailVerification(created.user);
+      showScreen("loginScreen");
+      const notice = document.getElementById("emailVerifyNotice");
+      if (notice) notice.style.display = "block";
+      showBoxMessage("loginError", "確認メールを送信しました。メール内の認証リンクを開いてからログインしてください。");
 
     } catch (error) {
 
@@ -4588,11 +4614,38 @@ document
   });
 
 
+// Browser-side retry delay is supplementary. Firebase server-side safeguards remain mandatory.
+let loginFailureCount = 0;
+let loginAllowedAfter = 0;
+function loginRetrySeconds() { return Math.max(0, Math.ceil((loginAllowedAfter - Date.now()) / 1000)); }
+document.getElementById("resendVerifyEmailButton").addEventListener("click", async function() {
+  const user = auth.currentUser;
+  if (!user) { showBoxMessage("loginError", "もう一度ログインしてから再送信してください。"); return; }
+  const button=this; button.disabled=true;
+  try {
+    const key="checkinVerificationMailSent:"+user.uid;
+    const last=Number(sessionStorage.getItem(key)||0);
+    if(Date.now()-last<60000) throw new Error("再送信は60秒以上間隔を空けてください。");
+    await sendEmailVerification(user);
+    sessionStorage.setItem(key, String(Date.now()));
+    showBoxMessage("loginError", "確認メールを再送信しました。");
+  } catch(e) { showBoxMessage("loginError", e.code ? accountErrorMessage(e) : e.message); }
+  finally { button.disabled=false; }
+});
+document.getElementById("retryVerifyEmailButton").addEventListener("click", async function() {
+  if (!auth.currentUser) { showBoxMessage("loginError", "メール認証後に再ログインしてください。"); return; }
+  await enterAfterAccessCheck(auth.currentUser);
+});
+
 document
   .getElementById("loginButton")
   .addEventListener("click", async () => {
 
     clearMessage("loginError");
+    if (loginRetrySeconds() > 0) {
+      showBoxMessage("loginError", "連続失敗のため、"+loginRetrySeconds()+"秒後にもう一度お試しください。");
+      return;
+    }
 
     const email =
       document
@@ -4623,6 +4676,7 @@ document
         email,
         password
       );
+      loginFailureCount = 0; loginAllowedAfter = 0;
 
       document
         .getElementById("loginPassword")
@@ -4630,7 +4684,8 @@ document
         "";
 
     } catch (error) {
-
+      loginFailureCount++;
+      if(loginFailureCount >= 5) loginAllowedAfter = Date.now() + Math.min(300000, 30000 * Math.pow(2, Math.min(4, loginFailureCount-5)));
       showFirebaseError(
         "loginError",
         error
@@ -9022,7 +9077,7 @@ document.getElementById('accountChangePasswordButton').addEventListener('click',
     const user = await accountReauthenticate(oldField.value);
     await updatePassword(user, newField.value);
     oldField.value = ''; newField.value = ''; confirmField.value = '';
-    accountMessage('accountSettingsMessage', 'パスワードを変更しました。UID・登録データ・利用権限は維持されます。');
+    accountMessage('accountSettingsMessage', 'パスワードを変更しました。UID・登録データ・利用権限は維持されます。セキュリティ上の通知メールはFirebase側の設定・送信状況を確認してください。');
   });
 });
 const CHECKIN_SUBSCRIPTION_API = 'https://dobharchu-checkin-api.komori-bd9.workers.dev';
