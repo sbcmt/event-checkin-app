@@ -2817,7 +2817,8 @@ body.dashboardWorkspace .app {
           </div>
           <button id="accountChangePasswordButton" type="button" class="secondaryButton">パスワードを変更する</button>
           <div id="accountSettingsMessage" class="infoNotice" role="status" aria-live="polite" style="display:none;white-space:pre-line;overflow-wrap:anywhere"></div>
-          <button id="accountBillingPortalButton" type="button" class="secondaryButton" style="display:none">契約・お支払いの管理／解約（Stripe）</button>
+          <button id="accountBillingPortalButton" type="button" class="secondaryButton" style="display:none">カード・請求情報を管理（Stripe）</button>
+          <button id="accountCancelSubscriptionButton" type="button" class="secondaryButton" style="display:none">サブスクリプションを解約する</button>
           <div id="accountBillingMessage" class="infoNotice" role="status" aria-live="polite" style="display:none;white-space:pre-line"></div>
         </div>
 
@@ -2922,7 +2923,7 @@ body.dashboardWorkspace .app {
 /* =========================
    APP VERSION CHECK
 ========================= */
-const APP_VERSION = "2.3.21";
+const APP_VERSION = "2.3.22";
 const APP_VERSION_FILE = "version.json";
 
 (async function checkAppVersion() {
@@ -8969,6 +8970,8 @@ function refreshAccountControls() {
   if (emailNode) emailNode.textContent = auth.currentUser?.email || '—';
   const portalButton = document.getElementById('accountBillingPortalButton');
   if (portalButton) portalButton.style.display = auth.currentUser && String(currentAccess?.type || '').toLowerCase() === 'paid' ? '' : 'none';
+  const cancelButton = document.getElementById('accountCancelSubscriptionButton');
+  if (cancelButton) cancelButton.style.display = auth.currentUser && String(currentAccess?.type || '').toLowerCase() === 'paid' ? '' : 'none';
 }
 function accountErrorMessage(error) {
   switch (error?.code) {
@@ -9035,6 +9038,38 @@ document.getElementById('accountBillingPortalButton').addEventListener('click', 
     const result = await response.json().catch(() => ({}));
     if (!response.ok || typeof result.url !== 'string' || !result.url.startsWith('https://billing.stripe.com/')) throw new Error('契約管理画面を開けませんでした。Stripe側の設定を確認してください。');
     window.location.assign(result.url);
+  });
+});
+
+const CHECKIN_SUBSCRIPTION_API = 'https://dobharchu-checkin-api.komori-bd9.workers.dev';
+function formatCheckinPeriodEnd(seconds) {
+  if (!Number.isFinite(seconds) || seconds <= 0) return '現在の請求期間の終了時';
+  return new Intl.DateTimeFormat('ja-JP',{timeZone:'Asia/Tokyo',year:'numeric',month:'long',day:'numeric'}).format(new Date(seconds*1000));
+}
+async function checkinSubscriptionCall(path, confirm = false) {
+  const user=auth.currentUser;
+  if (!user || String(currentAccess?.type || '').toLowerCase() !== 'paid') throw new Error('Pro.契約でログインしてください。');
+  const token=await user.getIdToken();
+  const response=await fetch(CHECKIN_SUBSCRIPTION_API+path,{
+    method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},
+    body:JSON.stringify(confirm ? {confirm:true} : {}),cache:'no-store'
+  });
+  const result=await response.json().catch(()=>({}));
+  if (!response.ok) throw new Error('契約情報の確認に失敗しました。操作は行われていません。 ('+(result.error || response.status)+')');
+  return result;
+}
+document.getElementById('accountCancelSubscriptionButton').addEventListener('click', function() {
+  accountWithButton(this,'accountBillingMessage',async()=>{
+    const status=await checkinSubscriptionCall('/subscription-status');
+    const end=formatCheckinPeriodEnd(status.periodEnd);
+    if (status.cancelAtPeriodEnd) {
+      accountMessage('accountBillingMessage','解約予約済みです。'+end+'までPro.をご利用いただけます。');
+      return;
+    }
+    if (!window.confirm('Check-In Pro.（月額600円）の自動更新を停止しますか？\n'+end+'まではPro.をご利用いただけます。\n\nこの操作を確定すると、契約期間終了時にFREEに切り替わります。')) return;
+    const result=await checkinSubscriptionCall('/cancel-subscription',true);
+    if (!result.cancelAtPeriodEnd) throw new Error('解約予約を確認できませんでした。Stripeの契約状況を確認してください。');
+    accountMessage('accountBillingMessage','解約予約が完了しました。'+formatCheckinPeriodEnd(result.periodEnd)+'までPro.をご利用いただけます。以降はFREEに切り替わります。');
   });
 });
 
