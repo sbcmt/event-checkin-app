@@ -2035,6 +2035,12 @@ body.dashboardWorkspace .app {
 .planBadgeFree{background:#C73535}
 .planBadgePro{background:#168C94}
 .planBadgeHeader{margin:7px auto 0}
+
+/* Compact account actions */
+.accountActionGroup{border-top:1px solid #e8e8e8;padding-top:15px;margin-top:4px}
+.accountActionLabel{font-weight:700;font-size:14px;margin-bottom:4px}
+.accountActionHint{font-size:13px;color:#666;line-height:1.6;margin-bottom:8px}
+
 </style>
 </head>
 
@@ -2809,19 +2815,11 @@ body.dashboardWorkspace .app {
             <input id="accountEmailCurrentPassword" class="input" type="password" autocomplete="current-password">
           </div>
           <button id="accountChangeEmailButton" type="button" class="secondaryButton">新しいメールアドレスに確認メールを送信</button>
-          <div class="field">
-            <label class="fieldLabel" for="accountPasswordCurrent">現在のパスワード</label>
-            <input id="accountPasswordCurrent" class="input" type="password" autocomplete="current-password">
+          <div class="accountActionGroup" aria-label="パスワード変更">
+            <div class="accountActionLabel">パスワード</div>
+            <div class="accountActionHint">登録メールに再設定用リンクを送ります。</div>
+            <button id="accountChangePasswordButton" type="button" class="secondaryButton">パスワード変更メールを送信</button>
           </div>
-          <div class="field">
-            <label class="fieldLabel" for="accountPasswordNew">新しいパスワード（6文字以上）</label>
-            <input id="accountPasswordNew" class="input" type="password" autocomplete="new-password">
-          </div>
-          <div class="field">
-            <label class="fieldLabel" for="accountPasswordConfirm">新しいパスワード（確認）</label>
-            <input id="accountPasswordConfirm" class="input" type="password" autocomplete="new-password">
-          </div>
-          <button id="accountChangePasswordButton" type="button" class="secondaryButton">パスワードを変更する</button>
           <div id="accountSettingsMessage" class="infoNotice" role="status" aria-live="polite" style="display:none;white-space:pre-line;overflow-wrap:anywhere"></div>
           <button id="accountCancelSubscriptionButton" type="button" class="secondaryButton" style="display:none">サブスクリプションを解約する</button>
           <div id="accountBillingMessage" class="infoNotice" role="status" aria-live="polite" style="display:none;white-space:pre-line"></div>
@@ -2928,7 +2926,7 @@ body.dashboardWorkspace .app {
 /* =========================
    APP VERSION CHECK
 ========================= */
-const APP_VERSION = "2.3.25";
+const APP_VERSION = "2.3.26";
 const APP_VERSION_FILE = "version.json";
 
 (async function checkAppVersion() {
@@ -3004,7 +3002,7 @@ import {
   EmailAuthProvider,
   reauthenticateWithCredential,
   verifyBeforeUpdateEmail,
-  updatePassword,
+  sendPasswordResetEmail,
   sendEmailVerification,
   reload
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
@@ -9070,7 +9068,7 @@ function accountErrorMessage(error) {
     case 'auth/requires-recent-login': return '安全のため、ログアウトして再ログインしてからお試しください。';
     case 'auth/too-many-requests': return '操作回数が多いため、時間を置いてお試しください。';
     case 'auth/network-request-failed': return '通信状態を確認して再度お試しください。';
-    case 'auth/operation-not-allowed': return 'Firebaseの認証設定により変更できません。管理者にお問い合わせください。';
+    case 'auth/operation-not-allowed': return '現在この操作を利用できません。お問い合わせください。';
     default: return '変更処理に失敗しました。再度お試しください。';
   }
 }
@@ -9100,38 +9098,15 @@ document.getElementById('accountChangeEmailButton').addEventListener('click', fu
     await accountReauthenticate(passwordField.value);
     await verifyBeforeUpdateEmail(user, newEmail);
     passwordField.value = '';
-    accountMessage('accountSettingsMessage', '新しいメールアドレス宛に確認メールを送りました。メール内のリンクで認証を完了してください。\n認証後に再ログインすると新しいメールアドレスが反映されます。');
+    accountMessage('accountSettingsMessage', 'メールアドレスの変更を受け付けました。新しいメールアドレスに届くメールから認証してください。');
   });
 });
 document.getElementById('accountChangePasswordButton').addEventListener('click', function() {
   accountWithButton(this, 'accountSettingsMessage', async () => {
-    const oldField = document.getElementById('accountPasswordCurrent');
-    const newField = document.getElementById('accountPasswordNew');
-    const confirmField = document.getElementById('accountPasswordConfirm');
-    if (newField.value.length < 6) throw new Error('新しいパスワードは6文字以上で入力してください。');
-    if (newField.value !== confirmField.value) throw new Error('新しいパスワードと確認用が一致しません。');
-    const user = await accountReauthenticate(oldField.value);
-    await updatePassword(user, newField.value);
-    oldField.value = ''; newField.value = ''; confirmField.value = '';
-    // Only notify after Firebase has successfully changed the password.
-    // The server derives the recipient from a verified Firebase ID token.
-    let notificationSent = false;
-    try {
-      const token = await user.getIdToken(true);
-      const res = await fetch('https://dobharchu-checkin-api.komori-bd9.workers.dev/password-change-notification', {
-        method:'POST',
-        headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},
-        body:'{}',cache:'no-store'
-      });
-      const outcome = await res.json().catch(()=>({}));
-      if (!res.ok || outcome.sent !== true) throw Error('notification unavailable');
-      notificationSent = true;
-    } catch (err) {
-      console.warn('Password change notification was not delivered',err);
-    }
-    accountMessage('accountSettingsMessage', notificationSent
-      ? 'パスワードを変更し、登録メールアドレスに日本語の変更通知を送信しました。UID・登録データ・利用権限は維持されます。'
-      : 'パスワードは変更されましたが、変更通知メールの送信を確認できませんでした。UID・登録データ・利用権限は維持されます。運営者へご連絡ください。');
+    const user = auth.currentUser;
+    if (!user?.email) throw new Error('再ログインしてください。');
+    await sendPasswordResetEmail(auth, user.email);
+    accountMessage('accountSettingsMessage', 'パスワード変更用のメールを送信しました。登録メールアドレスをご確認ください。');
   });
 });
 const CHECKIN_SUBSCRIPTION_API = 'https://dobharchu-checkin-api.komori-bd9.workers.dev';
