@@ -2817,7 +2817,6 @@ body.dashboardWorkspace .app {
           </div>
           <button id="accountChangePasswordButton" type="button" class="secondaryButton">パスワードを変更する</button>
           <div id="accountSettingsMessage" class="infoNotice" role="status" aria-live="polite" style="display:none;white-space:pre-line;overflow-wrap:anywhere"></div>
-          <button id="accountBillingPortalButton" type="button" class="secondaryButton" style="display:none">カード・請求情報を管理（Stripe）</button>
           <button id="accountCancelSubscriptionButton" type="button" class="secondaryButton" style="display:none">サブスクリプションを解約する</button>
           <div id="accountBillingMessage" class="infoNotice" role="status" aria-live="polite" style="display:none;white-space:pre-line"></div>
         </div>
@@ -8958,7 +8957,6 @@ function updateCurrentPlanBadges() {
 }
 
 /* Account controls: changes preserve the existing Firebase Authentication UID. */
-const CHECKIN_PORTAL_API = 'https://dobharchu-checkin-api.komori-bd9.workers.dev/create-portal-session';
 function accountMessage(id, message) {
   const target = document.getElementById(id);
   if (!target) return;
@@ -8968,8 +8966,6 @@ function accountMessage(id, message) {
 function refreshAccountControls() {
   const emailNode = document.getElementById('accountCurrentEmail');
   if (emailNode) emailNode.textContent = auth.currentUser?.email || '—';
-  const portalButton = document.getElementById('accountBillingPortalButton');
-  if (portalButton) portalButton.style.display = auth.currentUser && String(currentAccess?.type || '').toLowerCase() === 'paid' ? '' : 'none';
   const cancelButton = document.getElementById('accountCancelSubscriptionButton');
   if (cancelButton) cancelButton.style.display = auth.currentUser && String(currentAccess?.type || '').toLowerCase() === 'paid' ? '' : 'none';
 }
@@ -9029,18 +9025,6 @@ document.getElementById('accountChangePasswordButton').addEventListener('click',
     accountMessage('accountSettingsMessage', 'パスワードを変更しました。UID・登録データ・利用権限は維持されます。');
   });
 });
-document.getElementById('accountBillingPortalButton').addEventListener('click', function() {
-  accountWithButton(this, 'accountBillingMessage', async () => {
-    const user = auth.currentUser;
-    if (!user || String(currentAccess?.type || '').toLowerCase() !== 'paid') throw new Error('Pro.契約のあるアカウントでログインしてください。');
-    const token = await user.getIdToken();
-    const response = await fetch(CHECKIN_PORTAL_API, {method:'POST', headers:{Authorization:'Bearer '+token, 'Content-Type':'application/json'}, body:'{}', cache:'no-store'});
-    const result = await response.json().catch(() => ({}));
-    if (!response.ok || typeof result.url !== 'string' || !result.url.startsWith('https://billing.stripe.com/')) throw new Error('契約管理画面を開けませんでした。Stripe側の設定を確認してください。');
-    window.location.assign(result.url);
-  });
-});
-
 const CHECKIN_SUBSCRIPTION_API = 'https://dobharchu-checkin-api.komori-bd9.workers.dev';
 function formatCheckinPeriodEnd(seconds) {
   if (!Number.isFinite(seconds) || seconds <= 0) return '現在の請求期間の終了時';
