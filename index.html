@@ -9113,7 +9113,25 @@ document.getElementById('accountChangePasswordButton').addEventListener('click',
     const user = await accountReauthenticate(oldField.value);
     await updatePassword(user, newField.value);
     oldField.value = ''; newField.value = ''; confirmField.value = '';
-    accountMessage('accountSettingsMessage', 'パスワードを変更しました。UID・登録データ・利用権限は維持されます。変更通知メールの送信はFirebase側の設定確認が必要です。');
+    // Only notify after Firebase has successfully changed the password.
+    // The server derives the recipient from a verified Firebase ID token.
+    let notificationSent = false;
+    try {
+      const token = await user.getIdToken(true);
+      const res = await fetch('https://dobharchu-checkin-api.komori-bd9.workers.dev/password-change-notification', {
+        method:'POST',
+        headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},
+        body:'{}',cache:'no-store'
+      });
+      const outcome = await res.json().catch(()=>({}));
+      if (!res.ok || outcome.sent !== true) throw Error('notification unavailable');
+      notificationSent = true;
+    } catch (err) {
+      console.warn('Password change notification was not delivered',err);
+    }
+    accountMessage('accountSettingsMessage', notificationSent
+      ? 'パスワードを変更し、登録メールアドレスに日本語の変更通知を送信しました。UID・登録データ・利用権限は維持されます。'
+      : 'パスワードは変更されましたが、変更通知メールの送信を確認できませんでした。UID・登録データ・利用権限は維持されます。運営者へご連絡ください。');
   });
 });
 const CHECKIN_SUBSCRIPTION_API = 'https://dobharchu-checkin-api.komori-bd9.workers.dev';
