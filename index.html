@@ -2789,6 +2789,38 @@ body.dashboardWorkspace .app {
           <strong id="settingsPlanValue">—</strong>
         </div>
 
+        <div class="settingsInfoRow" style="margin-top:12px">
+          <span>ログインメールアドレス</span>
+          <strong id="accountCurrentEmail" style="overflow-wrap:anywhere;text-align:right">—</strong>
+        </div>
+        <div style="margin-top:16px;display:grid;gap:12px">
+          <div class="field">
+            <label class="fieldLabel" for="accountNewEmail">新しいメールアドレス</label>
+            <input id="accountNewEmail" class="input" type="email" autocomplete="email" placeholder="new@example.com">
+          </div>
+          <div class="field">
+            <label class="fieldLabel" for="accountEmailCurrentPassword">現在のパスワード（本人確認）</label>
+            <input id="accountEmailCurrentPassword" class="input" type="password" autocomplete="current-password">
+          </div>
+          <button id="accountChangeEmailButton" type="button" class="secondaryButton">新しいメールアドレスに確認メールを送信</button>
+          <div class="field">
+            <label class="fieldLabel" for="accountPasswordCurrent">現在のパスワード</label>
+            <input id="accountPasswordCurrent" class="input" type="password" autocomplete="current-password">
+          </div>
+          <div class="field">
+            <label class="fieldLabel" for="accountPasswordNew">新しいパスワード（6文字以上）</label>
+            <input id="accountPasswordNew" class="input" type="password" autocomplete="new-password">
+          </div>
+          <div class="field">
+            <label class="fieldLabel" for="accountPasswordConfirm">新しいパスワード（確認）</label>
+            <input id="accountPasswordConfirm" class="input" type="password" autocomplete="new-password">
+          </div>
+          <button id="accountChangePasswordButton" type="button" class="secondaryButton">パスワードを変更する</button>
+          <div id="accountSettingsMessage" class="infoNotice" role="status" aria-live="polite" style="display:none;white-space:pre-line;overflow-wrap:anywhere"></div>
+          <button id="accountBillingPortalButton" type="button" class="secondaryButton" style="display:none">契約・お支払いの管理／解約（Stripe）</button>
+          <div id="accountBillingMessage" class="infoNotice" role="status" aria-live="polite" style="display:none;white-space:pre-line"></div>
+        </div>
+
         <button id="dashboardLogoutButton" class="secondaryButton">
           ログアウト
         </button>
@@ -2890,7 +2922,7 @@ body.dashboardWorkspace .app {
 /* =========================
    APP VERSION CHECK
 ========================= */
-const APP_VERSION = "2.3.20";
+const APP_VERSION = "2.3.21";
 const APP_VERSION_FILE = "version.json";
 
 (async function checkAppVersion() {
@@ -2962,7 +2994,11 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
-  onAuthStateChanged
+  onAuthStateChanged,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  verifyBeforeUpdateEmail,
+  updatePassword
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
 import {
@@ -3144,7 +3180,7 @@ async function startCheckInCheckout(button, statusNode){
   }
   checkInCheckoutPending = true;
   button.disabled = true;
-  statusNode.textContent = 'Stripeのテスト決済画面を準備しています…';
+  statusNode.textContent = 'Stripeのお申し込み画面を準備しています…';
   try {
     const token = await user.getIdToken();
     const response = await fetch(CHECKIN_CHECKOUT_API, {
@@ -3181,13 +3217,13 @@ function showFreePlanLimit(message){
   desc.textContent=message;
   desc.style.cssText='line-height:1.8;margin:0 0 12px;white-space:pre-line';
   const cost=document.createElement('p');
-  cost.textContent='Pro.：月額700円';
+  cost.textContent='Pro.：月額600円';
   cost.style.cssText='font-weight:bold;margin:0 0 16px';
   const note=document.createElement('p');
-  note.textContent='現在はStripeのテスト環境です。実際の請求は発生しません。決済後のPro.権限付与はまだ行いません。';
+  note.textContent='お申し込み画面で料金と契約内容をご確認ください。';
   note.style.cssText='font-size:12px;margin:0 0 16px';
   const checkout=document.createElement('button');
-  checkout.type='button';checkout.textContent='テスト決済へ進む';
+  checkout.type='button';checkout.textContent='Pro.に申し込む';
   checkout.style.cssText='cursor:pointer;padding:10px 24px;border-radius:8px;border:0;background:#168c94;color:#fff;font:inherit;margin:0 8px 10px 0';
   const status=document.createElement('p');
   status.style.cssText='font-size:12px;line-height:1.6;margin:2px 0 12px;color:#a33';
@@ -8917,7 +8953,90 @@ function updateCurrentPlanBadges() {
     settings.textContent = label || '—';
     settings.className = label ? 'planBadge ' + badgeClass : '';
   }
+  refreshAccountControls();
 }
+
+/* Account controls: changes preserve the existing Firebase Authentication UID. */
+const CHECKIN_PORTAL_API = 'https://dobharchu-checkin-api.komori-bd9.workers.dev/create-portal-session';
+function accountMessage(id, message) {
+  const target = document.getElementById(id);
+  if (!target) return;
+  target.textContent = message;
+  target.style.display = message ? 'block' : 'none';
+}
+function refreshAccountControls() {
+  const emailNode = document.getElementById('accountCurrentEmail');
+  if (emailNode) emailNode.textContent = auth.currentUser?.email || '—';
+  const portalButton = document.getElementById('accountBillingPortalButton');
+  if (portalButton) portalButton.style.display = auth.currentUser && String(currentAccess?.type || '').toLowerCase() === 'paid' ? '' : 'none';
+}
+function accountErrorMessage(error) {
+  switch (error?.code) {
+    case 'auth/wrong-password':
+    case 'auth/invalid-credential': return '現在のパスワードが正しくありません。';
+    case 'auth/email-already-in-use': return 'このメールアドレスは既に使用されています。';
+    case 'auth/invalid-email': return 'メールアドレスの形式を確認してください。';
+    case 'auth/weak-password': return '新しいパスワードは6文字以上で設定してください。';
+    case 'auth/requires-recent-login': return '安全のため、ログアウトして再ログインしてからお試しください。';
+    case 'auth/too-many-requests': return '操作回数が多いため、時間を置いてお試しください。';
+    case 'auth/network-request-failed': return '通信状態を確認して再度お試しください。';
+    case 'auth/operation-not-allowed': return 'Firebaseの認証設定により変更できません。管理者にお問い合わせください。';
+    default: return '変更処理に失敗しました。再度お試しください。';
+  }
+}
+async function accountReauthenticate(password) {
+  const user = auth.currentUser;
+  if (!user?.email) throw new Error('ログイン状態を確認してください。');
+  if (!password) throw new Error('現在のパスワードを入力してください。');
+  await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, password));
+  return user;
+}
+async function accountWithButton(button, messageId, operation) {
+  if (button.disabled) return;
+  button.disabled = true;
+  accountMessage(messageId, '処理しています…');
+  try { await operation(); }
+  catch(error) { accountMessage(messageId, error?.code ? accountErrorMessage(error) : (error?.message || '処理できませんでした。')); }
+  finally { button.disabled = false; refreshAccountControls(); }
+}
+document.getElementById('accountChangeEmailButton').addEventListener('click', function() {
+  accountWithButton(this, 'accountSettingsMessage', async () => {
+    const user = auth.currentUser;
+    if (!user) throw new Error('再ログインしてください。');
+    const newEmail = document.getElementById('accountNewEmail').value.trim();
+    const passwordField = document.getElementById('accountEmailCurrentPassword');
+    if (!newEmail || !newEmail.includes('@')) throw new Error('新しいメールアドレスを正しく入力してください。');
+    if (newEmail.toLowerCase() === (user.email || '').toLowerCase()) throw new Error('現在のメールアドレスと同じです。');
+    await accountReauthenticate(passwordField.value);
+    await verifyBeforeUpdateEmail(user, newEmail);
+    passwordField.value = '';
+    accountMessage('accountSettingsMessage', '新しいメールアドレス宛に確認メールを送りました。メール内のリンクで認証を完了してください。\n認証後に再ログインすると新しいメールアドレスが反映されます。');
+  });
+});
+document.getElementById('accountChangePasswordButton').addEventListener('click', function() {
+  accountWithButton(this, 'accountSettingsMessage', async () => {
+    const oldField = document.getElementById('accountPasswordCurrent');
+    const newField = document.getElementById('accountPasswordNew');
+    const confirmField = document.getElementById('accountPasswordConfirm');
+    if (newField.value.length < 6) throw new Error('新しいパスワードは6文字以上で入力してください。');
+    if (newField.value !== confirmField.value) throw new Error('新しいパスワードと確認用が一致しません。');
+    const user = await accountReauthenticate(oldField.value);
+    await updatePassword(user, newField.value);
+    oldField.value = ''; newField.value = ''; confirmField.value = '';
+    accountMessage('accountSettingsMessage', 'パスワードを変更しました。UID・登録データ・利用権限は維持されます。');
+  });
+});
+document.getElementById('accountBillingPortalButton').addEventListener('click', function() {
+  accountWithButton(this, 'accountBillingMessage', async () => {
+    const user = auth.currentUser;
+    if (!user || String(currentAccess?.type || '').toLowerCase() !== 'paid') throw new Error('Pro.契約のあるアカウントでログインしてください。');
+    const token = await user.getIdToken();
+    const response = await fetch(CHECKIN_PORTAL_API, {method:'POST', headers:{Authorization:'Bearer '+token, 'Content-Type':'application/json'}, body:'{}', cache:'no-store'});
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || typeof result.url !== 'string' || !result.url.startsWith('https://billing.stripe.com/')) throw new Error('契約管理画面を開けませんでした。Stripe側の設定を確認してください。');
+    window.location.assign(result.url);
+  });
+});
 
 function populateDashboardSettings() {
   if (!currentEvent) {
