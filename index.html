@@ -2036,6 +2036,13 @@ body.dashboardWorkspace .app {
 .planBadgePro{background:#168C94}
 .planBadgeHeader{margin:7px auto 0}
 
+/* FREE account only: small text link beside the existing plan badge. */
+.settingsPlanWithUpgrade{display:inline-flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.accountUpgradeLink{padding:0;border:0;background:transparent;color:#168C94;text-decoration:underline;text-underline-offset:2px;cursor:pointer;font:inherit;font-size:12px;line-height:1.4;white-space:nowrap}
+.accountUpgradeLink[hidden],#accountUpgradeStatus[hidden]{display:none!important}
+.accountUpgradeLink:disabled{opacity:.6;cursor:wait}
+#accountUpgradeStatus{color:#a33;font-size:12px;line-height:1.6;text-align:right;margin:6px 4px 0;white-space:pre-line}
+
 /* Compact account actions */
 .accountActionGroup{border-top:1px solid #e8e8e8;padding-top:15px;margin-top:4px}
 .accountActionLabel{font-weight:700;font-size:14px;margin-bottom:4px}
@@ -2798,8 +2805,12 @@ body.dashboardWorkspace .app {
 
         <div class="settingsInfoRow">
           <span>利用区分</span>
-          <strong id="settingsPlanValue">—</strong>
+          <span class="settingsPlanWithUpgrade">
+            <strong id="settingsPlanValue">—</strong>
+            <button id="accountUpgradeLink" class="accountUpgradeLink" type="button" hidden>Pro.にアップグレード</button>
+          </span>
         </div>
+        <div id="accountUpgradeStatus" role="status" aria-live="polite" hidden></div>
 
         <div class="settingsInfoRow" style="margin-top:12px">
           <span>ログインメールアドレス</span>
@@ -2926,7 +2937,7 @@ body.dashboardWorkspace .app {
 /* =========================
    APP VERSION CHECK
 ========================= */
-const APP_VERSION = "2.3.27";
+const APP_VERSION = "2.3.28";
 const APP_VERSION_FILE = "version.json";
 
 (async function checkAppVersion() {
@@ -9042,8 +9053,22 @@ function updateCurrentPlanBadges() {
     settings.textContent = label || '—';
     settings.className = label ? 'planBadge ' + badgeClass : '';
   }
+  const upgradeLink = document.getElementById('accountUpgradeLink');
+  if (upgradeLink) upgradeLink.hidden = !(type === 'free' && currentUser);
+  const upgradeStatus = document.getElementById('accountUpgradeStatus');
+  if (upgradeStatus && type !== 'free') {
+    upgradeStatus.textContent = '';
+    upgradeStatus.hidden = true;
+  }
   refreshAccountControls();
 }
+
+/* Reuse the already verified live Stripe checkout flow; no payment logic changes. */
+document.getElementById('accountUpgradeLink').addEventListener('click', function() {
+  const status = document.getElementById('accountUpgradeStatus');
+  status.hidden = false;
+  startCheckInCheckout(this, status);
+});
 
 /* Account controls: changes preserve the existing Firebase Authentication UID. */
 function accountMessage(id, message) {
