@@ -2926,7 +2926,7 @@ body.dashboardWorkspace .app {
 /* =========================
    APP VERSION CHECK
 ========================= */
-const APP_VERSION = "2.3.26";
+const APP_VERSION = "2.3.27";
 const APP_VERSION_FILE = "version.json";
 
 (async function checkAppVersion() {
@@ -3176,7 +3176,7 @@ const FREE_MAX_PARTICIPANTS = 20;
 function isFreeCheckInAccount(){
   return String(currentAccess?.type || '').toLowerCase() === 'free';
 }
-const CHECKIN_CHECKOUT_API = 'https://dobharchu-checkin-api.komori-bd9.workers.dev/create-checkout-session';
+const CHECKIN_CHECKOUT_API = 'https://dobharchu-checkin-live.komori-bd9.workers.dev/create-checkout-session';
 let checkInCheckoutPending = false;
 async function startCheckInCheckout(button, statusNode){
   if(checkInCheckoutPending) return;
@@ -9109,7 +9109,7 @@ document.getElementById('accountChangePasswordButton').addEventListener('click',
     accountMessage('accountSettingsMessage', 'パスワード変更用のメールを送信しました。登録メールアドレスをご確認ください。');
   });
 });
-const CHECKIN_SUBSCRIPTION_API = 'https://dobharchu-checkin-api.komori-bd9.workers.dev';
+const CHECKIN_SUBSCRIPTION_API = 'https://dobharchu-checkin-live.komori-bd9.workers.dev';
 function formatCheckinPeriodEnd(seconds) {
   if (!Number.isFinite(seconds) || seconds <= 0) return '現在の請求期間の終了時';
   return new Intl.DateTimeFormat('ja-JP',{timeZone:'Asia/Tokyo',year:'numeric',month:'long',day:'numeric'}).format(new Date(seconds*1000));
