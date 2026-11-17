@@ -371,6 +371,7 @@ body { min-height: 100vh; display: flex; flex-direction: column; }
     <div id="errorText" class="state-text">
       URLをご確認いただくか、イベント主催者へお問い合わせください。
     </div>
+    <button id="retrySchedule" type="button" style="margin-top:16px;padding:10px 20px;border:1px solid #ccc;border-radius:10px;background:#fff;color:#111;font-weight:700;">再読み込み</button>
   </div>
 
   <!-- SCHEDULE -->
@@ -806,7 +807,16 @@ function render() {
 }
 
 
+let scheduleLoading = false;
 async function loadPublicSchedule() {
+  if (scheduleLoading) return;
+  scheduleLoading = true;
+  loadingState.classList.remove("hidden");
+  errorState.classList.add("hidden");
+  schedulePage.classList.add("hidden");
+  const controller = new AbortController();
+  let timer;
+  try {
 
   const params =
     new URLSearchParams(
@@ -828,7 +838,7 @@ async function loadPublicSchedule() {
     return;
   }
 
-  try {
+    timer = setTimeout(() => controller.abort(), 15000);
 
     const url =
       new URL(
@@ -850,7 +860,8 @@ async function loadPublicSchedule() {
         url.toString(),
         {
           method:"GET",
-          cache:"no-store"
+          cache:"no-store",
+          signal:controller.signal
         }
       );
 
@@ -922,12 +933,17 @@ async function loadPublicSchedule() {
 
     showError(
       "スケジュールを読み込めませんでした",
-      "通信状態をご確認のうえ、もう一度ページを開いてください。"
+      error?.name === "AbortError"
+        ? "通信がタイムアウトしました。再読み込みしてください。"
+        : "通信状態をご確認のうえ、再読み込みしてください。解消しない場合はイベント主催者へお問い合わせください。"
     );
+  } finally {
+    clearTimeout(timer);
+    scheduleLoading = false;
   }
 }
 
-
+document.getElementById("retrySchedule").addEventListener("click", loadPublicSchedule);
 loadPublicSchedule();
 </script>
 </body>

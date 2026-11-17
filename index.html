@@ -934,9 +934,20 @@ button {
 }
 .scheduleQrHolder{
   display:flex;
-  justify-content:center;
+  flex-direction:column;
+  align-items:center;
+  gap:10px;
   margin-top:8px;
+  min-width:0;
 }
+.scheduleQrHolder canvas{
+  display:block;
+  width:min(360px,100%);
+  height:auto;
+  background:#fff;
+  image-rendering:pixelated;
+}
+.scheduleQrHolder button{width:min(360px,100%);}
 .scheduleQrTitle{
   font-size:14px;
   font-weight:900;
@@ -2937,7 +2948,7 @@ body.dashboardWorkspace .app {
 /* =========================
    APP VERSION CHECK
 ========================= */
-const APP_VERSION = "2.3.28";
+const APP_VERSION = "2.3.29";
 const APP_VERSION_FILE = "version.json";
 
 (async function checkAppVersion() {
@@ -3270,6 +3281,7 @@ const FREE_PAID_BUTTONS = Object.freeze({
   copyScheduleUrlButton: 'スケジュール共有',
   openScheduleUrlButton: 'スケジュール共有',
   toggleScheduleQrButton: 'スケジュールQR表示',
+  downloadScheduleQrButton: 'スケジュールQR保存',
   editVenueMailButton: '会場案内メール',
   saveVenueMailButton: '会場案内メール',
   abortVenueMailEditButton: '会場案内メール',
@@ -11169,40 +11181,102 @@ function renderScheduleShareArea() {
 
   urlBox.textContent =
     url;
+  if (qrArea && qrArea.style.display === "block" &&
+      qrHolder && qrHolder.dataset.qrUrl !== url) {
+    renderScheduleQr();
+  }
 }
 
 function renderScheduleQr() {
-  const holder =
-    document.getElementById(
-      "scheduleQrHolder"
-    );
-
-  if (
-    !holder ||
-    !currentScheduleShare ||
-    !currentScheduleShare.publicId
-  ) {
-    return;
-  }
-
-  holder.innerHTML =
-    "";
-
-  const url =
-    buildSchedulePublicUrl(
-      currentScheduleShare.publicId
-    );
-
-  new QRCode(
-    holder,
-    {
-      text: url,
-      width: 220,
-      height: 220,
-      correctLevel:
-        QRCode.CorrectLevel.H
+  const holder = document.getElementById("scheduleQrHolder");
+  if (!holder || !currentScheduleShare?.publicId) return;
+  holder.replaceChildren();
+  delete holder.dataset.qrUrl;
+  const url = buildSchedulePublicUrl(currentScheduleShare.publicId);
+  try {
+    // Keep the existing public URL and ID. Render exact square modules and
+    // a four-module quiet zone; do not rescale the PNG before download.
+    const scratch = document.createElement("div");
+    const qr = new QRCode(scratch, {
+      text: url, width: 360, height: 360,
+      colorDark: "#000000", colorLight: "#ffffff",
+      correctLevel: QRCode.CorrectLevel.M
+    });
+    const matrix = qr._oQRCode; // qrcodejs 1.0.0
+    const n = matrix.getModuleCount();
+    const quiet = 4;
+    const unit = Math.max(1, Math.ceil(900 / (n + quiet * 2)));
+    const canvas = document.createElement("canvas");
+    canvas.width = canvas.height = (n + quiet * 2) * unit;
+    canvas.setAttribute("role", "img");
+    canvas.setAttribute("aria-label", "参加者向けスケジュールQRコード");
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("Canvas unavailable");
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#000000";
+    for (let row = 0; row < n; row++) {
+      for (let col = 0; col < n; col++) {
+        if (matrix.isDark(row, col)) {
+          ctx.fillRect((col + quiet) * unit, (row + quiet) * unit, unit, unit);
+        }
+      }
     }
-  );
+    const download = document.createElement("button");
+    download.type = "button";
+    download.id = "downloadScheduleQrButton";
+    download.className = "secondaryButton";
+    download.textContent = "QRコードをPNGで保存";
+    download.addEventListener("click", () => {
+      if (!requireCheckInPaid("スケジュールQR保存")) return;
+      const link = document.createElement("a");
+      link.download = "check-in-schedule-qr.png";
+      link.href = canvas.toDataURL("image/png");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    });
+    holder.append(canvas, download);
+    holder.dataset.qrUrl = url;
+  } catch (error) {
+    console.error("Schedule QR generation failed", error);
+    holder.textContent = "QRコードを作成できませんでした。URLをコピーして共有してください。";
+  }
+}
+
+async function verifyPublishedSchedule(publicId) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 15000);
+  try {
+    const url = new URL("https://asia-northeast1-event-checkin-app-987b3.cloudfunctions.net/getPublicSchedule");
+    url.searchParams.set("s", publicId);
+    url.searchParams.set("_t", Date.now().toString());
+    const response = await fetch(url.toString(), {cache:"no-store", signal:controller.signal});
+    if (!response.ok) return "HTTP " + response.status;
+    const result = await response.json();
+    return result?.ok === true && result.schedule && typeof result.schedule === "object"
+      ? "" : "公開データの形式エラー";
+  } catch (error) {
+    console.error("Public schedule verification failed", error);
+    return error?.name === "AbortError" ? "通信タイムアウト" : "通信またはCORSエラー";
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function schedulePublishErrorMessage(error) {
+  const code = String(error?.code || "unknown").replace(/^functions\//, "");
+  const messages = {
+    "failed-precondition":"先にスケジュールを保存してください。",
+    "permission-denied":"公開する権限を確認できませんでした。Pro.・テスターの利用権限をご確認ください。",
+    "unauthenticated":"ログイン情報を確認できませんでした。再ログインしてください。",
+    "not-found":"イベントまたは公開用のサーバー処理が見つかりません。",
+    "unavailable":"公開用サーバーに接続できませんでした。",
+    "deadline-exceeded":"公開処理がタイムアウトしました。",
+    "invalid-argument":"イベント情報を確認できませんでした。",
+    "internal":"公開用サーバーでエラーが発生しました。Functionsのログをご確認ください。"
+  };
+  return (messages[code] || "スケジュールを公開できませんでした。") + "（" + code + "）";
 }
 
 document
@@ -11219,6 +11293,11 @@ document
       ) {
         return;
       }
+
+      if (!requireCheckInPaid("スケジュール公開")) return;
+      const publishingEventId = currentEventId;
+      const publishingUid = currentUser.uid;
+      const isCurrent = () => currentEventId === publishingEventId && currentUser?.uid === publishingUid;
 
       const button =
         document.getElementById(
@@ -11239,7 +11318,7 @@ document
         const result =
           await publishScheduleCallable({
             eventId:
-              currentEventId
+              publishingEventId
           });
 
         const data =
@@ -11254,6 +11333,8 @@ document
           );
         }
 
+        if (!isCurrent()) return;
+
         currentScheduleShare = {
           publicId:
             data.publicId,
@@ -11264,9 +11345,14 @@ document
 
         renderScheduleShareArea();
 
-        setSchedulePublishMessage(
-          "スケジュールを公開しました。"
-        );
+        setSchedulePublishMessage("公開URLを作成しました。閲覧できるか確認しています...");
+        const verificationError = await verifyPublishedSchedule(data.publicId);
+        if (!isCurrent()) return;
+        if (verificationError) {
+          setSchedulePublishMessage("公開データは保存されましたが、閲覧確認に失敗しました。（" + verificationError + "）", true);
+        } else {
+          setSchedulePublishMessage("スケジュールを公開しました。閲覧確認済みです。");
+        }
 
       } catch (error) {
         console.error(
@@ -11274,27 +11360,7 @@ document
           error
         );
 
-        let message =
-          "スケジュールを公開できませんでした。";
-
-        const code =
-          String(
-            error?.code || ""
-          );
-
-        if (
-          code.includes(
-            "failed-precondition"
-          )
-        ) {
-          message =
-            "先にスケジュールを保存してください。";
-        }
-
-        setSchedulePublishMessage(
-          message,
-          true
-        );
+        if (isCurrent()) setSchedulePublishMessage(schedulePublishErrorMessage(error), true);
 
       } finally {
         button.disabled =
